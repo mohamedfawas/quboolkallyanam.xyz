@@ -9,9 +9,7 @@ import (
 type Config struct {
 	Environment string         `mapstructure:"environment"`
 	GRPC        GRPCConfig     `mapstructure:"grpc"`
-	HTTP        HTTPConfig     `mapstructure:"http"`
 	Postgres    PostgresConfig `mapstructure:"postgres"`
-	Razorpay    RazorpayConfig `mapstructure:"razorpay"`
 	Email       EmailConfig    `mapstructure:"email"`
 	RabbitMQ    RabbitMQConfig `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig   `mapstructure:"pubsub"`
@@ -19,13 +17,6 @@ type Config struct {
 
 type GRPCConfig struct {
 	Port int `mapstructure:"port"`
-}
-
-type HTTPConfig struct {
-	Port         string `mapstructure:"port"`
-	ReadTimeout  int    `mapstructure:"read_timeout"`
-	WriteTimeout int    `mapstructure:"write_timeout"`
-	IdleTimeout  int    `mapstructure:"idle_timeout"`
 }
 
 type PostgresConfig struct {
@@ -54,11 +45,6 @@ type RabbitMQConfig struct {
 
 type PubSubConfig struct {
 	ProjectID string `mapstructure:"project_id"`
-}
-
-type RazorpayConfig struct {
-	KeyID     string `mapstructure:"key_id"`
-	KeySecret string `mapstructure:"key_secret"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -92,10 +78,6 @@ func bindEnvVars(v *viper.Viper) {
 	keys := []string{
 		"environment",
 		"grpc.port",
-		"http.port",
-		"http.read_timeout",
-		"http.write_timeout",
-		"http.idle_timeout",
 		"postgres.host",
 		"postgres.port",
 		"postgres.user",
@@ -103,8 +85,6 @@ func bindEnvVars(v *viper.Viper) {
 		"postgres.dbname",
 		"postgres.sslmode",
 		"postgres.timezone",
-		"razorpay.key_id",
-		"razorpay.key_secret",
 		"email.smtp_host",
 		"email.smtp_port",
 		"email.smtp_username",
@@ -123,23 +103,15 @@ func bindEnvVars(v *viper.Viper) {
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("environment", "development")
 
-	v.SetDefault("grpc.port", 50055)
-
-	v.SetDefault("http.port", "8082")
-	v.SetDefault("http.read_timeout", 30)
-	v.SetDefault("http.write_timeout", 30)
-	v.SetDefault("http.idle_timeout", 120)
+	v.SetDefault("grpc.port", 50053)
 
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)
 	v.SetDefault("postgres.user", "postgres")
 	v.SetDefault("postgres.password", "postgres")
-	v.SetDefault("postgres.dbname", "qubool_kallyanam_payment")
+	v.SetDefault("postgres.dbname", "qubool_kallyanam_user")
 	v.SetDefault("postgres.sslmode", "disable")
 	v.SetDefault("postgres.timezone", "Asia/Kolkata")
-
-	v.SetDefault("razorpay.key_id", "")
-	v.SetDefault("razorpay.key_secret", "")
 
 	v.SetDefault("email.smtp_host", "smtp.gmail.com")
 	v.SetDefault("email.smtp_port", 587)
