@@ -1,19 +1,19 @@
 package main
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/server"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/server"
+	"google.golang.org/grpc"
 )
 
 func main() {
 	logger.InitLogger()
-	logger.Log.Info("Logger in gateway service is initialized")
+	logger.Log.Info("✅ Logger in auth service is initialized")
 	defer logger.Sync()
 
 	configPath := "./config/config.yaml"
@@ -25,29 +25,29 @@ func main() {
 	if err != nil {
 		logger.Log.Fatal("Failed to load config: ", err)
 	}
+	logger.Log.Info("✅ Auth Service Config loaded")
 
-	srv, err := server.NewHTTPServer(cfg)
+	srv, err := server.NewServer(cfg)
 	if err != nil {
 		logger.Log.Fatal("Failed to create server: ", err)
 	}
-	logger.Log.Info("Gateway server created successfully")
+	logger.Log.Info("✅ Auth Service Server created")
 
 	go func() {
 		if err := srv.Start(); err != nil {
-			if err != http.ErrServerClosed {
+			if err != grpc.ErrServerStopped {
 				logger.Log.Fatal("Failed to start server: ", err)
 			}
 		}
 	}()
+	logger.Log.Info("✅ Auth Service Server started")
 
 	quit := make(chan os.Signal, 1)
+
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Log.Info("Shutting down server...")
-	if err := srv.Stop(); err != nil {
-		logger.Log.Error("Server forced to shutdown: ", err)
-	}
-
-	logger.Log.Info("Server stopped")
+	logger.Log.Info("🛑 Shutting down server...")
+	srv.Stop()
+	logger.Log.Info("✅ Server stopped")
 }

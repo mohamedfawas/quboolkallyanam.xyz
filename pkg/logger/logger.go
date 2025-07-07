@@ -9,7 +9,7 @@ import (
 var Log *zap.SugaredLogger
 
 func InitLogger() {
-	env := os.Getenv("APP_ENV")
+	env := os.Getenv("ENVIRONMENT")
 
 	var zapLogger *zap.Logger
 	var err error
@@ -17,7 +17,6 @@ func InitLogger() {
 	if env == "production" {
 		zapLogger, err = zap.NewProduction()
 	} else {
-		// Default to development
 		zapLogger, err = zap.NewDevelopment()
 	}
 
@@ -30,6 +29,6 @@ func InitLogger() {
 
 func Sync() {
 	if Log != nil {
-		_ = Log.Sync() // flush logs
+		_ = Log.Sync() // flush logs from buffer to stdout
 	}
 }
