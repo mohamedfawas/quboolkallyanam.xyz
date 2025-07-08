@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package user.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1;userpbv1";
+
+service UserService {
+    rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+}
+
+message ProfileData {
+    uint64 id = 1;
+    bool is_bride = 2;
+    string full_name = 3;
+    string phone = 4;
+    string date_of_birth = 5;
+    int32 height_cm = 6;
+    bool physically_challenged = 7;
+    string community = 8;
+    string marital_status = 9;
+    string profession = 10;
+    string profession_type = 11;
+    string highest_education_level = 12;
+    string home_district = 13;
+    string profile_picture_url = 14;
+    google.protobuf.Timestamp last_login = 15;
+    google.protobuf.Timestamp created_at = 16;
+}
+
+message GetProfileRequest {
+    // No fields needed as user ID will be extracted from auth context
+}
+
+message GetProfileResponse {
+    ProfileData profile = 1;
+}

@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package auth.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1;authpbv1";
+
+service AuthService {
+    rpc UserRegister(UserRegisterRequest) returns (UserRegisterResponse);
+    rpc UserVerification(UserVerificationRequest) returns (UserVerificationResponse);
+    rpc UserLogin(UserLoginRequest) returns (UserLoginResponse);
+    rpc UserLogout(UserLogoutRequest) returns (google.protobuf.Empty);
+    rpc UserDelete(UserDeleteRequest) returns (google.protobuf.Empty);
+    rpc AdminLogin(AdminLoginRequest) returns (AdminLoginResponse);
+    rpc AdminLogout(AdminLogoutRequest) returns (google.protobuf.Empty);
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+}
+
+message UserRegisterRequest {
+    string email = 1;
+    string phone = 2;
+    string password = 3;
+}
+
+message UserRegisterResponse {
+    string id = 1;
+    string email = 2;
+    string phone = 3;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+
+message UserVerificationRequest {
+    string email = 1;
+    string otp = 2;
+}
+
+message UserVerificationResponse {
+    string id = 1;
+    string email = 2;
+    string phone = 3;
+}
+
+message UserLoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message UserLoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    google.protobuf.Timestamp access_token_expires_at = 3;
+    google.protobuf.Timestamp refresh_token_expires_at = 4;
+}
+  
+message UserLogoutRequest {
+    string refresh_token = 1;
+}
+
+message UserLogoutResponse {
+    google.protobuf.Empty success = 1;
+}
+
+message AdminLoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message AdminLoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    google.protobuf.Timestamp access_token_expires_at = 3;
+    google.protobuf.Timestamp refresh_token_expires_at = 4;
+}
+
+message AdminLogoutRequest {
+    string refresh_token = 1;
+}
+
+message AdminLogoutResponse {
+    google.protobuf.Empty success = 1;
+}
+
+message UserDeleteRequest {
+    string password = 1;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    google.protobuf.Timestamp access_token_expires_at = 3;
+    google.protobuf.Timestamp refresh_token_expires_at = 4;
+}

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package admin.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/admin/v1;adminpbv1";
+
+service AdminService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+    string identifier = 1;              // Can be UUID, email, or phone number
+    string identifier_type = 2;         // "uuid", "email", or "phone" (optional - auto-detect if not provided)
+}
+
+message GetUserResponse {
+    string id = 1;
+    string email = 2;
+    string phone = 3;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}

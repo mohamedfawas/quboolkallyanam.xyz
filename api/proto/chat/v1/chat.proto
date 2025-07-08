@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package chat.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/chat/v1;chatpbv1";
+
+service ChatService {
+    rpc CreateConversation(CreateConversationRequest) returns (CreateConversationResponse);
+}
+
+message CreateConversationRequest {
+    string user_id = 1;
+    string participant_id = 2;
+}
+
+message CreateConversationResponse {
+    string conversation_id = 1;
+    string user_id = 2;
+    string participant_id = 3;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+

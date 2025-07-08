@@ -11,6 +11,7 @@ type Config struct {
 	HTTP        HTTPConfig     `mapstructure:"http"`
 	Services    ServicesConfig `mapstructure:"services"`
 	Auth        AuthConfig     `mapstructure:"auth"`
+	OTP         OTPConfig      `mapstructure:"otp"`
 	// Tracing config @TODO: add tracing config
 }
 
@@ -38,6 +39,10 @@ type JWTConfig struct {
 	AccessTokenMinutes int    `mapstructure:"access_token_minutes"`
 	RefreshTokenDays   int    `mapstructure:"refresh_token_days"`
 	Issuer             string `mapstructure:"issuer"`
+}
+
+type OTPConfig struct {
+	Length int `mapstructure:"length"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -83,6 +88,7 @@ func bindEnvVars(v *viper.Viper) {
 		"auth.jwt.access_token_minutes",
 		"auth.jwt.refresh_token_days",
 		"auth.jwt.issuer",
+		"otp.length",
 	}
 	for _, key := range keys {
 		_ = v.BindEnv(key)
@@ -107,4 +113,5 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("auth.jwt.access_token_minutes", 15)
 	v.SetDefault("auth.jwt.refresh_token_days", 7)
 	v.SetDefault("auth.jwt.issuer", "qubool-kallyanam")
+	v.SetDefault("otp.length", 6)
 }

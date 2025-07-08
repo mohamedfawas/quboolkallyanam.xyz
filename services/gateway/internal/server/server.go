@@ -7,12 +7,36 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
+
+	// Client imports
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
+	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth"
+
+	// Usecase imports
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/usecase"
+	authUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/usecase/auth"
+
+	// Handler imports
+	authHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/auth"
 )
 
 type Server struct {
 	config     *config.Config
 	httpServer *http.Server
+
+	// gRPC Clients (concrete implementations)
+	authGRPCClient *authGRPC.AuthGRPCClient
+
+	// Interface-based clients (for dependency injection)
+	authClient client.AuthClient
+
+	// Usecases (interface-based)
+	authUsecase usecase.AuthUsecase
+
+	// Handlers
+	authHandler *authHandler.AuthHandler
 }
 
 func NewHTTPServer(config *config.Config) (*Server, error) {
@@ -20,8 +44,26 @@ func NewHTTPServer(config *config.Config) (*Server, error) {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	server := &Server{
+		config: config,
+	}
+
+	if err := server.initClients(); err != nil {
+		return nil, fmt.Errorf("failed to initialize clients: %w", err)
+	}
+
+	if err := server.initUsecases(); err != nil {
+		return nil, fmt.Errorf("failed to initialize usecases: %w", err)
+	}
+
+	if err := server.initHandlers(); err != nil {
+		return nil, fmt.Errorf("failed to initialize handlers: %w", err)
+	}
+
 	router := gin.New()
 	router.Use(gin.Recovery())
+
+	server.setupRoutes(router)
 
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf(":%s", config.HTTP.Port),
@@ -31,22 +73,55 @@ func NewHTTPServer(config *config.Config) (*Server, error) {
 		IdleTimeout:  time.Duration(config.HTTP.IdleTimeout) * time.Second,
 	}
 
-	server := &Server{
-		config:     config,
-		httpServer: httpServer,
-	}
-
-	server.SetupRoutes(router)
+	server.httpServer = httpServer
 
 	return server, nil
 }
 
-func (s *Server) SetupRoutes(router *gin.Engine) {
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong from gateway",
-		})
-	})
+func (s *Server) initClients() error {
+	ctx := context.Background()
+
+	authGRPCClient, err := authGRPC.NewAuthGRPCClient(
+		ctx,
+		fmt.Sprintf("localhost:%s", s.config.Services.AuthServicePort),
+		false, // useTLS - set to true in production
+		nil,   // tlsConfig
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create auth gRPC client: %w", err)
+	}
+
+	s.authGRPCClient = authGRPCClient
+	s.authClient = authGRPCClient
+
+	// TODO: Add other clients as you implement them
+
+	return nil
+}
+
+func (s *Server) initUsecases() error {
+	// Initialize Auth Usecase
+	s.authUsecase = authUsecase.NewAuthUsecase(s.authClient)
+
+	// TODO: Add other usecases as you implement them
+	// s.adminUsecase = adminUsecase.NewAdminUsecase(s.adminClient)
+	// s.userUsecase = userUsecase.NewUserUsecase(s.userClient)
+	// s.chatUsecase = chatUsecase.NewChatUsecase(s.chatClient)
+	// s.paymentUsecase = paymentUsecase.NewPaymentUsecase(s.paymentClient)
+
+	return nil
+}
+
+func (s *Server) initHandlers() error {
+	s.authHandler = authHandler.NewAuthHandler(s.authUsecase, *s.config)
+
+	// TODO: Add other handlers as you implement them
+	// s.adminHandler = adminHandler.NewAdminHandler(s.adminUsecase, *s.config)
+	// s.userHandler = userHandler.NewUserHandler(s.userUsecase, *s.config)
+	// s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase, *s.config)
+	// s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase, *s.config)
+
+	return nil
 }
 
 func (s *Server) Start() error {

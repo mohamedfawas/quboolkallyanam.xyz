@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package payment.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/payment/v1;paymentpbv1";
+
+service PaymentService {
+    rpc CreatePaymentOrder(CreatePaymentOrderRequest) returns (CreatePaymentOrderResponse);
+}
+
+message CreatePaymentOrderRequest {
+    string plan_id = 1; // e.g., "premium_365"
+}
+
+message CreatePaymentOrderResponse {
+    string order_id = 1;
+    string plan_id = 2;
+    string user_id = 3;
+    string status = 4;
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
+}
