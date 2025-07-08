@@ -9,6 +9,16 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
+// @Summary User verification
+// @Description User verification
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param user_verification_request body dto.UserVerificationRequest true "User verification request"
+// @Success 200 {object} dto.UserVerificationResponse "User verification response"
+// @Failure 400 {object} dto.ErrorResponse "Bad request"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /api/v1/auth/user/verify [post]
 func (h *AuthHandler) UserVerification(c *gin.Context) {
 	var req dto.UserVerificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

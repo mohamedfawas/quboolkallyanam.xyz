@@ -1,0 +1,21 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "REST API Gateway for Qubool Kallyanam microservices",
+        "title": "Qubool Kallyanam Gateway API",
+        "termsOfService": "http://quboolkallyanam.xyz/terms/",
+        "contact": {
+            "name": "Mohamed Fawas",
+            "url": "https://quboolkallyanam.xyz",
+            "email": "adminquboolkallyanam@gmail.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "quboolkallyanam.xyz",
+    "basePath": "/api/v1",
+    "paths": {}
+}

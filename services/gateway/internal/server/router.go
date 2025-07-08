@@ -2,9 +2,16 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "github.com/mohamedfawas/quboolkallyanam.xyz/docs/swagger" // Swagger generated files
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/middleware"
 )
 
 func (s *Server) setupRoutes(router *gin.Engine) {
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	v1 := router.Group("/api/v1")
 
 	s.registerAuthRoutes(v1)
@@ -19,7 +26,10 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 			userAuth.POST("/register", s.authHandler.UserRegister)
 			userAuth.POST("/verify", s.authHandler.UserVerification)
 			userAuth.POST("/login", s.authHandler.UserLogin)
-			userAuth.POST("/logout", s.authHandler.UserLogout)
+			userAuth.POST("/logout", middleware.AuthMiddleware(s.jwtManager),
+				middleware.RequireRole(constants.UserRole),
+				s.authHandler.UserLogout)
+
 			// TODO: Add more user auth routes as needed
 			// userAuth.POST("/refresh", s.authHandler.RefreshToken)
 			// userAuth.POST("/forgot-password", s.authHandler.ForgotPassword)
@@ -29,10 +39,14 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 		adminAuth := auth.Group("/admin")
 		{
 			adminAuth.POST("/login", s.authHandler.AdminLogin)
-			adminAuth.POST("/logout", s.authHandler.AdminLogout)
+			adminAuth.POST("/logout", middleware.AuthMiddleware(s.jwtManager),
+				middleware.RequireRole(constants.AdminRole),
+				s.authHandler.AdminLogout)
 			// TODO: Add more admin auth routes as needed
 			// adminAuth.POST("/refresh", s.authHandler.AdminRefreshToken)
 		}
+		auth.POST("/refresh", middleware.AuthMiddleware(s.jwtManager),
+			s.authHandler.RefreshToken)
 	}
 }
 

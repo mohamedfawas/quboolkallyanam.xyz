@@ -26,6 +26,8 @@ var (
 var (
 	ErrInvalidToken        = errors.New("invalid or expired token")
 	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
+	ErrExpiredToken        = errors.New("token has expired")
+	ErrTokenNotActive      = errors.New("token not active yet")
 )
 
 // OTP errors

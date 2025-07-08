@@ -1,5 +1,17 @@
 package main
 
+// @title Qubool Kallyanam Gateway API
+// @version 1.0
+// @description REST API Gateway for Qubool Kallyanam microservices
+// @termsOfService http://quboolkallyanam.xyz/terms/
+// @contact.name Mohamed Fawas
+// @contact.email adminquboolkallyanam@gmail.com
+// @contact.url https://quboolkallyanam.xyz
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @host quboolkallyanam.xyz
+// @BasePath /api/v1
+
 import (
 	"net/http"
 	"os"

@@ -1,0 +1,16 @@
+basePath: /api/v1
+host: quboolkallyanam.xyz
+info:
+  contact:
+    email: adminquboolkallyanam@gmail.com
+    name: Mohamed Fawas
+    url: https://quboolkallyanam.xyz
+  description: REST API Gateway for Qubool Kallyanam microservices
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://quboolkallyanam.xyz/terms/
+  title: Qubool Kallyanam Gateway API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

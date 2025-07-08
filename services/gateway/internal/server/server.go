@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/auth/jwt"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
 
 	// Client imports
@@ -25,6 +25,7 @@ import (
 type Server struct {
 	config     *config.Config
 	httpServer *http.Server
+	jwtManager *jwt.JWTManager
 
 	// gRPC Clients (concrete implementations)
 	authGRPCClient *authGRPC.AuthGRPCClient
@@ -47,6 +48,13 @@ func NewHTTPServer(config *config.Config) (*Server, error) {
 	server := &Server{
 		config: config,
 	}
+
+	server.jwtManager = jwt.NewJWTManager(jwt.JWTConfig{
+		SecretKey:          config.Auth.JWT.SecretKey,
+		AccessTokenMinutes: config.Auth.JWT.AccessTokenMinutes,
+		RefreshTokenDays:   config.Auth.JWT.RefreshTokenDays,
+		Issuer:             config.Auth.JWT.Issuer,
+	})
 
 	if err := server.initClients(); err != nil {
 		return nil, fmt.Errorf("failed to initialize clients: %w", err)

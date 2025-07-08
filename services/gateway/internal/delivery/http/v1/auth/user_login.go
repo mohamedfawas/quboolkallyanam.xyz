@@ -9,6 +9,16 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
+// @Summary User login
+// @Description User login
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param user_login_request body dto.UserLoginRequest true "User login request"
+// @Success 200 {object} dto.UserLoginResponse "User login response"
+// @Failure 400 {object} dto.ErrorResponse "Bad request"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /api/v1/auth/user/login [post]
 func (h *AuthHandler) UserLogin(c *gin.Context) {
 	var req dto.UserLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

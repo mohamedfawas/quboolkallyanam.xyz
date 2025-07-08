@@ -9,6 +9,16 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
+// @Summary User register
+// @Description User register
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param user_register_request body dto.UserRegisterRequest true "User register request"
+// @Success 200 {object} dto.UserRegisterResponse "User register response"
+// @Failure 400 {object} dto.ErrorResponse "Bad request"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /api/v1/auth/user/register [post]
 func (h *AuthHandler) UserRegister(c *gin.Context) {
 	var req dto.UserRegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
