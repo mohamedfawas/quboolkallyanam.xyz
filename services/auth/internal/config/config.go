@@ -15,6 +15,7 @@ type Config struct {
 	Admin       AdminConfig    `mapstructure:"admin"`
 	RabbitMQ    RabbitMQConfig `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig   `mapstructure:"pubsub"`
+	Auth        AuthConfig     `mapstructure:"auth"`
 }
 
 type GRPCConfig struct {
@@ -61,6 +62,19 @@ type PubSubConfig struct {
 	ProjectID string `mapstructure:"project_id"`
 }
 
+type AuthConfig struct {
+	PendingRegistrationExpiryHours int       `mapstructure:"pending_registration_expiry_hours"`
+	OTPExpiryMinutes               int       `mapstructure:"otp_expiry_minutes"`
+	JWT                            JWTConfig `mapstructure:"jwt"`
+}
+
+type JWTConfig struct {
+	SecretKey          string `mapstructure:"secret_key"`
+	AccessTokenMinutes int    `mapstructure:"access_token_minutes"`
+	RefreshTokenDays   int    `mapstructure:"refresh_token_days"`
+	Issuer             string `mapstructure:"issuer"`
+}
+
 func LoadConfig(configPath string) (*Config, error) {
 	v := initViper(configPath)
 	bindEnvVars(v)
@@ -92,6 +106,8 @@ func bindEnvVars(v *viper.Viper) {
 	keys := []string{
 		"environment",
 		"grpc.port",
+		"auth.pending_registration_expiry_hours",
+		"auth.otp_expiry_minutes",
 		"postgres.host",
 		"postgres.port",
 		"postgres.user",
@@ -124,6 +140,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("environment", "development")
 
 	v.SetDefault("grpc.port", 50051)
+
+	v.SetDefault("auth.pending_registration_expiry_hours", 1)
+	v.SetDefault("auth.otp_expiry_minutes", 15)
 
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)

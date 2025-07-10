@@ -1,4 +1,158 @@
 basePath: /api/v1
+definitions:
+  dto.AdminLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.AdminLoginResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: string
+    type: object
+  dto.AdminLogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.AdminLogoutResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        example: Email is not valid
+        type: string
+      message:
+        example: Invalid input
+        type: string
+      status:
+        example: 400
+        type: integer
+    type: object
+  dto.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: string
+    type: object
+  dto.UserDeleteRequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  dto.UserDeleteResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  dto.UserLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.UserLoginResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_expires_at:
+        type: string
+    type: object
+  dto.UserLogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.UserLogoutResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  dto.UserRegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - password
+    - phone
+    type: object
+  dto.UserRegisterResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.UserVerificationRequest:
+    properties:
+      email:
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  dto.UserVerificationResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+    type: object
 host: quboolkallyanam.xyz
 info:
   contact:
@@ -12,5 +166,253 @@ info:
   termsOfService: http://quboolkallyanam.xyz/terms/
   title: Qubool Kallyanam Gateway API
   version: "1.0"
-paths: {}
+paths:
+  /api/v1/auth/admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Admin login
+      parameters:
+      - description: Admin login request
+        in: body
+        name: admin_login_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AdminLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin login response
+          schema:
+            $ref: '#/definitions/dto.AdminLoginResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Admin login
+      tags:
+      - Auth
+  /api/v1/auth/admin/logout:
+    post:
+      consumes:
+      - application/json
+      description: Admin logout
+      parameters:
+      - description: Admin logout request
+        in: body
+        name: admin_logout_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AdminLogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin logout response
+          schema:
+            $ref: '#/definitions/dto.AdminLogoutResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Admin logout
+      tags:
+      - Auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: refresh_token_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Refresh token response
+          schema:
+            $ref: '#/definitions/dto.RefreshTokenResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Refresh token
+      tags:
+      - Auth
+  /api/v1/auth/user/delete:
+    post:
+      consumes:
+      - application/json
+      description: User delete
+      parameters:
+      - description: User delete request
+        in: body
+        name: user_delete_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserDeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User delete response
+          schema:
+            $ref: '#/definitions/dto.UserDeleteResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: User delete
+      tags:
+      - Auth
+  /api/v1/auth/user/login:
+    post:
+      consumes:
+      - application/json
+      description: User login
+      parameters:
+      - description: User login request
+        in: body
+        name: user_login_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User login response
+          schema:
+            $ref: '#/definitions/dto.UserLoginResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: User login
+      tags:
+      - Auth
+  /api/v1/auth/user/logout:
+    post:
+      consumes:
+      - application/json
+      description: User logout
+      parameters:
+      - description: User logout request
+        in: body
+        name: user_logout_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserLogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User logout response
+          schema:
+            $ref: '#/definitions/dto.UserLogoutResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - Auth
+  /api/v1/auth/user/register:
+    post:
+      consumes:
+      - application/json
+      description: User register
+      parameters:
+      - description: User register request
+        in: body
+        name: user_register_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User register response
+          schema:
+            $ref: '#/definitions/dto.UserRegisterResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: User register
+      tags:
+      - Auth
+  /api/v1/auth/user/verify:
+    post:
+      consumes:
+      - application/json
+      description: User verification
+      parameters:
+      - description: User verification request
+        in: body
+        name: user_verification_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User verification response
+          schema:
+            $ref: '#/definitions/dto.UserVerificationResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: User verification
+      tags:
+      - Auth
 swagger: "2.0"

@@ -1,11 +1,20 @@
 package constants
 
 const (
-	UserIDKey       = "user_id"
-	RoleKey         = "role"
-	AuthHeaderKey   = "Authorization"
-	BearerPrefix    = "Bearer "
-	UserRole        = "user"
-	AdminRole       = "admin"
-	PremiumUserRole = "premium_user"
+	// Auth
+	ContextKeyUserID    = "user_id"
+	ContextKeyRole      = "role"
+	HeaderAuthorization = "Authorization"
+	BearerTokenPrefix   = "Bearer "
+	DefaultCostBcrypt   = 12
+
+	// Roles
+	RoleUser        = "user"
+	RoleAdmin       = "admin"
+	RolePremiumUser = "premium_user"
+
+	// Redis key prefixes
+	RedisPrefixRefreshToken = "refresh_token:"
+	RedisPrefixBlacklist    = "blacklist:"
+	RedisPrefixOTP          = "otp:"
 )
