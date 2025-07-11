@@ -55,3 +55,9 @@ var (
 var (
 	ErrInvalidConfig = errors.New("invalid SMTP configuration")
 )
+
+// Subscription Plan errors
+var (
+	ErrSubscriptionPlanNotFound  = errors.New("subscription plan not found")
+	ErrSubscriptionPlanNotActive = errors.New("subscription plan is not active")
+)

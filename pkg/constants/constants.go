@@ -26,4 +26,11 @@ const (
 	EventType        = "event_type"
 	EventUserDeleted = "user_deleted"
 	Timestamp        = "timestamp"
+
+	// payment
+	PaymentMethodRazorpay  = "razorpay"
+	PaymentCurrencyINR     = "INR"
+	PaymentStatusPending   = "pending"
+	PaymentStatusCompleted = "completed"
+	PaymentStatusFailed    = "failed"
 )

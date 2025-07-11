@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS subscription_plans (
+    id VARCHAR(100) PRIMARY KEY,
+    duration_days INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+    currency VARCHAR(3) NOT NULL,
+    description TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
