@@ -19,6 +19,7 @@ var (
 	ErrInvalidCredentials          = errors.New("invalid email or password")
 	ErrAccountNotVerified          = errors.New("account is not verified")
 	ErrAccountDisabled             = errors.New("account is disabled")
+	ErrAccountBlocked              = errors.New("account is blocked")
 	ErrEmailAlreadyExists          = errors.New("email already registered")
 	ErrPhoneAlreadyExists          = errors.New("phone number already registered")
 	ErrRegistrationFailed          = errors.New("registration failed")
