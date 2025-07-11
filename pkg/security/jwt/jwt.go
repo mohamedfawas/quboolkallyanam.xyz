@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	customerrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 )
 
@@ -44,6 +45,7 @@ func (j *JWTManager) generateToken(userID, role string, ttl time.Duration) (stri
 		UserID: userID,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.New().String(),
 			Issuer:    j.config.Issuer,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),

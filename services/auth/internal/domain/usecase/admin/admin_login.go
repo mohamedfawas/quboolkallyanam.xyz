@@ -46,7 +46,7 @@ func (u *adminUsecase) AdminLogin(ctx context.Context, email, password string) (
 		time.Duration(u.config.Auth.JWT.RefreshTokenDays)*24*time.Hour,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to store adminrefresh token: %w", err)
+		return nil, fmt.Errorf("failed to store admin refresh token: %w", err)
 	}
 
 	tokenPair := &entity.TokenPair{
