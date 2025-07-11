@@ -1,6 +1,9 @@
 package constants
 
 const (
+	// Commmon
+	ID = "id"
+
 	// Auth
 	ContextKeyUserID    = "user_id"
 	ContextKeyRole      = "role"
@@ -17,4 +20,10 @@ const (
 	RedisPrefixRefreshToken = "refresh_token:"
 	RedisPrefixBlacklist    = "blacklist:"
 	RedisPrefixOTP          = "otp:"
+
+	// messaging
+	UserID           = "user_id"
+	EventType        = "event_type"
+	EventUserDeleted = "user_deleted"
+	Timestamp        = "timestamp"
 )

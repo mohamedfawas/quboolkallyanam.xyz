@@ -33,7 +33,12 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 		return nil, errors.ErrInvalidCredentials
 	}
 
-	accessToken, err := u.jwtManager.GenerateAccessToken(user.ID.String(), constants.RoleUser)
+	role := constants.RoleUser
+	if user.IsPremium() {
+		role = constants.RolePremiumUser
+	}
+
+	accessToken, err := u.jwtManager.GenerateAccessToken(user.ID.String(), role)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
