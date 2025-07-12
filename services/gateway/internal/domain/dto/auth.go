@@ -1,7 +1,5 @@
 package dto
 
-import "time"
-
 type UserRegisterRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Phone    string `json:"phone" binding:"required"`
@@ -9,11 +7,8 @@ type UserRegisterRequest struct {
 }
 
 type UserRegisterResponse struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
 }
 
 type UserVerificationRequest struct {
@@ -22,9 +17,7 @@ type UserVerificationRequest struct {
 }
 
 type UserVerificationResponse struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
+	Success string `json:"success"`
 }
 
 type UserLoginRequest struct {
@@ -33,10 +26,9 @@ type UserLoginRequest struct {
 }
 
 type UserLoginResponse struct {
-	AccessToken           string    `json:"access_token"`
-	RefreshToken          string    `json:"refresh_token"`
-	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
-	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
 }
 
 type UserLogoutRequest struct {
@@ -53,10 +45,9 @@ type AdminLoginRequest struct {
 }
 
 type AdminLoginResponse struct {
-	AccessToken           string    `json:"access_token"`
-	RefreshToken          string    `json:"refresh_token"`
-	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
-	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
 }
 
 type AdminLogoutRequest struct {
@@ -80,8 +71,7 @@ type RefreshTokenRequest struct {
 }
 
 type RefreshTokenResponse struct {
-	AccessToken           string    `json:"access_token"`
-	RefreshToken          string    `json:"refresh_token"`
-	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
-	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
 }

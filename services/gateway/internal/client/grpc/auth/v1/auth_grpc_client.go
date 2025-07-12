@@ -5,11 +5,13 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 
 	authpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
@@ -40,11 +42,14 @@ func NewAuthGRPCClient(ctx context.Context, address string, useTLS bool, tlsConf
 }
 
 func (c *authGRPCClient) UserRegister(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserRegisterResponse, error) {
+	logger.Log.Info("🔑 UserRegister request received in client : ", "email : ", req.Email, "phone : ", req.Phone)
 	grpcReq := MapUserRegisterRequest(req)
 	grpcResp, err := c.client.UserRegister(ctx, grpcReq)
 	if err != nil {
+		logger.Log.Error("❌ UserRegister request failed in client : ", "error : ", err)
 		return nil, err
 	}
+	logger.Log.Info("✅ UserRegister request successful in client : ", "email : ", req.Email, "phone : ", req.Phone)
 	return MapUserRegisterResponse(grpcResp), nil
 }
 
@@ -88,6 +93,12 @@ func (c *authGRPCClient) AdminLogout(ctx context.Context, req dto.AdminLogoutReq
 }
 
 func (c *authGRPCClient) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return fmt.Errorf("user ID not found in context")
+	}
+
+	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapUserDeleteRequest(req)
 	_, err := c.client.UserDelete(ctx, grpcReq)
 	return err

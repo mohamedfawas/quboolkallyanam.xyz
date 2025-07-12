@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	logger "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
@@ -25,13 +26,15 @@ func (h *AuthHandler) UserRegister(c *gin.Context) {
 		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
 		return
 	}
+	logger.Log.Info("🔑 UserRegister request validated in handler : ", "email : ", req.Email, "phone : ", req.Phone)
 
+	logger.Log.Info("🔑 UserRegister request sent to usecase from handler : ", "email : ", req.Email, "phone : ", req.Phone)
 	user, err := h.authUsecase.UserRegister(c.Request.Context(), req)
 	if err != nil {
-
 		apiresponse.Fail(c, err)
 		return
 	}
 
+	logger.Log.Info("🔑 UserRegister response sent from usecase to handler : ", "email : ", user.Email, "phone : ", user.Phone)
 	apiresponse.Success(c, "OTP sent to the registered email", user)
 }

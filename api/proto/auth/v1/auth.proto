@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package auth.v1;
 
-import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1;authpbv1";
@@ -35,9 +34,7 @@ message UserVerificationRequest {
 }
 
 message UserVerificationResponse {
-    string id = 1;
-    string email = 2;
-    string phone = 3;
+    string success = 1;
 }
 
 message UserLoginRequest {
@@ -48,8 +45,7 @@ message UserLoginRequest {
 message UserLoginResponse {
     string access_token = 1;
     string refresh_token = 2;
-    google.protobuf.Timestamp access_token_expires_at = 3;
-    google.protobuf.Timestamp refresh_token_expires_at = 4;
+    int64 expires_in = 3;
 }
   
 message UserLogoutRequest {
@@ -68,8 +64,7 @@ message AdminLoginRequest {
 message AdminLoginResponse {
     string access_token = 1;
     string refresh_token = 2;
-    google.protobuf.Timestamp access_token_expires_at = 3;
-    google.protobuf.Timestamp refresh_token_expires_at = 4;
+    int64 expires_in = 3;
 }
 
 message AdminLogoutRequest {
@@ -91,6 +86,5 @@ message RefreshTokenRequest {
 message RefreshTokenResponse {
     string access_token = 1;
     string refresh_token = 2;
-    google.protobuf.Timestamp access_token_expires_at = 3;
-    google.protobuf.Timestamp refresh_token_expires_at = 4;
+    int64 expires_in = 3;
 }

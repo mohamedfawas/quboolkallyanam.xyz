@@ -34,9 +34,7 @@ func MapUserVerificationRequest(req dto.UserVerificationRequest) *authpbv1.UserV
 
 func MapUserVerificationResponse(resp *authpbv1.UserVerificationResponse) *dto.UserVerificationResponse {
 	return &dto.UserVerificationResponse{
-		ID:    resp.Id,
-		Email: resp.Email,
-		Phone: resp.Phone,
+		Success: resp.Success,
 	}
 }
 
@@ -51,10 +49,9 @@ func MapUserLoginRequest(req dto.UserLoginRequest) *authpbv1.UserLoginRequest {
 
 func MapUserLoginResponse(resp *authpbv1.UserLoginResponse) *dto.UserLoginResponse {
 	return &dto.UserLoginResponse{
-		AccessToken:           resp.AccessToken,
-		RefreshToken:          resp.RefreshToken,
-		AccessTokenExpiresAt:  resp.AccessTokenExpiresAt.AsTime(),
-		RefreshTokenExpiresAt: resp.RefreshTokenExpiresAt.AsTime(),
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+		ExpiresIn:    resp.ExpiresIn,
 	}
 }
 
@@ -83,10 +80,9 @@ func MapAdminLoginRequest(req dto.AdminLoginRequest) *authpbv1.AdminLoginRequest
 
 func MapAdminLoginResponse(resp *authpbv1.AdminLoginResponse) *dto.AdminLoginResponse {
 	return &dto.AdminLoginResponse{
-		AccessToken:           resp.AccessToken,
-		RefreshToken:          resp.RefreshToken,
-		AccessTokenExpiresAt:  resp.AccessTokenExpiresAt.AsTime(),
-		RefreshTokenExpiresAt: resp.RefreshTokenExpiresAt.AsTime(),
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+		ExpiresIn:    resp.ExpiresIn,
 	}
 }
 
@@ -127,9 +123,8 @@ func MapRefreshTokenRequest(req dto.RefreshTokenRequest) *authpbv1.RefreshTokenR
 
 func MapRefreshTokenResponse(resp *authpbv1.RefreshTokenResponse) *dto.RefreshTokenResponse {
 	return &dto.RefreshTokenResponse{
-		AccessToken:           resp.AccessToken,
-		RefreshToken:          resp.RefreshToken,
-		AccessTokenExpiresAt:  resp.AccessTokenExpiresAt.AsTime(),
-		RefreshTokenExpiresAt: resp.RefreshTokenExpiresAt.AsTime(),
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+		ExpiresIn:    resp.ExpiresIn,
 	}
 }

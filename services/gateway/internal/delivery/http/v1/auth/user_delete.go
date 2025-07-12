@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
@@ -27,7 +29,15 @@ func (h *AuthHandler) UserDelete(c *gin.Context) {
 		return
 	}
 
-	err := h.authUsecase.UserDelete(c.Request.Context(), req)
+	userID, exists := c.Get(constants.ContextKeyUserID)
+	if !exists {
+		apiresponse.Fail(c, fmt.Errorf("user ID not found in context"))
+		return
+	}
+
+	ctx := context.WithValue(c.Request.Context(), constants.ContextKeyUserID, userID)
+
+	err := h.authUsecase.UserDelete(ctx, req)
 	if err != nil {
 		apiresponse.Fail(c, err)
 		return
