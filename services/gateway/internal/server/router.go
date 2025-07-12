@@ -11,6 +11,7 @@ import (
 )
 
 func (s *Server) setupRoutes(router *gin.Engine) {
+	router.Use(middleware.ErrorHandler())
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	v1 := router.Group("/api/v1")
 
@@ -27,7 +28,7 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 			userAuth.POST("/verify", s.authHandler.UserVerification)
 			userAuth.POST("/login", s.authHandler.UserLogin)
 			userAuth.POST("/logout", middleware.AuthMiddleware(s.jwtManager),
-				middleware.RequireRole(constants.UserRole),
+				middleware.RequireRole(constants.RoleUser),
 				s.authHandler.UserLogout)
 
 			// TODO: Add more user auth routes as needed
@@ -40,7 +41,7 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 		{
 			adminAuth.POST("/login", s.authHandler.AdminLogin)
 			adminAuth.POST("/logout", middleware.AuthMiddleware(s.jwtManager),
-				middleware.RequireRole(constants.AdminRole),
+				middleware.RequireRole(constants.RoleAdmin),
 				s.authHandler.AdminLogout)
 			// TODO: Add more admin auth routes as needed
 			// adminAuth.POST("/refresh", s.authHandler.AdminRefreshToken)

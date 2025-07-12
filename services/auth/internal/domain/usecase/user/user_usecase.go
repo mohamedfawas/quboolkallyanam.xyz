@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging"
+	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/jwt"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/repository"
@@ -13,7 +13,7 @@ type userUseCase struct {
 	jwtManager      jwt.JWTManager
 	tokenRepository repository.TokenRepository
 	config          *config.Config
-	messageBroker   messaging.Client
+	messageBroker   messageBroker.Client
 }
 
 func NewUserUseCase(
@@ -21,7 +21,7 @@ func NewUserUseCase(
 	jwtManager jwt.JWTManager,
 	tokenRepository repository.TokenRepository,
 	config *config.Config,
-	messageBroker messaging.Client,
+	messageBroker messageBroker.Client,
 ) usecase.UserUsecase {
 	return &userUseCase{
 		userRepository:  userRepository,

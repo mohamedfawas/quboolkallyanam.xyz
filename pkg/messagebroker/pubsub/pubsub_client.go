@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging"
+	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 
 	"cloud.google.com/go/pubsub"
 )
@@ -18,7 +18,7 @@ type Client struct {
 	ctx      context.Context
 }
 
-var _ messaging.Client = (*Client)(nil)
+var _ messageBroker.Client = (*Client)(nil)
 
 func NewClient(ctx context.Context, projectID string) (*Client, error) {
 	client, err := pubsub.NewClient(ctx, projectID)
@@ -51,7 +51,7 @@ func (c *Client) Publish(topicName string, data interface{}) error {
 	return err
 }
 
-func (c *Client) Subscribe(subName string, handler messaging.MessageHandler) error {
+func (c *Client) Subscribe(subName string, handler messageBroker.MessageHandler) error {
 	sub := c.psClient.Subscription(subName)
 
 	go func() {

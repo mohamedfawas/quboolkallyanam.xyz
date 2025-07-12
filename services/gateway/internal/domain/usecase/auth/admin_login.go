@@ -8,7 +8,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-func (u *AuthUsecase) AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
+func (u *authUsecase) AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
 	if !validation.IsValidEmail(req.Email) {
 		return nil, errors.ErrInvalidEmail
 	}

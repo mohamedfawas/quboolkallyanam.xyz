@@ -36,6 +36,26 @@ func NewClient(cfg Config) (*Client, error) {
 	return &Client{Client: client}, nil
 }
 
+func (c *Client) Get(ctx context.Context, key string) (string, error) {
+	return c.Client.Get(ctx, key).Result()
+}
+
+func (c *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	return c.Client.Set(ctx, key, value, expiration).Err()
+}
+
+func (c *Client) Del(ctx context.Context, key string) error {
+	return c.Client.Del(ctx, key).Err()
+}
+
+func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
+	exists, err := c.Client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return exists > 0, nil
+}
+
 func (c *Client) Close() error {
 	return c.Client.Close()
 }

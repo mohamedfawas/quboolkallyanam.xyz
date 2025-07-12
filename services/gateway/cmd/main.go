@@ -25,7 +25,7 @@ import (
 
 func main() {
 	logger.InitLogger()
-	logger.Log.Info("Logger in gateway service is initialized")
+	logger.Log.Info("✅ Logger in gateway service is initialized")
 	defer logger.Sync()
 
 	configPath := "./config/config.yaml"
@@ -37,12 +37,13 @@ func main() {
 	if err != nil {
 		logger.Log.Fatal("Failed to load config: ", err)
 	}
+	logger.Log.Info("✅ Gateway Service Config loaded successfully")
 
 	srv, err := server.NewHTTPServer(cfg)
 	if err != nil {
 		logger.Log.Fatal("Failed to create server: ", err)
 	}
-	logger.Log.Info("Gateway server created successfully")
+	logger.Log.Info("✅ Gateway server created successfully")
 
 	go func() {
 		if err := srv.Start(); err != nil {
@@ -51,12 +52,13 @@ func main() {
 			}
 		}
 	}()
+	logger.Log.Info("✅ Gateway server started successfully")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Log.Info("Shutting down server...")
+	logger.Log.Info("🛑 Shutting down server...")
 	if err := srv.Stop(); err != nil {
 		logger.Log.Error("Server forced to shutdown: ", err)
 	}

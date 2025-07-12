@@ -6,28 +6,29 @@ import (
 	"time"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 )
 
 func (u *userUseCase) RefreshToken(ctx context.Context, refreshToken string) (*entity.TokenPair, error) {
 	claims, err := u.jwtManager.VerifyToken(refreshToken)
 	if err != nil {
-		return nil, errors.ErrInvalidToken
+		return nil, appErrors.ErrInvalidToken
 	}
 
 	if claims.Role != constants.RoleUser {
-		return nil, errors.ErrUnauthorized
+		return nil, appErrors.ErrUnauthorized
 	}
 
 	userID := claims.UserID
-	valid, err := u.tokenRepository.IsValidRefreshToken(ctx, userID)
+	refreshTokenKey := fmt.Sprintf("%s%s", constants.RedisPrefixRefreshToken, userID)
+	valid, err := u.tokenRepository.IsValidRefreshToken(ctx, refreshTokenKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate refresh token: %w", err)
 	}
 
 	if !valid {
-		return nil, errors.ErrInvalidToken
+		return nil, appErrors.ErrInvalidToken
 	}
 
 	if err := u.tokenRepository.DeleteRefreshToken(ctx, userID); err != nil {
@@ -44,9 +45,10 @@ func (u *userUseCase) RefreshToken(ctx context.Context, refreshToken string) (*e
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
+	refreshTokenKey = fmt.Sprintf("%s%s", constants.RedisPrefixRefreshToken, userID)
 	err = u.tokenRepository.StoreRefreshToken(
 		ctx,
-		userID,
+		refreshTokenKey,
 		newRefreshToken,
 		time.Duration(u.config.Auth.JWT.RefreshTokenDays)*24*time.Hour,
 	)

@@ -2,31 +2,36 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
+	"gorm.io/gorm"
 )
 
 func (u *adminUsecase) AdminLogin(ctx context.Context, email, password string) (*entity.TokenPair, error) {
 	admin, err := u.adminRepository.GetAdminByEmail(ctx, email)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, appErrors.ErrAdminNotFound
+		}
 		return nil, fmt.Errorf("failed to get admin details using email: %w", err)
 	}
 
 	if admin == nil {
-		return nil, errors.ErrAdminNotFound
+		return nil, appErrors.ErrAdminNotFound
 	}
 
 	if !admin.IsActive {
-		return nil, errors.ErrAdminAccountDisabled
+		return nil, appErrors.ErrAdminAccountDisabled
 	}
 
 	if !hash.ComparePassword(password, admin.PasswordHash) {
-		return nil, errors.ErrInvalidPassword
+		return nil, appErrors.ErrInvalidPassword
 	}
 
 	accessToken, err := u.jwtManager.GenerateAccessToken(admin.ID.String(), constants.RoleAdmin)
@@ -39,9 +44,10 @@ func (u *adminUsecase) AdminLogin(ctx context.Context, email, password string) (
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
+	refreshTokenKey := fmt.Sprintf("%s%s", constants.RedisPrefixRefreshToken, admin.ID.String())
 	err = u.tokenRepository.StoreRefreshToken(
 		ctx,
-		admin.ID.String(),
+		refreshTokenKey,
 		refreshToken,
 		time.Duration(u.config.Auth.JWT.RefreshTokenDays)*24*time.Hour,
 	)

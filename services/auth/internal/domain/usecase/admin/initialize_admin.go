@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
@@ -24,18 +24,18 @@ func (u *adminUsecase) InitializeDefaultAdmin(ctx context.Context, defaultEmail,
 
 	if validation.IsValidEmail(defaultEmail) {
 		logger.Log.Error("Provided email for admin initialization is invalid", defaultEmail)
-		return errors.ErrInvalidEmail
+		return appErrors.ErrInvalidEmail
 	}
 
 	if !validation.IsValidPassword(defaultPassword, validation.DefaultPasswordRequirements()) {
 		logger.Log.Error("Provided password for admin initialization is not strong enough", defaultPassword)
-		return errors.ErrInvalidPassword
+		return appErrors.ErrInvalidPassword
 	}
 
 	hasedPassword, err := hash.HashPassword(defaultPassword)
 	if err != nil {
 		logger.Log.Error("Failed to hash given admin password", err)
-		return errors.ErrHashGenerationFailed
+		return appErrors.ErrHashGenerationFailed
 	}
 
 	now := timeutil.NowIST()

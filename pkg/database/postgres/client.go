@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -22,7 +21,6 @@ type Config struct {
 
 type Client struct {
 	GormDB *gorm.DB
-	SQLDB  *sql.DB
 }
 
 func NewClient(cfg Config) (*Client, error) {
@@ -46,22 +44,26 @@ func NewClient(cfg Config) (*Client, error) {
 
 	sqlDB, err := gormDB.DB()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get *sql.DB from *gorm.DB: %w", err)
+		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+	if err := sqlDB.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
+	// Configure pool
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(25)
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	return &Client{
 		GormDB: gormDB,
-		SQLDB:  sqlDB,
 	}, nil
 }
 
 func (c *Client) Close() error {
-	if c.SQLDB != nil {
-		return c.SQLDB.Close()
+	sqlDB, err := c.GormDB.DB()
+	if err != nil {
+		return err
 	}
-	return nil
+	return sqlDB.Close()
 }

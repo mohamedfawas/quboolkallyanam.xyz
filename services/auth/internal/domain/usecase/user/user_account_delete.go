@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
@@ -18,14 +18,15 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 	}
 
 	if user == nil {
-		return errors.ErrUserNotFound
+		return appErrors.ErrUserNotFound
 	}
 
 	if !hash.ComparePassword(user.PasswordHash, password) {
-		return errors.ErrInvalidCredentials
+		return appErrors.ErrInvalidCredentials
 	}
 
-	if err := u.userRepository.SoftDeleteUser(ctx, userID); err != nil {
+	now := timeutil.NowIST()
+	if err := u.userRepository.SoftDeleteUser(ctx, userID, now); err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
@@ -33,7 +34,7 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	now := timeutil.NowIST()
+	now = timeutil.NowIST()
 	if u.messageBroker != nil {
 		userDeletedEvent := map[string]interface{}{
 			constants.UserID:    userID,

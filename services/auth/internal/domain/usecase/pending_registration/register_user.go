@@ -2,16 +2,18 @@ package pendingregistration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/notifications/smtp"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
+	"gorm.io/gorm"
 )
 
 func (u *pendingRegistrationUsecase) RegisterUser(ctx context.Context,
@@ -24,7 +26,7 @@ func (u *pendingRegistrationUsecase) RegisterUser(ctx context.Context,
 		return fmt.Errorf("failed to check email: %w", err)
 	}
 	if existsEmail {
-		return errors.ErrEmailAlreadyExists
+		return appErrors.ErrEmailAlreadyExists
 	}
 
 	existsPhone, err := u.userRepository.IsRegistered(ctx, "phone", req.Phone)
@@ -32,11 +34,11 @@ func (u *pendingRegistrationUsecase) RegisterUser(ctx context.Context,
 		return fmt.Errorf("failed to check phone: %w", err)
 	}
 	if existsPhone {
-		return errors.ErrPhoneAlreadyExists
+		return appErrors.ErrPhoneAlreadyExists
 	}
 
 	pendingEmail, err := u.pendingRegistrationRepository.GetPendingRegistration(ctx, "email", req.Email)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("failed to get existing pending registration: %w", err)
 	}
 	if pendingEmail != nil {
@@ -47,7 +49,7 @@ func (u *pendingRegistrationUsecase) RegisterUser(ctx context.Context,
 	}
 
 	pendingPhone, err := u.pendingRegistrationRepository.GetPendingRegistration(ctx, "phone", req.Phone)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("failed to get existing pending registration: %w", err)
 	}
 	if pendingPhone != nil {

@@ -1,8 +1,6 @@
-package auth
+package v1
 
 import (
-	"time"
-
 	authpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -20,11 +18,8 @@ func MapUserRegisterRequest(req dto.UserRegisterRequest) *authpbv1.UserRegisterR
 
 func MapUserRegisterResponse(resp *authpbv1.UserRegisterResponse) *dto.UserRegisterResponse {
 	return &dto.UserRegisterResponse{
-		ID:        resp.Id,
-		Email:     resp.Email,
-		Phone:     resp.Phone,
-		CreatedAt: resp.CreatedAt.AsTime().Format(time.RFC3339),
-		UpdatedAt: resp.UpdatedAt.AsTime().Format(time.RFC3339),
+		Email: resp.Email,
+		Phone: resp.Phone,
 	}
 }
 

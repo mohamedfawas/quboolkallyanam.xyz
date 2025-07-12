@@ -1,31 +1,36 @@
 package middleware
 
 import (
-	"net/http"
 	"strings"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/gin-gonic/gin"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/auth/jwt"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/jwt"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 )
 
 func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader(constants.AuthHeaderKey)
-		if authHeader == "" || !strings.HasPrefix(authHeader, constants.BearerPrefix) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing or invalid Authorization header"})
+		authHeader := c.GetHeader(constants.HeaderAuthorization)
+		if authHeader == "" || !strings.HasPrefix(authHeader, constants.BearerTokenPrefix) {
+			apiresponse.Fail(c, status.Errorf(codes.Unauthenticated, "missing or invalid Authorization header"))
+			c.Abort()
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, constants.BearerPrefix)
+		token := strings.TrimPrefix(authHeader, constants.BearerTokenPrefix)
 		userID, role, err := jwtManager.ExtractUserIDAndRole(token)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			apiresponse.Fail(c, status.Errorf(codes.Unauthenticated, "invalid token: %v", err))
+			c.Abort()
 			return
 		}
 
-		c.Set(constants.UserIDKey, userID)
-		c.Set(constants.RoleKey, role)
+		c.Set(constants.ContextKeyUserID, userID)
+		c.Set(constants.ContextKeyRole, role)
 
 		c.Next()
 	}
@@ -33,9 +38,10 @@ func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
 
 func RequireRole(role string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		val, exists := c.Get(constants.RoleKey)
+		val, exists := c.Get(constants.ContextKeyRole)
 		if !exists || val != role {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: insufficient role"})
+			apiresponse.Fail(c, status.Errorf(codes.PermissionDenied, "insufficient role"))
+			c.Abort()
 			return
 		}
 		c.Next()

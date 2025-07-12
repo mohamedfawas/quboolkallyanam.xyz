@@ -7,16 +7,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/auth/jwt"
+	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/jwt"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
 
 	// Client imports
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
-	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth"
+	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth/v1"
 
 	// Usecase imports
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/usecase"
-	authUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/usecase/auth"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase"
+	authUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/auth"
 
 	// Handler imports
 	authHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/auth"
@@ -26,9 +27,6 @@ type Server struct {
 	config     *config.Config
 	httpServer *http.Server
 	jwtManager *jwt.JWTManager
-
-	// gRPC Clients (concrete implementations)
-	authGRPCClient *authGRPC.AuthGRPCClient
 
 	// Interface-based clients (for dependency injection)
 	authClient client.AuthClient
@@ -41,7 +39,7 @@ type Server struct {
 }
 
 func NewHTTPServer(config *config.Config) (*Server, error) {
-	if config.Environment == "production" {
+	if config.Environment == constants.EnvProduction {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -99,7 +97,6 @@ func (s *Server) initClients() error {
 		return fmt.Errorf("failed to create auth gRPC client: %w", err)
 	}
 
-	s.authGRPCClient = authGRPCClient
 	s.authClient = authGRPCClient
 
 	// TODO: Add other clients as you implement them

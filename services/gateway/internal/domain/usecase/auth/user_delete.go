@@ -8,7 +8,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-func (u *AuthUsecase) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
+func (u *authUsecase) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
 	if !validation.IsValidPassword(req.Password, validation.DefaultPasswordRequirements()) {
 		return errors.ErrInvalidPassword
 	}

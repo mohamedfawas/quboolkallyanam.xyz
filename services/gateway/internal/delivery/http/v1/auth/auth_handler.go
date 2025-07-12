@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/usecase"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase"
 )
 
 type AuthHandler struct {

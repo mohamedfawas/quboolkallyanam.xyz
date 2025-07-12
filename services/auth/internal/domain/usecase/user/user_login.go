@@ -2,35 +2,40 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
+	"gorm.io/gorm"
 )
 
 func (u *userUseCase) Login(ctx context.Context, email, password string) (*entity.TokenPair, error) {
 	user, err := u.userRepository.GetUser(ctx, "email", email)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, appErrors.ErrUserNotFound
+		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	if user == nil {
-		return nil, errors.ErrUserNotFound
+		return nil, appErrors.ErrUserNotFound
 	}
 
 	if !user.IsActive {
-		return nil, errors.ErrAccountDisabled
+		return nil, appErrors.ErrAccountDisabled
 	}
 
 	if user.IsBlocked {
-		return nil, errors.ErrAccountBlocked
+		return nil, appErrors.ErrAccountBlocked
 	}
 
 	if hash.ComparePassword(user.PasswordHash, password) {
-		return nil, errors.ErrInvalidCredentials
+		return nil, appErrors.ErrInvalidCredentials
 	}
 
 	role := constants.RoleUser
@@ -48,9 +53,10 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
+	refreshTokenKey := fmt.Sprintf("%s%s", constants.RedisPrefixRefreshToken, user.ID.String())
 	err = u.tokenRepository.StoreRefreshToken(
 		ctx,
-		user.ID.String(),
+		refreshTokenKey,
 		refreshToken,
 		time.Duration(u.config.Auth.JWT.RefreshTokenDays)*24*time.Hour,
 	)

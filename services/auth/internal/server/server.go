@@ -8,9 +8,9 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/redis"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging/pubsub"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging/rabbitmq"
+	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
 	"google.golang.org/grpc"
 )
@@ -20,7 +20,7 @@ type Server struct {
 	grpcServer      *grpc.Server
 	pgClient        *postgres.Client
 	redisClient     *redis.Client
-	messagingClient messaging.Client
+	messagingClient messageBroker.Client
 }
 
 func NewServer(config *config.Config) (*Server, error) {
@@ -53,7 +53,7 @@ func NewServer(config *config.Config) (*Server, error) {
 	}
 	logger.Log.Info("✅ Auth Service Connected to Redis")
 
-	var messagingClient messaging.Client
+	var messagingClient messageBroker.Client
 	if config.Environment == "production" {
 		ctx := context.Background()
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)

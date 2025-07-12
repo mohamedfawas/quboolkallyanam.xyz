@@ -2,10 +2,11 @@ package pendingregistration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	timeutil "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 )
@@ -19,20 +20,20 @@ func (u *pendingRegistrationUsecase) VerifyUserRegistration(ctx context.Context,
 	}
 
 	if pendingRegistration == nil {
-		return errors.ErrPendingRegistrationNotFound
+		return appErrors.ErrPendingRegistrationNotFound
 	}
 
 	OTPKey := fmt.Sprintf("%s%s", constants.RedisPrefixOTP, email)
 	valid, err := u.validateOTP(ctx, otp, OTPKey)
 	if err != nil {
-		if err == errors.ErrOTPNotFound {
-			return errors.ErrOTPNotFound
+		if errors.Is(err, appErrors.ErrOTPNotFound) {
+			return appErrors.ErrOTPNotFound
 		}
 		return fmt.Errorf("failed to validate otp: %w", err)
 	}
 
 	if !valid {
-		return errors.ErrInvalidOTP
+		return appErrors.ErrInvalidOTP
 	}
 
 	if err := u.otpRepository.DeleteOTP(ctx, OTPKey); err != nil {

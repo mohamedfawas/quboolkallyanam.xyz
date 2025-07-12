@@ -2,7 +2,10 @@ package constants
 
 const (
 	// Commmon
-	ID = "id"
+	ID             = "id"
+	EnvProduction  = "production"
+	EnvDevelopment = "development"
+	EnvStaging     = "staging"
 
 	// Auth
 	ContextKeyUserID    = "user_id"
@@ -20,6 +23,9 @@ const (
 	RedisPrefixRefreshToken = "refresh_token:"
 	RedisPrefixBlacklist    = "blacklist:"
 	RedisPrefixOTP          = "otp:"
+
+	// Token
+	BlacklistedToken = "blacklisted"
 
 	// messaging
 	UserID           = "user_id"

@@ -2,11 +2,12 @@ package pendingregistration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/otp"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
 	"github.com/redis/go-redis/v9"
@@ -29,8 +30,8 @@ func (u *pendingRegistrationUsecase) generateAndStoreOTP(ctx context.Context, em
 func (u *pendingRegistrationUsecase) validateOTP(ctx context.Context, inputOTP, OTPKey string) (bool, error) {
 	storedOTP, err := u.otpRepository.GetOTP(ctx, OTPKey)
 	if err != nil {
-		if err == redis.Nil {
-			return false, errors.ErrOTPNotFound
+		if errors.Is(err, redis.Nil) {
+			return false, appErrors.ErrOTPNotFound
 		}
 		return false, fmt.Errorf("failed to retrieve otp: %w", err)
 	}

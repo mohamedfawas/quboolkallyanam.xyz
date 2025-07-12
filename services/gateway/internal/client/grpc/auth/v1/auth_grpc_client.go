@@ -1,4 +1,4 @@
-package auth
+package v1
 
 import (
 	"context"
@@ -12,14 +12,15 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 
 	authpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 )
 
-type AuthGRPCClient struct {
+type authGRPCClient struct {
 	conn   *grpc.ClientConn
 	client authpbv1.AuthServiceClient
 }
 
-func NewAuthGRPCClient(ctx context.Context, address string, useTLS bool, tlsConfig *tls.Config) (*AuthGRPCClient, error) {
+func NewAuthGRPCClient(ctx context.Context, address string, useTLS bool, tlsConfig *tls.Config) (client.AuthClient, error) {
 	var creds credentials.TransportCredentials
 	if useTLS {
 		creds = credentials.NewTLS(tlsConfig)
@@ -32,13 +33,13 @@ func NewAuthGRPCClient(ctx context.Context, address string, useTLS bool, tlsConf
 		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
 	}
 
-	return &AuthGRPCClient{
+	return &authGRPCClient{
 		conn:   conn,
 		client: authpbv1.NewAuthServiceClient(conn),
 	}, nil
 }
 
-func (c *AuthGRPCClient) UserRegister(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserRegisterResponse, error) {
+func (c *authGRPCClient) UserRegister(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserRegisterResponse, error) {
 	grpcReq := MapUserRegisterRequest(req)
 	grpcResp, err := c.client.UserRegister(ctx, grpcReq)
 	if err != nil {
@@ -47,7 +48,7 @@ func (c *AuthGRPCClient) UserRegister(ctx context.Context, req dto.UserRegisterR
 	return MapUserRegisterResponse(grpcResp), nil
 }
 
-func (c *AuthGRPCClient) UserVerification(ctx context.Context, req dto.UserVerificationRequest) (*dto.UserVerificationResponse, error) {
+func (c *authGRPCClient) UserVerification(ctx context.Context, req dto.UserVerificationRequest) (*dto.UserVerificationResponse, error) {
 	grpcReq := MapUserVerificationRequest(req)
 	grpcResp, err := c.client.UserVerification(ctx, grpcReq)
 	if err != nil {
@@ -56,7 +57,7 @@ func (c *AuthGRPCClient) UserVerification(ctx context.Context, req dto.UserVerif
 	return MapUserVerificationResponse(grpcResp), nil
 }
 
-func (c *AuthGRPCClient) UserLogin(ctx context.Context, req dto.UserLoginRequest) (*dto.UserLoginResponse, error) {
+func (c *authGRPCClient) UserLogin(ctx context.Context, req dto.UserLoginRequest) (*dto.UserLoginResponse, error) {
 	grpcReq := MapUserLoginRequest(req)
 	grpcResp, err := c.client.UserLogin(ctx, grpcReq)
 	if err != nil {
@@ -65,13 +66,13 @@ func (c *AuthGRPCClient) UserLogin(ctx context.Context, req dto.UserLoginRequest
 	return MapUserLoginResponse(grpcResp), nil
 }
 
-func (c *AuthGRPCClient) UserLogout(ctx context.Context, req dto.UserLogoutRequest) error {
+func (c *authGRPCClient) UserLogout(ctx context.Context, req dto.UserLogoutRequest) error {
 	grpcReq := MapUserLogoutRequest(req)
 	_, err := c.client.UserLogout(ctx, grpcReq)
 	return err
 }
 
-func (c *AuthGRPCClient) AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
+func (c *authGRPCClient) AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
 	grpcReq := MapAdminLoginRequest(req)
 	grpcResp, err := c.client.AdminLogin(ctx, grpcReq)
 	if err != nil {
@@ -80,19 +81,19 @@ func (c *AuthGRPCClient) AdminLogin(ctx context.Context, req dto.AdminLoginReque
 	return MapAdminLoginResponse(grpcResp), nil
 }
 
-func (c *AuthGRPCClient) AdminLogout(ctx context.Context, req dto.AdminLogoutRequest) error {
+func (c *authGRPCClient) AdminLogout(ctx context.Context, req dto.AdminLogoutRequest) error {
 	grpcReq := MapAdminLogoutRequest(req)
 	_, err := c.client.AdminLogout(ctx, grpcReq)
 	return err
 }
 
-func (c *AuthGRPCClient) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
+func (c *authGRPCClient) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
 	grpcReq := MapUserDeleteRequest(req)
 	_, err := c.client.UserDelete(ctx, grpcReq)
 	return err
 }
 
-func (c *AuthGRPCClient) RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error) {
+func (c *authGRPCClient) RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error) {
 	grpcReq := MapRefreshTokenRequest(req)
 	grpcResp, err := c.client.RefreshToken(ctx, grpcReq)
 	if err != nil {
@@ -101,6 +102,6 @@ func (c *AuthGRPCClient) RefreshToken(ctx context.Context, req dto.RefreshTokenR
 	return MapRefreshTokenResponse(grpcResp), nil
 }
 
-func (c *AuthGRPCClient) Close() error {
+func (c *authGRPCClient) Close() error {
 	return c.conn.Close()
 }

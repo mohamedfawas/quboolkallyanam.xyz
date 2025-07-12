@@ -7,11 +7,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging"
+	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var _ messaging.Client = (*Client)(nil)
+var _ messageBroker.Client = (*Client)(nil)
 
 type Config struct {
 	DSN          string // amqp://guest:guest@localhost:5672/
@@ -81,7 +81,7 @@ func (c *Client) Publish(routingKey string, message interface{}) error {
 	)
 }
 
-func (c *Client) Subscribe(routingKey string, handler messaging.MessageHandler) error {
+func (c *Client) Subscribe(routingKey string, handler messageBroker.MessageHandler) error {
 	q, err := c.channel.QueueDeclare(
 		"",    // auto-generated queue name
 		false, // non-durable

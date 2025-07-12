@@ -9,7 +9,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-func (u *AuthUsecase) UserVerification(ctx context.Context, req dto.UserVerificationRequest, config config.Config) (*dto.UserVerificationResponse, error) {
+func (u *authUsecase) UserVerification(ctx context.Context, req dto.UserVerificationRequest, config config.Config) (*dto.UserVerificationResponse, error) {
 	if !validation.IsValidEmail(req.Email) {
 		return nil, errors.ErrInvalidEmail
 	}

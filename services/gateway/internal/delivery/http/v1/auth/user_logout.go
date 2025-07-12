@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
@@ -16,22 +15,22 @@ import (
 // @Produce json
 // @Param user_logout_request body dto.UserLogoutRequest true "User logout request"
 // @Success 200 {object} dto.UserLogoutResponse "User logout response"
-// @Failure 400 {object} dto.ErrorResponse "Bad request"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Failure 400 {object} apiresponse.Response "Bad request"
+// @Failure 500 {object} apiresponse.Response "Internal server error"
 // @Security BearerAuth
 // @Router /api/v1/auth/user/logout [post]
 func (h *AuthHandler) UserLogout(c *gin.Context) {
 	var req dto.UserLogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Error(c, http.StatusBadRequest, "Invalid request body", err.Error())
+		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
 		return
 	}
 
 	err := h.authUsecase.UserLogout(c.Request.Context(), req)
 	if err != nil {
-		apiresponse.Error(c, http.StatusInternalServerError, "Something went wrong. Please try again later.", errors.ErrInternalServerError.Error())
+		apiresponse.Fail(c, err)
 		return
 	}
 
-	apiresponse.Success(c, http.StatusOK, "User logged out successfully", nil)
+	apiresponse.Success(c, "User logged out successfully", nil)
 }
