@@ -2,10 +2,11 @@ package auth
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
 // @Summary Admin logout
@@ -20,14 +21,16 @@ import (
 // @Security BearerAuth
 // @Router /api/v1/auth/admin/logout [post]
 func (h *AuthHandler) AdminLogout(c *gin.Context) {
-	var req dto.AdminLogoutRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
+	accessToken, exists := c.Get(constants.ContextKeyAccessToken)
+	if !exists {
+		log.Printf("Access token not found in context")
+		apiresponse.Fail(c, fmt.Errorf("access token not found in context"))
 		return
 	}
 
-	err := h.authUsecase.AdminLogout(c.Request.Context(), req)
+	err := h.authUsecase.AdminLogout(c.Request.Context(), accessToken.(string))
 	if err != nil {
+		log.Printf("Failed to logout: %v", err)
 		apiresponse.Fail(c, err)
 		return
 	}

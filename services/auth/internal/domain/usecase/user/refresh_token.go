@@ -16,10 +16,6 @@ func (u *userUseCase) RefreshToken(ctx context.Context, refreshToken string) (*e
 		return nil, appErrors.ErrInvalidToken
 	}
 
-	if claims.Role != constants.RoleUser {
-		return nil, appErrors.ErrUnauthorized
-	}
-
 	userID := claims.UserID
 	refreshTokenKey := fmt.Sprintf("%s%s", constants.RedisPrefixRefreshToken, userID)
 	valid, err := u.tokenRepository.IsValidRefreshToken(ctx, refreshTokenKey)

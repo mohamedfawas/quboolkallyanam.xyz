@@ -31,6 +31,7 @@ func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
 
 		c.Set(constants.ContextKeyUserID, userID)
 		c.Set(constants.ContextKeyRole, role)
+		c.Set(constants.ContextKeyAccessToken, token)
 
 		c.Next()
 	}

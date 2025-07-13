@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"log"
 
 	postgres "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
@@ -19,6 +20,7 @@ func NewAdminRepository(db *postgres.Client) repository.AdminRepository {
 func (r *adminRepository) GetAdminByEmail(ctx context.Context, email string) (*entity.Admin, error) {
 	var admin entity.Admin
 	if err := r.db.GormDB.WithContext(ctx).Where("email = ?", email).First(&admin).Error; err != nil {
+		log.Printf("GetAdminByEmail error in admin repository: %v", err)
 		return nil, err
 	}
 	return &admin, nil
@@ -35,6 +37,7 @@ func (r *adminRepository) UpdateAdmin(ctx context.Context, admin *entity.Admin) 
 func (r *adminRepository) CheckAdminExists(ctx context.Context, email string) (bool, error) {
 	var count int64
 	if err := r.db.GormDB.WithContext(ctx).Model(&entity.Admin{}).Where("email = ?", email).Count(&count).Error; err != nil {
+		log.Printf("CheckAdminExists error in admin repository: %v", err)
 		return false, err
 	}
 	return count > 0, nil

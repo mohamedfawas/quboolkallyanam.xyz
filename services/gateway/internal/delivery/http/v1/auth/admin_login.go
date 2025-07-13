@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
@@ -28,6 +29,7 @@ func (h *AuthHandler) AdminLogin(c *gin.Context) {
 
 	resp, err := h.authUsecase.AdminLogin(c.Request.Context(), req)
 	if err != nil {
+		log.Printf("Failed to login: %v", err)
 		apiresponse.Fail(c, err)
 		return
 	}

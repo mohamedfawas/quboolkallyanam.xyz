@@ -49,7 +49,7 @@ message UserLoginResponse {
 }
   
 message UserLogoutRequest {
-    string refresh_token = 1;
+    string access_token = 1;
 }
 
 message UserLogoutResponse {
@@ -68,7 +68,7 @@ message AdminLoginResponse {
 }
 
 message AdminLogoutRequest {
-    string refresh_token = 1;
+    string access_token = 1;
 }
 
 message AdminLogoutResponse {

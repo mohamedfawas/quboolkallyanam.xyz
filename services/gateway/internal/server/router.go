@@ -33,8 +33,8 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 			userAuth.POST("/delete", middleware.AuthMiddleware(s.jwtManager),
 				middleware.RequireRole(constants.RoleUser),
 				s.authHandler.UserDelete)
+			userAuth.POST("/refresh", s.authHandler.RefreshToken)
 			// TODO: Add more user auth routes as needed
-			// userAuth.POST("/refresh", s.authHandler.RefreshToken)
 			// userAuth.POST("/forgot-password", s.authHandler.ForgotPassword)
 			// userAuth.POST("/reset-password", s.authHandler.ResetPassword)
 		}

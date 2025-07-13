@@ -30,7 +30,7 @@ func (u *adminUsecase) AdminLogin(ctx context.Context, email, password string) (
 		return nil, appErrors.ErrAdminAccountDisabled
 	}
 
-	if !hash.ComparePassword(password, admin.PasswordHash) {
+	if !hash.VerifyPassword(admin.PasswordHash, password) {
 		return nil, appErrors.ErrInvalidPassword
 	}
 

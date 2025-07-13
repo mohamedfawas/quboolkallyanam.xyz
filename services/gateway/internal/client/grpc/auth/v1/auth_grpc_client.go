@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"google.golang.org/grpc"
@@ -42,23 +42,25 @@ func NewAuthGRPCClient(ctx context.Context, address string, useTLS bool, tlsConf
 }
 
 func (c *authGRPCClient) UserRegister(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserRegisterResponse, error) {
-	logger.Log.Info("🔑 UserRegister request received in client : ", "email : ", req.Email, "phone : ", req.Phone)
+
 	grpcReq := MapUserRegisterRequest(req)
 	grpcResp, err := c.client.UserRegister(ctx, grpcReq)
 	if err != nil {
-		logger.Log.Error("❌ UserRegister request failed in client : ", "error : ", err)
+		log.Printf("UserRegister error in auth grpc client: %v", err)
 		return nil, err
 	}
-	logger.Log.Info("✅ UserRegister request successful in client : ", "email : ", req.Email, "phone : ", req.Phone)
 	return MapUserRegisterResponse(grpcResp), nil
 }
 
 func (c *authGRPCClient) UserVerification(ctx context.Context, req dto.UserVerificationRequest) (*dto.UserVerificationResponse, error) {
+
 	grpcReq := MapUserVerificationRequest(req)
 	grpcResp, err := c.client.UserVerification(ctx, grpcReq)
 	if err != nil {
+		log.Printf("UserVerification error in auth grpc client: %v", err)
 		return nil, err
 	}
+
 	return MapUserVerificationResponse(grpcResp), nil
 }
 
@@ -66,30 +68,40 @@ func (c *authGRPCClient) UserLogin(ctx context.Context, req dto.UserLoginRequest
 	grpcReq := MapUserLoginRequest(req)
 	grpcResp, err := c.client.UserLogin(ctx, grpcReq)
 	if err != nil {
+		log.Printf("UserLogin error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapUserLoginResponse(grpcResp), nil
 }
 
-func (c *authGRPCClient) UserLogout(ctx context.Context, req dto.UserLogoutRequest) error {
-	grpcReq := MapUserLogoutRequest(req)
+func (c *authGRPCClient) UserLogout(ctx context.Context, accessToken string) error {
+	grpcReq := MapUserLogoutRequest(accessToken)
 	_, err := c.client.UserLogout(ctx, grpcReq)
-	return err
+	if err != nil {
+		log.Printf("UserLogout error in auth grpc client: %v", err)
+		return err
+	}
+	return nil
 }
 
 func (c *authGRPCClient) AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
 	grpcReq := MapAdminLoginRequest(req)
 	grpcResp, err := c.client.AdminLogin(ctx, grpcReq)
 	if err != nil {
+		log.Printf("AdminLogin error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapAdminLoginResponse(grpcResp), nil
 }
 
-func (c *authGRPCClient) AdminLogout(ctx context.Context, req dto.AdminLogoutRequest) error {
-	grpcReq := MapAdminLogoutRequest(req)
+func (c *authGRPCClient) AdminLogout(ctx context.Context, accessToken string) error {
+	grpcReq := MapAdminLogoutRequest(accessToken)
 	_, err := c.client.AdminLogout(ctx, grpcReq)
-	return err
+	if err != nil {
+		log.Printf("AdminLogout error in auth grpc client: %v", err)
+		return err
+	}
+	return nil
 }
 
 func (c *authGRPCClient) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
@@ -101,13 +113,18 @@ func (c *authGRPCClient) UserDelete(ctx context.Context, req dto.UserDeleteReque
 	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapUserDeleteRequest(req)
 	_, err := c.client.UserDelete(ctx, grpcReq)
-	return err
+	if err != nil {
+		log.Printf("UserDelete error in auth grpc client: %v", err)
+		return err
+	}
+	return nil
 }
 
 func (c *authGRPCClient) RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error) {
 	grpcReq := MapRefreshTokenRequest(req)
 	grpcResp, err := c.client.RefreshToken(ctx, grpcReq)
 	if err != nil {
+		log.Printf("RefreshToken error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapRefreshTokenResponse(grpcResp), nil

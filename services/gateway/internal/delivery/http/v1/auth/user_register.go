@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
-	logger "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
@@ -21,20 +20,20 @@ import (
 // @Failure 500 {object} apiresponse.Response "Internal server error"
 // @Router /api/v1/auth/user/register [post]
 func (h *AuthHandler) UserRegister(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var req dto.UserRegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
-		return
-	}
-	logger.Log.Info("🔑 UserRegister request validated in handler : ", "email : ", req.Email, "phone : ", req.Phone)
-
-	logger.Log.Info("🔑 UserRegister request sent to usecase from handler : ", "email : ", req.Email, "phone : ", req.Phone)
-	user, err := h.authUsecase.UserRegister(c.Request.Context(), req)
-	if err != nil {
+		log.Printf("Invalid request body: %v", err)
 		apiresponse.Fail(c, err)
 		return
 	}
 
-	logger.Log.Info("🔑 UserRegister response sent from usecase to handler : ", "email : ", user.Email, "phone : ", user.Phone)
+	user, err := h.authUsecase.UserRegister(ctx, req)
+	if err != nil {
+		log.Printf("User registration failed: %v", err)
+		apiresponse.Fail(c, err)
+		return
+	}
 	apiresponse.Success(c, "OTP sent to the registered email", user)
 }

@@ -13,20 +13,19 @@ package main
 // @BasePath /api/v1
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/server"
 )
 
 func main() {
-	logger.InitLogger()
-	logger.Log.Info("✅ Logger in gateway service is initialized")
-	defer logger.Sync()
+	// logger.InitLogger(constants.ServiceGateway)
+	// defer logger.Sync()
 
 	configPath := "./config/config.yaml"
 	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
@@ -35,33 +34,31 @@ func main() {
 
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
-		logger.Log.Fatal("Failed to load config: ", err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
-	logger.Log.Info("✅ Gateway Service Config loaded successfully")
 
 	srv, err := server.NewHTTPServer(cfg)
 	if err != nil {
-		logger.Log.Fatal("Failed to create server: ", err)
+		log.Fatalf("Failed to create server: %v", err)
 	}
-	logger.Log.Info("✅ Gateway server created successfully")
 
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != http.ErrServerClosed {
-				logger.Log.Fatal("Failed to start server: ", err)
+				log.Fatalf("Failed to start HTTP server: %v", err)
 			}
 		}
 	}()
-	logger.Log.Info("✅ Gateway server started successfully")
+	log.Println("HTTP server started successfully")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Log.Info("🛑 Shutting down server...")
+	log.Println("Shutting down server")
 	if err := srv.Stop(); err != nil {
-		logger.Log.Error("Server forced to shutdown: ", err)
+		log.Printf("Error during server shutdown: %v", err)
+	} else {
+		log.Println("Server shutdown completed")
 	}
-
-	logger.Log.Info("Server stopped")
 }

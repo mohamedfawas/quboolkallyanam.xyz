@@ -57,9 +57,9 @@ func MapUserLoginResponse(resp *authpbv1.UserLoginResponse) *dto.UserLoginRespon
 
 ////////////////////////////// User Logout //////////////////////////////
 
-func MapUserLogoutRequest(req dto.UserLogoutRequest) *authpbv1.UserLogoutRequest {
+func MapUserLogoutRequest(accessToken string) *authpbv1.UserLogoutRequest {
 	return &authpbv1.UserLogoutRequest{
-		RefreshToken: req.RefreshToken,
+		AccessToken: accessToken,
 	}
 }
 
@@ -88,9 +88,9 @@ func MapAdminLoginResponse(resp *authpbv1.AdminLoginResponse) *dto.AdminLoginRes
 
 ////////////////////////////// Admin Logout //////////////////////////////
 
-func MapAdminLogoutRequest(req dto.AdminLogoutRequest) *authpbv1.AdminLogoutRequest {
+func MapAdminLogoutRequest(accessToken string) *authpbv1.AdminLogoutRequest {
 	return &authpbv1.AdminLogoutRequest{
-		RefreshToken: req.RefreshToken,
+		AccessToken: accessToken,
 	}
 }
 

@@ -34,10 +34,10 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 		return nil, appErrors.ErrAccountBlocked
 	}
 
-	if hash.ComparePassword(user.PasswordHash, password) {
+	if !hash.VerifyPassword(user.PasswordHash, password) {
 		return nil, appErrors.ErrInvalidCredentials
 	}
-
+	
 	role := constants.RoleUser
 	if user.IsPremium() {
 		role = constants.RolePremiumUser

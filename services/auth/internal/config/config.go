@@ -108,6 +108,10 @@ func bindEnvVars(v *viper.Viper) {
 		"grpc.port",
 		"auth.pending_registration_expiry_hours",
 		"auth.otp_expiry_minutes",
+		"auth.jwt.secret_key",
+		"auth.jwt.access_token_minutes",
+		"auth.jwt.refresh_token_days",
+		"auth.jwt.issuer",
 		"postgres.host",
 		"postgres.port",
 		"postgres.user",
@@ -143,6 +147,10 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("auth.pending_registration_expiry_hours", 1)
 	v.SetDefault("auth.otp_expiry_minutes", 15)
+	v.SetDefault("auth.jwt.secret_key", "your-256-bit-secret-replace-in-production")
+	v.SetDefault("auth.jwt.access_token_minutes", 15)
+	v.SetDefault("auth.jwt.refresh_token_days", 7)
+	v.SetDefault("auth.jwt.issuer", "qubool-kallyanam")
 
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)
@@ -164,8 +172,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("email.from_email", "noreply@qubool-kallyanam.xyz")
 	v.SetDefault("email.from_name", "Qubool Kallyanam")
 
-	v.SetDefault("admin.default_admin_email", "admin@qubool-kallyanam.xyz")
-	v.SetDefault("admin.default_admin_password", "admin123")
+	v.SetDefault("admin.default_admin_email", "adminquboolkallyanam@gmail.com")
+	v.SetDefault("admin.default_admin_password", "Admin@123")
 
 	v.SetDefault("rabbitmq.dsn", "amqp://guest:guest@localhost:5672/")
 	v.SetDefault("rabbitmq.exchange_name", "qubool_kallyanam_events")

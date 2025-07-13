@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -18,7 +19,6 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/usecase"
 
 	authpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1"
-	logger "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 )
 
 type AuthHandler struct {
@@ -42,15 +42,12 @@ func NewAuthHandler(userUsecase usecase.UserUsecase,
 }
 
 func (h *AuthHandler) UserRegister(ctx context.Context, req *authpbv1.UserRegisterRequest) (*authpbv1.UserRegisterResponse, error) {
-	logger.Log.Info("Received UserRegistration request in auth handler", "email : ", req.Email, "phone : ", req.Phone)
-
 	userRegistrationRequest := &entity.UserRegistrationRequest{
 		Email:    req.Email,
 		Phone:    req.Phone,
 		Password: req.Password,
 	}
 
-	logger.Log.Info("Sending request to pendingRegistrationUsecase from auth handler", "email : ", req.Email, "phone : ", req.Phone)
 	err := h.pendingRegistrationUsecase.RegisterUser(ctx, userRegistrationRequest, h.config)
 	if err != nil {
 		switch {
@@ -59,11 +56,11 @@ func (h *AuthHandler) UserRegister(ctx context.Context, req *authpbv1.UserRegist
 		case errors.Is(err, appErrors.ErrPhoneAlreadyExists):
 			return nil, status.Errorf(codes.AlreadyExists, "An account with this phone number already exists")
 		default:
+			log.Printf("Failed to register user: %v", err)
 			return nil, status.Errorf(codes.Internal, "Failed to register user: %v", err)
 		}
 	}
 
-	logger.Log.Info("UserRegistration request successful ", "email : ", req.Email, "phone : ", req.Phone)
 	return &authpbv1.UserRegisterResponse{
 		Email: req.Email,
 		Phone: req.Phone,
@@ -71,8 +68,6 @@ func (h *AuthHandler) UserRegister(ctx context.Context, req *authpbv1.UserRegist
 }
 
 func (h *AuthHandler) UserVerification(ctx context.Context, req *authpbv1.UserVerificationRequest) (*authpbv1.UserVerificationResponse, error) {
-	logger.Log.Info("Received UserVerification request in auth handler", "email : ", req.Email)
-
 	err := h.pendingRegistrationUsecase.VerifyUserRegistration(ctx, req.Email, req.Otp)
 	if err != nil {
 		switch {
@@ -83,6 +78,7 @@ func (h *AuthHandler) UserVerification(ctx context.Context, req *authpbv1.UserVe
 		case errors.Is(err, appErrors.ErrOTPNotFound):
 			return nil, status.Errorf(codes.NotFound, "No OTP request found for this email")
 		default:
+			log.Printf("Failed to verify user: %v", err)
 			return nil, status.Errorf(codes.Internal, "Failed to verify user: %v", err)
 		}
 	}
@@ -93,14 +89,19 @@ func (h *AuthHandler) UserVerification(ctx context.Context, req *authpbv1.UserVe
 }
 
 func (h *AuthHandler) UserLogin(ctx context.Context, req *authpbv1.UserLoginRequest) (*authpbv1.UserLoginResponse, error) {
-	logger.Log.Info("Received UserLogin request in auth handler", "email : ", req.Email)
-
 	result, err := h.userUsecase.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		switch {
 		case errors.Is(err, appErrors.ErrInvalidCredentials):
 			return nil, status.Errorf(codes.Unauthenticated, "Invalid credentials")
+		case errors.Is(err, appErrors.ErrUserNotFound):
+			return nil, status.Errorf(codes.NotFound, "User not found")
+		case errors.Is(err, appErrors.ErrAccountDisabled):
+			return nil, status.Errorf(codes.PermissionDenied, "Account disabled")
+		case errors.Is(err, appErrors.ErrAccountBlocked):
+			return nil, status.Errorf(codes.PermissionDenied, "Account blocked")
 		default:
+			log.Printf("Failed to login: %v", err)
 			return nil, status.Errorf(codes.Internal, "Failed to login: %v", err)
 		}
 	}
@@ -113,35 +114,109 @@ func (h *AuthHandler) UserLogin(ctx context.Context, req *authpbv1.UserLoginRequ
 }
 
 func (h *AuthHandler) UserLogout(ctx context.Context, req *authpbv1.UserLogoutRequest) (*emptypb.Empty, error) {
-	logger.Log.Info("Received UserLogout request in auth handler")
-
-	err := h.userUsecase.Logout(ctx, req.RefreshToken)
+	err := h.userUsecase.Logout(ctx, req.AccessToken)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to logout: %v", err)
+		switch {
+		case errors.Is(err, appErrors.ErrInvalidToken):
+			return nil, status.Errorf(codes.Unauthenticated, "Invalid token")
+		case errors.Is(err, appErrors.ErrExpiredToken):
+			return nil, status.Errorf(codes.Unauthenticated, "Token expired")
+		case errors.Is(err, appErrors.ErrTokenNotActive):
+			return nil, status.Errorf(codes.Unauthenticated, "Token not active")
+		case errors.Is(err, appErrors.ErrUnauthorized):
+			return nil, status.Errorf(codes.PermissionDenied, "Unauthorized")
+		default:
+			log.Printf("Failed to logout: %v", err)
+			return nil, status.Errorf(codes.Internal, "Failed to logout: %v", err)
+		}
 	}
-
 	return &emptypb.Empty{}, nil
 }
 
 func (h *AuthHandler) UserDelete(ctx context.Context, req *authpbv1.UserDeleteRequest) (*emptypb.Empty, error) {
-	logger.Log.Info("Received UserDelete request in auth handler")
-
 	userID, err := contextutils.GetUserID(ctx)
 	if err != nil {
+		log.Printf("Failed to get user ID: %v", err)
 		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
 	}
 
 	err = h.userUsecase.UserAccountDelete(ctx, userID, req.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, appErrors.ErrInvalidPassword):
-			return nil, status.Errorf(codes.InvalidArgument, "Invalid password")
+		case errors.Is(err, appErrors.ErrUserNotFound):
+			return nil, status.Errorf(codes.NotFound, "User not found")
+		case errors.Is(err, appErrors.ErrInvalidCredentials):
+			return nil, status.Errorf(codes.Unauthenticated, "Invalid credentials")
 		default:
+			log.Printf("Failed to delete account: %v", err)
 			return nil, status.Errorf(codes.Internal, "Failed to delete account: %v", err)
 		}
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpbv1.AdminLoginRequest) (*authpbv1.AdminLoginResponse, error) {
+	result, err := h.adminUsecase.AdminLogin(ctx, req.Email, req.Password)
+	if err != nil {
+		switch {
+		case errors.Is(err, appErrors.ErrInvalidPassword):
+			return nil, status.Errorf(codes.Unauthenticated, "Invalid credentials")
+		case errors.Is(err, appErrors.ErrAdminNotFound):
+			return nil, status.Errorf(codes.NotFound, "Admin not found")
+		case errors.Is(err, appErrors.ErrAdminAccountDisabled):
+			return nil, status.Errorf(codes.PermissionDenied, "Admin account disabled")
+		default:
+			log.Printf("Failed to login: %v", err)
+			return nil, status.Errorf(codes.Internal, "Failed to login: %v", err)
+		}
+	}
+
+	return &authpbv1.AdminLoginResponse{
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
+		ExpiresIn:    result.ExpiresIn,
+	}, nil
+}
+
+func (h *AuthHandler) AdminLogout(ctx context.Context, req *authpbv1.AdminLogoutRequest) (*emptypb.Empty, error) {
+	err := h.adminUsecase.AdminLogout(ctx, req.AccessToken)
+	if err != nil {
+		switch {
+		case errors.Is(err, appErrors.ErrInvalidToken):
+			return nil, status.Errorf(codes.Unauthenticated, "Invalid token")
+		case errors.Is(err, appErrors.ErrExpiredToken):
+			return nil, status.Errorf(codes.Unauthenticated, "Token expired")
+		case errors.Is(err, appErrors.ErrTokenNotActive):
+			return nil, status.Errorf(codes.Unauthenticated, "Token not active")
+		case errors.Is(err, appErrors.ErrUnauthorized):
+			return nil, status.Errorf(codes.PermissionDenied, "Unauthorized")
+		default:
+			log.Printf("Failed to logout: %v", err)
+			return nil, status.Errorf(codes.Internal, "Failed to logout: %v", err)
+		}
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (h *AuthHandler) RefreshToken(ctx context.Context, req *authpbv1.RefreshTokenRequest) (*authpbv1.RefreshTokenResponse, error) {
+	result, err := h.userUsecase.RefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		log.Printf("Failed to refresh token: %v", err)
+		switch {
+		case errors.Is(err, appErrors.ErrInvalidToken):
+			return nil, status.Errorf(codes.Unauthenticated, "Invalid refresh token")
+		default:
+			return nil, status.Errorf(codes.Internal, "Failed to refresh token: %v", err)
+		}
+	}
+
+	return &authpbv1.RefreshTokenResponse{
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
+		ExpiresIn:    result.ExpiresIn,
+	}, nil
 }
 
 func extractUserIDFromMetadata(ctx context.Context) (string, error) {
@@ -156,55 +231,4 @@ func extractUserIDFromMetadata(ctx context.Context) (string, error) {
 	}
 
 	return userIDs[0], nil
-}
-
-func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpbv1.AdminLoginRequest) (*authpbv1.AdminLoginResponse, error) {
-	logger.Log.Info("Received AdminLogin request in auth handler", "email : ", req.Email)
-
-	result, err := h.adminUsecase.AdminLogin(ctx, req.Email, req.Password)
-	if err != nil {
-		switch {
-		case errors.Is(err, appErrors.ErrInvalidCredentials):
-			return nil, status.Errorf(codes.Unauthenticated, "Invalid credentials")
-		default:
-			return nil, status.Errorf(codes.Internal, "Failed to login: %v", err)
-		}
-	}
-
-	return &authpbv1.AdminLoginResponse{
-		AccessToken:  result.AccessToken,
-		RefreshToken: result.RefreshToken,
-		ExpiresIn:    result.ExpiresIn,
-	}, nil
-}
-
-func (h *AuthHandler) AdminLogout(ctx context.Context, req *authpbv1.AdminLogoutRequest) (*emptypb.Empty, error) {
-	logger.Log.Info("Received AdminLogout request in auth handler")
-
-	err := h.adminUsecase.AdminLogout(ctx, req.RefreshToken)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Failed to logout: %v", err)
-	}
-
-	return &emptypb.Empty{}, nil
-}
-
-func (h *AuthHandler) RefreshToken(ctx context.Context, req *authpbv1.RefreshTokenRequest) (*authpbv1.RefreshTokenResponse, error) {
-	logger.Log.Info("Received RefreshToken request in auth handler")
-
-	result, err := h.userUsecase.RefreshToken(ctx, req.RefreshToken)
-	if err != nil {
-		switch {
-		case errors.Is(err, appErrors.ErrInvalidToken):
-			return nil, status.Errorf(codes.Unauthenticated, "Invalid refresh token")
-		default:
-			return nil, status.Errorf(codes.Internal, "Failed to refresh token: %v", err)
-		}
-	}
-
-	return &authpbv1.RefreshTokenResponse{
-		AccessToken:  result.AccessToken,
-		RefreshToken: result.RefreshToken,
-		ExpiresIn:    result.ExpiresIn,
-	}, nil
 }

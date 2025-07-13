@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
@@ -22,12 +23,14 @@ import (
 func (h *AuthHandler) UserLogin(c *gin.Context) {
 	var req dto.UserLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Invalid request body: %v", err)
 		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
 		return
 	}
 
 	resp, err := h.authUsecase.UserLogin(c.Request.Context(), req)
 	if err != nil {
+		log.Printf("User login failed: %v", err)
 		apiresponse.Fail(c, err)
 		return
 	}

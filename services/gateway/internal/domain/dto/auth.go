@@ -1,9 +1,9 @@
 package dto
 
 type UserRegisterRequest struct {
-	Email    string `json:"email" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type UserRegisterResponse struct {
@@ -12,7 +12,7 @@ type UserRegisterResponse struct {
 }
 
 type UserVerificationRequest struct {
-	Email string `json:"email" binding:"required"`
+	Email string `json:"email" binding:"required,email"`
 	OTP   string `json:"otp" binding:"required"`
 }
 
@@ -21,8 +21,8 @@ type UserVerificationResponse struct {
 }
 
 type UserLoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type UserLoginResponse struct {
@@ -31,17 +31,13 @@ type UserLoginResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-type UserLogoutRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
-}
-
 type UserLogoutResponse struct {
 	Success bool `json:"success"`
 }
 
 type AdminLoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type AdminLoginResponse struct {
@@ -50,16 +46,12 @@ type AdminLoginResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-type AdminLogoutRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
-}
-
 type AdminLogoutResponse struct {
 	Success bool `json:"success"`
 }
 
 type UserDeleteRequest struct {
-	Password string `json:"password" binding:"required"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type UserDeleteResponse struct {

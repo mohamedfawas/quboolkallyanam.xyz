@@ -6,13 +6,25 @@ const (
 	EnvProduction  = "production"
 	EnvDevelopment = "development"
 	EnvStaging     = "staging"
+	ENVIRONMENT    = "ENVIRONMENT"
+	Service        = "service"
+	ServiceGateway = "gateway"
+	ServiceAuth    = "auth"
+	ServiceUser    = "user"
+	ServiceAdmin   = "admin"
+	ServicePayment = "payment"
+	ServiceChat    = "chat"
+	Env            = "env"
 
 	// Auth
-	ContextKeyUserID    = "user_id"
-	ContextKeyRole      = "role"
-	HeaderAuthorization = "Authorization"
-	BearerTokenPrefix   = "Bearer "
-	DefaultCostBcrypt   = 12
+	ContextKeyUserID      = "user_id"
+	ContextKeyRole        = "role"
+	ContextKeyRequestID   = "request_id"
+	ContextKeyAccessToken = "access_token"
+	HeaderAuthorization   = "Authorization"
+	HeaderRefreshToken    = "Refresh-Token"
+	BearerTokenPrefix     = "Bearer "
+	DefaultCostBcrypt     = 12
 
 	// Roles
 	RoleUser        = "user"

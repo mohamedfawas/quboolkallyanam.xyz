@@ -3,10 +3,10 @@ package user
 import (
 	"context"
 	"fmt"
+	"log"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 )
@@ -21,7 +21,7 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 		return appErrors.ErrUserNotFound
 	}
 
-	if !hash.ComparePassword(user.PasswordHash, password) {
+	if !hash.VerifyPassword(user.PasswordHash, password) {
 		return appErrors.ErrInvalidCredentials
 	}
 
@@ -46,6 +46,6 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 		}
 	}
 
-	logger.Log.Info("User account deleted successfully : ", "user_id", userID)
+	log.Printf("User account deleted successfully : %v", userID)
 	return nil
 }

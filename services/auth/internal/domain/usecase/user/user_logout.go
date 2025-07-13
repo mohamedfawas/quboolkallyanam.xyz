@@ -3,11 +3,11 @@ package user
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	logger "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 )
 
 func (u *userUseCase) Logout(ctx context.Context, accessToken string) error {
@@ -55,6 +55,6 @@ func (u *userUseCase) Logout(ctx context.Context, accessToken string) error {
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	logger.Log.Info("User logged out successfully : ", "user_id", userID)
+	log.Printf("User logged out successfully : %v", userID)
 	return nil
 }

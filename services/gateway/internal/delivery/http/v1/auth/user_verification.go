@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
@@ -21,12 +21,14 @@ import (
 func (h *AuthHandler) UserVerification(c *gin.Context) {
 	var req dto.UserVerificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
+		log.Printf("Invalid request body: %v", err)
+		apiresponse.Fail(c, err)
 		return
 	}
 
 	user, err := h.authUsecase.UserVerification(c.Request.Context(), req, h.config)
 	if err != nil {
+		log.Printf("User verification failed: %v", err)
 		apiresponse.Fail(c, err)
 		return
 	}

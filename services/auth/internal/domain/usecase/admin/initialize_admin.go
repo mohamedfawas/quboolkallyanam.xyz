@@ -3,9 +3,9 @@ package admin
 import (
 	"context"
 	"fmt"
+	"log"
 
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/vaidation"
@@ -18,23 +18,23 @@ func (u *adminUsecase) InitializeDefaultAdmin(ctx context.Context, defaultEmail,
 		return fmt.Errorf("failed to check if admin exists: %w", err)
 	}
 	if exists {
-		logger.Log.Info("Admin already exists, skipping default admin creation")
+		log.Println("Admin already exists, skipping default admin creation")
 		return nil
 	}
 
-	if validation.IsValidEmail(defaultEmail) {
-		logger.Log.Error("Provided email for admin initialization is invalid", defaultEmail)
+	if !validation.IsValidEmail(defaultEmail) {
+		log.Printf("Provided email for admin initialization is invalid: %v", defaultEmail)
 		return appErrors.ErrInvalidEmail
 	}
 
 	if !validation.IsValidPassword(defaultPassword, validation.DefaultPasswordRequirements()) {
-		logger.Log.Error("Provided password for admin initialization is not strong enough", defaultPassword)
+		log.Printf("Provided password for admin initialization is not strong enough: %v", defaultPassword)
 		return appErrors.ErrInvalidPassword
 	}
 
 	hasedPassword, err := hash.HashPassword(defaultPassword)
 	if err != nil {
-		logger.Log.Error("Failed to hash given admin password", err)
+		log.Printf("Failed to hash given admin password: %v", err)
 		return appErrors.ErrHashGenerationFailed
 	}
 
@@ -50,7 +50,7 @@ func (u *adminUsecase) InitializeDefaultAdmin(ctx context.Context, defaultEmail,
 		return fmt.Errorf("failed to intialize admin account to database: %w", err)
 	}
 
-	logger.Log.Info("Default admin account initialized successfully", "email", defaultEmail)
+	log.Printf("Default admin account initialized successfully: %v", defaultEmail)
 
 	return nil
 }

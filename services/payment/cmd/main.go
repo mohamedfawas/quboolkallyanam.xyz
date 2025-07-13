@@ -1,20 +1,19 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/server"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	logger.InitLogger()
-	logger.Log.Info("✅ Logger in payment service is initialized")
-	defer logger.Sync()
+	// logger.InitLogger()
+	// defer logger.Sync()
 
 	configPath := "./config/config.yaml"
 	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
@@ -23,31 +22,28 @@ func main() {
 
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
-		logger.Log.Fatal("Failed to load config: ", err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
-	logger.Log.Info("✅ Payment Service Config loaded")
 
 	srv, err := server.NewServer(cfg)
 	if err != nil {
-		logger.Log.Fatal("Failed to create server: ", err)
+		log.Fatalf("Failed to create server: %v", err)
 	}
-	logger.Log.Info("✅ Payment Service Server created")
 
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != grpc.ErrServerStopped {
-				logger.Log.Fatal("Failed to start server: ", err)
+				log.Fatalf("Failed to start server: %v", err)
 			}
 		}
 	}()
-	logger.Log.Info("✅ Payment Service Server started")
 
 	quit := make(chan os.Signal, 1)
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Log.Info("🛑 Shutting down server...")
+	log.Println("🛑 Shutting down server...")
 	srv.Stop()
-	logger.Log.Info("✅ Server stopped")
+	log.Println("✅ Server stopped")
 }

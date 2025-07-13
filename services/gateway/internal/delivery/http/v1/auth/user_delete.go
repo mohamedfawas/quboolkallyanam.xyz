@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
@@ -25,6 +26,7 @@ import (
 func (h *AuthHandler) UserDelete(c *gin.Context) {
 	var req dto.UserDeleteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Invalid request body: %v", err)
 		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
 		return
 	}
@@ -39,6 +41,7 @@ func (h *AuthHandler) UserDelete(c *gin.Context) {
 
 	err := h.authUsecase.UserDelete(ctx, req)
 	if err != nil {
+		log.Printf("Failed to delete user: %v", err)
 		apiresponse.Fail(c, err)
 		return
 	}

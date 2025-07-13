@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/redis"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
@@ -58,7 +58,7 @@ func NewServer(config *config.Config) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
-	logger.Log.Info("✅ Auth Service Connected to PostgreSQL ")
+	log.Println("Auth Service Connected to PostgreSQL ")
 
 	redisClient, err := redis.NewClient(redis.Config{
 		Host:     config.Redis.Host,
@@ -71,7 +71,7 @@ func NewServer(config *config.Config) (*Server, error) {
 		pgClient.Close()
 		return nil, fmt.Errorf("failed to create redis client: %w", err)
 	}
-	logger.Log.Info("✅ Auth Service Connected to Redis")
+	log.Println("Auth Service Connected to Redis")
 
 	var messagingClient messageBroker.Client
 	if config.Environment == "production" {
@@ -83,7 +83,7 @@ func NewServer(config *config.Config) (*Server, error) {
 			redisClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		logger.Log.Info("✅ Auth Service Connected to PubSub")
+		log.Println("Auth Service Connected to PubSub")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -95,7 +95,7 @@ func NewServer(config *config.Config) (*Server, error) {
 			redisClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		logger.Log.Info("✅ Auth Service Connected to RabbitMQ")
+		log.Println("Auth Service Connected to RabbitMQ")
 	}
 
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
@@ -145,12 +145,12 @@ func NewServer(config *config.Config) (*Server, error) {
 	authHandler := grpcHandlerv1.NewAuthHandler(userUC, adminUC, pendingRegistrationUC, config)
 	authpbv1.RegisterAuthServiceServer(grpcServer, authHandler)
 
-	logger.Log.Info("✅ Auth Service gRPC handlers registered")
+	log.Println("Auth Service gRPC handlers registered")
 
 	// Initialize default admin if needed
 	ctx := context.Background()
 	if err := adminUC.InitializeDefaultAdmin(ctx, config.Admin.DefaultAdminEmail, config.Admin.DefaultAdminPassword); err != nil {
-		logger.Log.Error("Failed to initialize default admin", "error", err)
+		log.Println("Failed to initialize default admin", "error", err)
 	}
 
 	server := &Server{
@@ -172,7 +172,7 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	logger.Log.Info("🚀 Auth Service gRPC server starting", "port", s.config.GRPC.Port)
+	log.Println("Auth Service gRPC server starting", "port", s.config.GRPC.Port)
 
 	return s.grpcServer.Serve(listener)
 }
@@ -183,19 +183,19 @@ func (s *Server) Stop() {
 	// Close messaging client first
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
-			logger.Log.Error("failed to close messaging client", "error", err)
+			log.Println("failed to close messaging client", "error", err)
 		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			logger.Log.Error("failed to close postgres client: %w", err)
+			log.Println("failed to close postgres client: %w", err)
 		}
 	}
 
 	if s.redisClient != nil {
 		if err := s.redisClient.Close(); err != nil {
-			logger.Log.Error("failed to close redis client: %w", err)
+			log.Println("failed to close redis client: %w", err)
 		}
 	}
 }

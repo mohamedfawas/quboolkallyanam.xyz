@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging/pubsub"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging/rabbitmq"
+	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/config"
 	"google.golang.org/grpc"
 )
@@ -22,7 +22,7 @@ type Server struct {
 	grpcServer      *grpc.Server
 	httpServer      *http.Server
 	pgClient        *postgres.Client
-	messagingClient messaging.Client
+	messagingClient messageBroker.Client
 }
 
 func NewServer(config *config.Config) (*Server, error) {
@@ -41,7 +41,7 @@ func NewServer(config *config.Config) (*Server, error) {
 	}
 	logger.Log.Info("✅ Payment Service Connected to PostgreSQL ")
 
-	var messagingClient messaging.Client
+	var messagingClient messageBroker.Client
 	if config.Environment == "production" {
 		ctx := context.Background()
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)

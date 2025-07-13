@@ -3,11 +3,11 @@ package admin
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 )
 
 func (u *adminUsecase) AdminLogout(ctx context.Context, accessToken string) error {
@@ -54,6 +54,6 @@ func (u *adminUsecase) AdminLogout(ctx context.Context, accessToken string) erro
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	logger.Log.Info("Admin logged out successfully : ", "admin_id", userID)
+	log.Printf("Admin logged out successfully : %v", userID)
 	return nil
 }

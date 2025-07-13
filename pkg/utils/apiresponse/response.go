@@ -2,66 +2,96 @@ package apiresponse
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-type Response struct {
-	Status  int         `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
+type StandardResponse struct {
+	Success   bool        `json:"success"`
+	Message   string      `json:"message"`
+	Data      interface{} `json:"data,omitempty"`
+	Error     *ErrorInfo  `json:"error,omitempty"`
+	Timestamp string      `json:"timestamp"`
+	RequestID string      `json:"request_id,omitempty"`
+}
+
+type ErrorInfo struct {
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Details map[string]string `json:"details,omitempty"`
 }
 
 func Success(c *gin.Context, message string, data interface{}) {
-	c.JSON(http.StatusOK, Response{
-		Status:  http.StatusOK,
-		Message: message,
-		Data:    data,
-	})
+	response := StandardResponse{
+		Success:   true,
+		Message:   message,
+		Data:      data,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		RequestID: getRequestID(c),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
-// Fail inspects err; if it's a gRPC error, maps its code→HTTP, otherwise 500.
-// Writes JSON: { status, message, error }
 func Fail(c *gin.Context, err error) {
-	httpCode := http.StatusInternalServerError
-	msg := "internal error"
+	httpCode, errorInfo := mapErrorToResponse(err)
 
-	if st, ok := status.FromError(err); ok {
-		switch st.Code() {
-		case codes.InvalidArgument:
-			httpCode = http.StatusBadRequest
-			msg = st.Message()
-		case codes.Unauthenticated:
-			httpCode = http.StatusUnauthorized
-			msg = st.Message()
-		case codes.PermissionDenied:
-			httpCode = http.StatusForbidden
-			msg = st.Message()
-		case codes.NotFound:
-			httpCode = http.StatusNotFound
-			msg = st.Message()
-		case codes.AlreadyExists:
-			httpCode = http.StatusConflict
-			msg = st.Message()
-		case codes.Unavailable:
-			httpCode = http.StatusServiceUnavailable
-			msg = st.Message()
-		default:
-			httpCode = http.StatusInternalServerError
-			msg = st.Message()
-		}
-	} else {
-		// non-grpc errors: you can add application-specific checks here
-		msg = err.Error()
+	response := StandardResponse{
+		Success:   false,
+		Message:   "Request failed",
+		Error:     errorInfo,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		RequestID: getRequestID(c),
 	}
 
-	c.JSON(httpCode, Response{
-		Status:  httpCode,
-		Message: msg,
-		Error:   msg,
-	})
+	c.JSON(httpCode, response)
 	c.Abort()
+}
+
+func FailWithDetails(c *gin.Context, err error, details map[string]string) {
+	httpCode, errorInfo := mapErrorToResponse(err)
+	if errorInfo.Details == nil {
+		errorInfo.Details = make(map[string]string)
+	}
+	for k, v := range details {
+		errorInfo.Details[k] = v
+	}
+
+	response := StandardResponse{
+		Success:   false,
+		Message:   "Request failed",
+		Error:     errorInfo,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		RequestID: getRequestID(c),
+	}
+
+	c.JSON(httpCode, response)
+	c.Abort()
+}
+
+func ValidationError(c *gin.Context, message string, details map[string]string) {
+	response := StandardResponse{
+		Success: false,
+		Message: "Validation failed",
+		Error: &ErrorInfo{
+			Code:    "VALIDATION_ERROR",
+			Message: message,
+			Details: details,
+		},
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		RequestID: getRequestID(c),
+	}
+
+	c.JSON(http.StatusBadRequest, response)
+	c.Abort()
+}
+
+func getRequestID(c *gin.Context) string {
+	if requestID := c.GetHeader("X-Request-ID"); requestID != "" {
+		return requestID
+	}
+	if requestID := c.GetString("request_id"); requestID != "" {
+		return requestID
+	}
+	return ""
 }

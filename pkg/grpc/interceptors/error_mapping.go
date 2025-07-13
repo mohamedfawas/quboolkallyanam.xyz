@@ -5,8 +5,6 @@ import (
 	"errors"
 
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,42 +15,81 @@ func UnaryErrorInterceptor() grpc.UnaryServerInterceptor {
 		req interface{},
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler) (resp interface{}, err error) {
+
 		resp, err = handler(ctx, req)
 		if err == nil {
 			return resp, nil
 		}
 
-		var st *status.Status
-		switch {
-		case errors.Is(err, appErrors.ErrInvalidCredentials):
-			st = status.New(codes.Unauthenticated, "Invalid credentials")
-
-		// TODO: Add more error cases here
-		default:
-			if s, ok := status.FromError(err); ok {
-				st = s
-			} else {
-				st = status.New(codes.Internal, "Internal server error")
-			}
-		}
-
-		// Log full error server-side
-		if st.Code() == codes.Internal {
-			logger.Log.Error("gRPC handler error",
-				zap.String("method", info.FullMethod),
-				zap.Error(err),
-				zap.String("mapped_message", st.Message()),
-				zap.String("stack", zap.Stack("stack").String),
-			)
-		} else {
-			logger.Log.Infow("gRPC client error",
-				"method", info.FullMethod,
-				"error", err.Error(),
-				"mapped_code", st.Code(),
-				"mapped_message", st.Message(),
-			)
-		}
+		// Map application errors to gRPC status codes
+		st := mapAppErrorToGRPCStatus(err)
 
 		return nil, st.Err()
+	}
+}
+
+func mapAppErrorToGRPCStatus(err error) *status.Status {
+	switch {
+	// Authentication errors
+	case errors.Is(err, appErrors.ErrInvalidCredentials):
+		return status.New(codes.Unauthenticated, "Invalid credentials")
+	case errors.Is(err, appErrors.ErrInvalidToken):
+		return status.New(codes.Unauthenticated, "Invalid token")
+	case errors.Is(err, appErrors.ErrExpiredToken):
+		return status.New(codes.Unauthenticated, "Token expired")
+	case errors.Is(err, appErrors.ErrInvalidRefreshToken):
+		return status.New(codes.Unauthenticated, "Invalid refresh token")
+	case errors.Is(err, appErrors.ErrUnauthorized):
+		return status.New(codes.Unauthenticated, "Unauthorized")
+
+	// Permission errors
+	case errors.Is(err, appErrors.ErrForbidden):
+		return status.New(codes.PermissionDenied, "Access denied")
+	case errors.Is(err, appErrors.ErrAccountDisabled):
+		return status.New(codes.PermissionDenied, "Account disabled")
+	case errors.Is(err, appErrors.ErrAccountBlocked):
+		return status.New(codes.PermissionDenied, "Account blocked")
+	case errors.Is(err, appErrors.ErrAdminAccountDisabled):
+		return status.New(codes.PermissionDenied, "Admin account disabled")
+
+	// Not found errors
+	case errors.Is(err, appErrors.ErrUserNotFound):
+		return status.New(codes.NotFound, "User not found")
+	case errors.Is(err, appErrors.ErrAdminNotFound):
+		return status.New(codes.NotFound, "Admin not found")
+	case errors.Is(err, appErrors.ErrPendingRegistrationNotFound):
+		return status.New(codes.NotFound, "Registration not found")
+	case errors.Is(err, appErrors.ErrOTPNotFound):
+		return status.New(codes.NotFound, "OTP not found")
+
+	// Conflict errors
+	case errors.Is(err, appErrors.ErrEmailAlreadyExists):
+		return status.New(codes.AlreadyExists, "Email already exists")
+	case errors.Is(err, appErrors.ErrPhoneAlreadyExists):
+		return status.New(codes.AlreadyExists, "Phone already exists")
+
+	// Validation errors
+	case errors.Is(err, appErrors.ErrInvalidEmail):
+		return status.New(codes.InvalidArgument, "Invalid email")
+	case errors.Is(err, appErrors.ErrInvalidPhoneNumber):
+		return status.New(codes.InvalidArgument, "Invalid phone number")
+	case errors.Is(err, appErrors.ErrInvalidPassword):
+		return status.New(codes.InvalidArgument, "Invalid password")
+	case errors.Is(err, appErrors.ErrInvalidInput):
+		return status.New(codes.InvalidArgument, "Invalid input")
+	case errors.Is(err, appErrors.ErrInvalidOTP):
+		return status.New(codes.InvalidArgument, "Invalid OTP")
+
+	// Account state errors
+	case errors.Is(err, appErrors.ErrAccountNotVerified):
+		return status.New(codes.FailedPrecondition, "Account not verified")
+
+	default:
+		// Check if it's already a gRPC status error
+		if st, ok := status.FromError(err); ok {
+			return st
+		}
+		// Default to internal error
+		return status.New(codes.Internal, "Internal server error")
 	}
 }
