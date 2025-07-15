@@ -12,6 +12,7 @@ type Config struct {
 	Services    ServicesConfig `mapstructure:"services"`
 	Auth        AuthConfig     `mapstructure:"auth"`
 	OTP         OTPConfig      `mapstructure:"otp"`
+	BaseURL     string         `mapstructure:"base_url"`
 	// Tracing config @TODO: add tracing config
 }
 
@@ -89,6 +90,7 @@ func bindEnvVars(v *viper.Viper) {
 		"auth.jwt.refresh_token_days",
 		"auth.jwt.issuer",
 		"otp.length",
+		"base_url",
 	}
 	for _, key := range keys {
 		_ = v.BindEnv(key)
@@ -114,4 +116,5 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("auth.jwt.refresh_token_days", 7)
 	v.SetDefault("auth.jwt.issuer", "qubool-kallyanam")
 	v.SetDefault("otp.length", 6)
+	v.SetDefault("base_url", "http://localhost:8080")
 }

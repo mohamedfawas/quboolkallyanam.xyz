@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment - Qubool Kallyanam</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .payment-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .plan-info {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        .plan-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        .plan-amount {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .plan-duration {
+            color: #718096;
+            font-size: 14px;
+        }
+        .pay-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        .security-badge {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            border: 1px solid #b2f5ea;
+        }
+        .loading {
+            display: none;
+            padding: 20px;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-card">
+        <div class="logo">🔐 Qubool Kallyanam</div>
+        <div class="subtitle">Secure Payment Gateway</div>
+        
+        <div class="plan-info">
+            <div class="plan-name">{{.PlanID}}</div>
+            <div class="plan-amount">₹{{.DisplayAmount}}</div>
+            <div class="plan-duration">Valid for {{.PlanDurationInDays}} days</div>
+        </div>
+        
+        <div id="alert" class="alert"></div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div>Processing payment...</div>
+        </div>
+        
+        <button id="payBtn" class="pay-btn">
+            Pay ₹{{.DisplayAmount}} Securely
+        </button>
+        
+        <div class="security-badge">
+            🔒 256-bit SSL encryption • PCI DSS compliant
+        </div>
+    </div>
+    
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        const config = {
+            keyId: '{{.RazorpayKeyID}}',
+            orderId: '{{.RazorpayOrderID}}',
+            amount: {{.Amount}},
+            planId: '{{.PlanID}}',
+            planDurationInDays: {{.PlanDurationInDays}},
+            displayAmount: '{{.DisplayAmount}}',
+            gatewayUrl: '{{.GatewayURL}}'
+        };
+        
+        const payBtn = document.getElementById('payBtn');
+        const loading = document.getElementById('loading');
+        const alert = document.getElementById('alert');
+        
+        function showAlert(message, type = 'error') {
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+        }
+        
+        function showLoading() {
+            payBtn.style.display = 'none';
+            loading.style.display = 'block';
+        }
+        
+        function hideLoading() {
+            payBtn.style.display = 'block';
+            loading.style.display = 'none';
+        }
+        
+        const rzp = new Razorpay({
+            key: config.keyId,
+            amount: config.amount,
+            currency: 'INR',
+            name: 'Qubool Kallyanam',
+            description: config.planId,
+            order_id: config.orderId,
+            handler: function(response) {
+                showLoading();
+                window.location.href = config.gatewayUrl + '/api/v1/payment/verify?' + 
+                    'razorpay_payment_id=' + response.razorpay_payment_id +
+                    '&razorpay_order_id=' + response.razorpay_order_id +
+                    '&razorpay_signature=' + response.razorpay_signature;
+            },
+            theme: { color: '#667eea' },
+            modal: {
+                ondismiss: function() {
+                    hideLoading();
+                    showAlert('Payment was cancelled. You can try again.');
+                }
+            }
+        });
+        
+        rzp.on('payment.failed', function(response) {
+            hideLoading();
+            showAlert('Payment failed: ' + response.error.description);
+            setTimeout(() => {
+                window.location.href = '/payment/failed?order_id=' + config.orderId + '&error=' + response.error.code;
+            }, 3000);
+        });
+        
+        payBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            rzp.open();
+        });
+    </script>
+</body>
+</html>

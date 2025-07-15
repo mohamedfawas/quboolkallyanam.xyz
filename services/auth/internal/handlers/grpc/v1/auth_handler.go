@@ -3,15 +3,12 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
@@ -217,18 +214,4 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, req *authpbv1.RefreshTok
 		RefreshToken: result.RefreshToken,
 		ExpiresIn:    result.ExpiresIn,
 	}, nil
-}
-
-func extractUserIDFromMetadata(ctx context.Context) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", fmt.Errorf("no metadata found in context")
-	}
-
-	userIDs := md.Get(constants.ContextKeyUserID)
-	if len(userIDs) == 0 {
-		return "", fmt.Errorf("user ID not found in metadata")
-	}
-
-	return userIDs[0], nil
 }

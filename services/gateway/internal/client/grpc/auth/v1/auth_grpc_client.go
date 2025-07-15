@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
@@ -22,22 +23,31 @@ type authGRPCClient struct {
 	client authpbv1.AuthServiceClient
 }
 
-func NewAuthGRPCClient(ctx context.Context, address string, useTLS bool, tlsConfig *tls.Config) (client.AuthClient, error) {
-	var creds credentials.TransportCredentials
+func NewAuthGRPCClient(
+	ctx context.Context,
+	address string,
+	useTLS bool,
+	tlsConfig *tls.Config) (client.AuthClient, error) {
+	_, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	var opts []grpc.DialOption
 	if useTLS {
-		creds = credentials.NewTLS(tlsConfig)
+		creds := credentials.NewTLS(tlsConfig)
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
-		creds = insecure.NewCredentials()
+		creds := insecure.NewCredentials()
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 	}
 
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(creds))
+	cc, err := grpc.NewClient(address, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create gRPC client: %w", err)
+		return nil, fmt.Errorf("failed to create gRPC client to %s: %w", address, err)
 	}
 
 	return &authGRPCClient{
-		conn:   conn,
-		client: authpbv1.NewAuthServiceClient(conn),
+		conn:   cc,
+		client: authpbv1.NewAuthServiceClient(cc),
 	}, nil
 }
 

@@ -61,3 +61,10 @@ var (
 	ErrSubscriptionPlanNotFound  = errors.New("subscription plan not found")
 	ErrSubscriptionPlanNotActive = errors.New("subscription plan is not active")
 )
+
+// Payment errors
+var (
+	ErrPaymentNotFound         = errors.New("payment not found")
+	ErrPaymentAlreadyCompleted = errors.New("payment already completed")
+	ErrPaymentExpired          = errors.New("payment has expired")
+)

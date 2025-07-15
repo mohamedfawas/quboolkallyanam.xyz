@@ -57,14 +57,14 @@ func (c *Client) Subscribe(subName string, handler messageBroker.MessageHandler)
 	go func() {
 		err := sub.Receive(c.ctx, func(ctx context.Context, msg *pubsub.Message) {
 			if err := handler(msg.Data); err != nil {
-				log.Printf("❌ Handler error: %v", err)
+				log.Printf("Handler error: %v", err)
 				msg.Nack()
 			} else {
 				msg.Ack()
 			}
 		})
 		if err != nil {
-			log.Printf("❌ Subscription error: %v", err)
+			log.Printf("Subscription error: %v", err)
 		}
 	}()
 

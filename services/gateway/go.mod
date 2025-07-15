@@ -10,7 +10,6 @@ go 1.23.4
 
 require (
 	github.com/gin-gonic/gin v1.10.1
-	github.com/google/uuid v1.6.0
 	github.com/mohamedfawas/quboolkallyanam.xyz/api v0.0.0-00010101000000-000000000000
 	github.com/mohamedfawas/quboolkallyanam.xyz/docs/swagger v0.0.0-00010101000000-000000000000
 	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-00010101000000-000000000000
@@ -20,7 +19,6 @@ require (
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/sdk v1.37.0
-	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -49,6 +47,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect

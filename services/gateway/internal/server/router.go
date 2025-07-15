@@ -16,6 +16,7 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 
 	s.registerAuthRoutes(v1)
+	s.registerPaymentRoutes(v1)
 
 }
 
@@ -53,7 +54,17 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 	}
 }
 
-func (s *Server) registerUserRoutes(v1 *gin.RouterGroup)    {}
-func (s *Server) registerAdminRoutes(v1 *gin.RouterGroup)   {}
-func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup) {}
-func (s *Server) registerChatRoutes(v1 *gin.RouterGroup)    {}
+func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup) {
+	payment := v1.Group("/payment")
+	{
+		// Protected payment routes - require user authentication
+		payment.POST("/order",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.paymentHandler.CreatePaymentOrder)
+	}
+}
+
+func (s *Server) registerUserRoutes(v1 *gin.RouterGroup)  {}
+func (s *Server) registerAdminRoutes(v1 *gin.RouterGroup) {}
+func (s *Server) registerChatRoutes(v1 *gin.RouterGroup)  {}

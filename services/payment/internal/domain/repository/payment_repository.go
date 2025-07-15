@@ -8,6 +8,6 @@ import (
 
 type PaymentsRepository interface {
 	CreatePayment(ctx context.Context, payment *entity.Payment) error
-	GetPaymentByID(ctx context.Context, paymentID string) (*entity.Payment, error)
-	UpdatePayment(ctx context.Context, paymentID string, payment *entity.Payment) error
+	GetPaymentDetailsByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (*entity.Payment, error)
+	UpdatePayment(ctx context.Context, payment *entity.Payment) error
 }

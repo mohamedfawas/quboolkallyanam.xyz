@@ -51,7 +51,7 @@ func NewClient(cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("failed to declare exchange: %w", err)
 	}
 
-	log.Println("✅ Connected to RabbitMQ")
+	log.Println("Connected to RabbitMQ")
 	return &Client{
 		conn:     conn,
 		channel:  ch,
@@ -121,7 +121,7 @@ func (c *Client) Subscribe(routingKey string, handler messageBroker.MessageHandl
 	go func() {
 		for d := range msgs {
 			if err := handler(d.Body); err != nil {
-				log.Printf("❌ Error in handler: %v", err)
+				log.Printf("Error in handler: %v", err)
 			}
 		}
 	}()

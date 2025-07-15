@@ -9,16 +9,23 @@ import (
 type paymentUsecase struct {
 	paymentRepository          repository.PaymentsRepository
 	subscriptionPlanRepository repository.SubscriptionPlansRepository
+	subscriptionRepository     repository.SubscriptionsRepository
+	txManager                  repository.TxManager
 	razorpayService            *razorpay.Service
 }
 
 func NewPaymentUsecase(
 	paymentRepository repository.PaymentsRepository,
 	subscriptionPlanRepository repository.SubscriptionPlansRepository,
+	subscriptionRepository repository.SubscriptionsRepository,
+	txManager repository.TxManager,
 	razorpayService *razorpay.Service,
 ) usecase.PaymentUsecase {
-	return &paymentUsecase{paymentRepository: paymentRepository,
+	return &paymentUsecase{
+		paymentRepository:          paymentRepository,
 		subscriptionPlanRepository: subscriptionPlanRepository,
+		subscriptionRepository:     subscriptionRepository,
+		txManager:                  txManager,
 		razorpayService:            razorpayService,
 	}
 }

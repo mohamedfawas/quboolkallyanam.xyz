@@ -43,7 +43,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("🛑 Shutting down server...")
+	log.Println("Shutting down server...")
 	srv.Stop()
-	log.Println("✅ Server stopped")
+	log.Println("Server stopped")
 }

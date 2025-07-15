@@ -8,6 +8,7 @@ option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/payme
 
 service PaymentService {
     rpc CreatePaymentOrder(CreatePaymentOrderRequest) returns (CreatePaymentOrderResponse);
+    rpc VerifyPayment(VerifyPaymentRequest) returns (VerifyPaymentResponse);
 }
 
 message CreatePaymentOrderRequest {
@@ -16,9 +17,23 @@ message CreatePaymentOrderRequest {
 
 message CreatePaymentOrderResponse {
     string order_id = 1;
-    string plan_id = 2;
-    string user_id = 3;
-    string status = 4;
-    google.protobuf.Timestamp created_at = 5;
-    google.protobuf.Timestamp updated_at = 6;
+    string razorpay_order_id = 2;
+    string razorpay_key_id = 3;
+    double amount = 4;
+    string currency = 5;
+    string plan_id = 6;
+    google.protobuf.Timestamp expires_at = 7;
+}
+
+message VerifyPaymentRequest {
+    string razorpay_order_id = 1;
+    string razorpay_payment_id = 2;
+    string razorpay_signature = 3;
+}
+
+message VerifyPaymentResponse {
+    string subscription_id = 1;
+    google.protobuf.Timestamp subscription_start_date = 2;
+    google.protobuf.Timestamp subscription_end_date = 3;
+    string subscription_status = 4;
 }

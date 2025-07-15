@@ -51,4 +51,8 @@ const (
 	PaymentStatusPending   = "pending"
 	PaymentStatusCompleted = "completed"
 	PaymentStatusFailed    = "failed"
+
+	// subscription
+	SubscriptionStatusActive    = "active"
+	SubscriptionStatusCancelled = "cancelled"
 )

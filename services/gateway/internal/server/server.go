@@ -14,13 +14,16 @@ import (
 	// Client imports
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth/v1"
+	paymentGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/payment/v1"
 
 	// Usecase imports
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase"
 	authUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/auth"
+	paymentUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/payment"
 
 	// Handler imports
 	authHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/auth"
+	paymentHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/payment"
 )
 
 type Server struct {
@@ -29,13 +32,16 @@ type Server struct {
 	jwtManager *jwt.JWTManager
 
 	// Interface-based clients (for dependency injection)
-	authClient client.AuthClient
+	authClient    client.AuthClient
+	paymentClient client.PaymentClient
 
 	// Usecases (interface-based)
-	authUsecase usecase.AuthUsecase
+	authUsecase    usecase.AuthUsecase
+	paymentUsecase usecase.PaymentUsecase
 
 	// Handlers
-	authHandler *authHandler.AuthHandler
+	authHandler    *authHandler.AuthHandler
+	paymentHandler *paymentHandler.PaymentHandler
 }
 
 func NewHTTPServer(config *config.Config) (*Server, error) {
@@ -87,6 +93,7 @@ func NewHTTPServer(config *config.Config) (*Server, error) {
 func (s *Server) initClients() error {
 	ctx := context.Background()
 
+	// Initialize Auth gRPC Client
 	authGRPCClient, err := authGRPC.NewAuthGRPCClient(
 		ctx,
 		fmt.Sprintf("localhost:%s", s.config.Services.AuthServicePort),
@@ -99,14 +106,26 @@ func (s *Server) initClients() error {
 
 	s.authClient = authGRPCClient
 
+	// Initialize Payment gRPC Client
+	paymentGRPCClient, err := paymentGRPC.NewPaymentGRPCClient(
+		ctx,
+		fmt.Sprintf("localhost:%s", s.config.Services.PaymentServicePort),
+		false, // useTLS - set to true in production
+		nil,   // tlsConfig
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create payment gRPC client: %w", err)
+	}
+	s.paymentClient = paymentGRPCClient
+
 	// TODO: Add other clients as you implement them
 
 	return nil
 }
 
 func (s *Server) initUsecases() error {
-	// Initialize Auth Usecase
 	s.authUsecase = authUsecase.NewAuthUsecase(s.authClient)
+	s.paymentUsecase = paymentUsecase.NewPaymentUsecase(s.paymentClient, s.config)
 
 	// TODO: Add other usecases as you implement them
 	// s.adminUsecase = adminUsecase.NewAdminUsecase(s.adminClient)
@@ -119,6 +138,7 @@ func (s *Server) initUsecases() error {
 
 func (s *Server) initHandlers() error {
 	s.authHandler = authHandler.NewAuthHandler(s.authUsecase, *s.config)
+	s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase)
 
 	// TODO: Add other handlers as you implement them
 	// s.adminHandler = adminHandler.NewAdminHandler(s.adminUsecase, *s.config)

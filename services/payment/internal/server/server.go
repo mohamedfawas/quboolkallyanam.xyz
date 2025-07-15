@@ -3,26 +3,39 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
-	"net/http"
-	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/payment/razorpay"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/config"
+
+	// Proto imports
+	paymentpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/payment/v1"
+
+	// Repository imports
+	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/adapters/postgres"
+
+	// Use case imports
+	paymentUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/usecase/payments"
+
+	// Handler imports
+	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/handlers/grpc/v1"
+
 	"google.golang.org/grpc"
 )
 
 type Server struct {
 	config          *config.Config
 	grpcServer      *grpc.Server
-	httpServer      *http.Server
 	pgClient        *postgres.Client
 	messagingClient messageBroker.Client
+	razorpayService *razorpay.Service
 }
 
 func NewServer(config *config.Config) (*Server, error) {
@@ -39,89 +52,96 @@ func NewServer(config *config.Config) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
-	logger.Log.Info("✅ Payment Service Connected to PostgreSQL ")
+	log.Println("Payment Service Connected to PostgreSQL")
 
 	var messagingClient messageBroker.Client
-	if config.Environment == "production" {
+	if config.Environment == constants.EnvProduction {
 		ctx := context.Background()
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
 		if err != nil {
+			// Clean up existing connections before returning error
+			pgClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		logger.Log.Info("✅ Payment Service Connected to PubSub")
+		log.Println("Payment Service Connected to PubSub")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
 			ExchangeName: config.RabbitMQ.ExchangeName,
 		})
 		if err != nil {
+			// Clean up existing connections before returning error
+			pgClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		logger.Log.Info("✅ Payment Service Connected to RabbitMQ")
+		log.Println("Payment Service Connected to RabbitMQ")
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		interceptors.UnaryErrorInterceptor(),
+	))
 
-	if config.Environment == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	// Initialize Razorpay service
+	razorpayService := razorpay.NewService(config.Razorpay.KeyID, config.Razorpay.KeySecret)
+	log.Println("Payment Service Connected to Razorpay")
 
-	router := gin.New()
-	router.Use(gin.Recovery())
+	// Initialize repositories
+	paymentsRepo := postgresAdapters.NewPaymentsRepository(pgClient)
+	subscriptionPlansRepo := postgresAdapters.NewSubscriptionPlansRepository(pgClient)
+	subscriptionsRepo := postgresAdapters.NewSubscriptionsRepository(pgClient)
+	txManager := postgresAdapters.NewTxManager(pgClient)
+	// Initialize use cases
+	paymentUC := paymentUsecase.NewPaymentUsecase(
+		paymentsRepo,
+		subscriptionPlansRepo,
+		subscriptionsRepo,
+		txManager,
+		razorpayService,
+	)
 
-	httpServer := &http.Server{
-		Addr:         fmt.Sprintf(":%s", config.HTTP.Port),
-		Handler:      router,
-		ReadTimeout:  time.Duration(config.HTTP.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(config.HTTP.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(config.HTTP.IdleTimeout) * time.Second,
-	}
+	// Initialize and register gRPC handler
+	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC)
+	paymentpbv1.RegisterPaymentServiceServer(grpcServer, paymentHandler)
+
+	log.Println("Payment Service gRPC handlers registered")
 
 	server := &Server{
 		config:          config,
 		grpcServer:      grpcServer,
 		pgClient:        pgClient,
 		messagingClient: messagingClient,
-		httpServer:      httpServer,
+		razorpayService: razorpayService,
 	}
 
 	return server, nil
 }
 
 func (s *Server) Start() error {
-	go func() {
-		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Log.Fatal("failed to start http server", "error", err)
-		}
-	}()
-	logger.Log.Info("✅ Payment Service's HTTP Server started")
-
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.config.GRPC.Port))
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Payment Service gRPC server starting on port %d", s.config.GRPC.Port)
+
 	return s.grpcServer.Serve(listener)
 }
 
 func (s *Server) Stop() {
 	s.grpcServer.GracefulStop()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := s.httpServer.Shutdown(ctx); err != nil {
-		logger.Log.Error("HTTP server forced to shutdown", "error", err)
+	// Close messaging client first
+	if s.messagingClient != nil {
+		if err := s.messagingClient.Close(); err != nil {
+			log.Printf("failed to close messaging client: %v", err)
+		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			logger.Log.Error("failed to close postgres client: %w", err)
+			log.Printf("failed to close postgres client: %v", err)
 		}
 	}
 
-	if s.messagingClient != nil {
-		if err := s.messagingClient.Close(); err != nil {
-			logger.Log.Error("failed to close messaging client", "error", err)
-		}
-	}
-	logger.Log.Info("✅ Payment Service stopped")
+	log.Println("Payment Service stopped")
 }

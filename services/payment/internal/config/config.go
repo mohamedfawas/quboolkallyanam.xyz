@@ -9,7 +9,6 @@ import (
 type Config struct {
 	Environment string         `mapstructure:"environment"`
 	GRPC        GRPCConfig     `mapstructure:"grpc"`
-	HTTP        HTTPConfig     `mapstructure:"http"`
 	Postgres    PostgresConfig `mapstructure:"postgres"`
 	Razorpay    RazorpayConfig `mapstructure:"razorpay"`
 	Email       EmailConfig    `mapstructure:"email"`
@@ -19,13 +18,6 @@ type Config struct {
 
 type GRPCConfig struct {
 	Port int `mapstructure:"port"`
-}
-
-type HTTPConfig struct {
-	Port         string `mapstructure:"port"`
-	ReadTimeout  int    `mapstructure:"read_timeout"`
-	WriteTimeout int    `mapstructure:"write_timeout"`
-	IdleTimeout  int    `mapstructure:"idle_timeout"`
 }
 
 type PostgresConfig struct {
@@ -92,10 +84,6 @@ func bindEnvVars(v *viper.Viper) {
 	keys := []string{
 		"environment",
 		"grpc.port",
-		"http.port",
-		"http.read_timeout",
-		"http.write_timeout",
-		"http.idle_timeout",
 		"postgres.host",
 		"postgres.port",
 		"postgres.user",
@@ -124,11 +112,6 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("environment", "development")
 
 	v.SetDefault("grpc.port", 50055)
-
-	v.SetDefault("http.port", "8082")
-	v.SetDefault("http.read_timeout", 30)
-	v.SetDefault("http.write_timeout", 30)
-	v.SetDefault("http.idle_timeout", 120)
 
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)

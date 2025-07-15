@@ -7,6 +7,6 @@ import (
 )
 
 type PaymentUsecase interface {
-	CreatePaymentOrder(ctx context.Context, userID string, planID string) (*entity.Payment, error)
-	// VerifyPayment(ctx context.Context, orderID string, paymentID string, signature string) error
+	CreatePaymentOrder(ctx context.Context, userID string, planID string) (*entity.PaymentOrderResponse, error)
+	VerifyPayment(ctx context.Context, req *entity.VerifyPaymentRequest) (*entity.VerifyPaymentResponse, error)
 }
