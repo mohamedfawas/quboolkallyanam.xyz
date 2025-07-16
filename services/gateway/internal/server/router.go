@@ -16,7 +16,7 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 	v1 := router.Group("/api/v1")
 
 	s.registerAuthRoutes(v1)
-	s.registerPaymentRoutes(v1)
+	s.registerPaymentRoutes(v1, router)
 
 }
 
@@ -54,14 +54,24 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 	}
 }
 
-func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup) {
-	payment := v1.Group("/payment")
+func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) {
+	// ============= PAYMENT API ROUTES  =============
+	apiPayment := v1.Group("/payment")
 	{
-		// Protected payment routes - require user authentication
-		payment.POST("/order",
+		apiPayment.POST("/order",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.paymentHandler.CreatePaymentOrder)
+	}
+
+	// ============= PAYMENT WEB PAGES (Public) =============
+	payment := router.Group("/payment")
+	{
+
+		payment.GET("/checkout", s.paymentHandler.ShowPaymentPage)
+		payment.POST("/verify", s.paymentHandler.VerifyPayment)
+		payment.GET("/success", s.paymentHandler.ShowSuccessPage)
+		payment.GET("/failed", s.paymentHandler.ShowFailurePage)
 	}
 }
 

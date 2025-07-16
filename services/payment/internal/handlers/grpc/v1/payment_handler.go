@@ -48,13 +48,32 @@ func (h *PaymentHandler) CreatePaymentOrder(ctx context.Context, req *paymentpbv
 	expiresAtPb := timestamppb.New(paymentOrderResponse.ExpiresAt)
 
 	return &paymentpbv1.CreatePaymentOrderResponse{
-		OrderId:         paymentOrderResponse.OrderID,
 		RazorpayOrderId: paymentOrderResponse.RazorpayOrderID,
-		RazorpayKeyId:   paymentOrderResponse.RazorpayKeyID,
 		Amount:          paymentOrderResponse.Amount,
 		Currency:        paymentOrderResponse.Currency,
 		PlanId:          paymentOrderResponse.PlanID,
 		ExpiresAt:       expiresAtPb,
+	}, nil
+}
+
+func (h *PaymentHandler) ShowPaymentPage(ctx context.Context, req *paymentpbv1.ShowPaymentPageRequest) (*paymentpbv1.ShowPaymentPageResponse, error) {
+	response, err := h.paymentUsecase.ShowPaymentPage(ctx, req.RazorpayOrderId)
+	if err != nil {
+		switch {
+		case errors.Is(err, appErrors.ErrPaymentNotFound):
+			return nil, status.Errorf(codes.NotFound, "Payment not found")
+		case errors.Is(err, appErrors.ErrSubscriptionPlanNotFound):
+			return nil, status.Errorf(codes.NotFound, "Subscription plan not found")
+		default:
+			log.Printf("Failed to get payment page data: %v", err)
+			return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+		}
+	}
+
+	return &paymentpbv1.ShowPaymentPageResponse{
+		PlanId:             response.PlanID,
+		DisplayAmount:      response.DisplayAmount,
+		PlanDurationInDays: response.PlanDurationInDays,
 	}, nil
 }
 

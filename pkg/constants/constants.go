@@ -47,10 +47,11 @@ const (
 
 	// payment
 	PaymentMethodRazorpay  = "razorpay"
-	PaymentCurrencyINR     = "INR"
-	PaymentStatusPending   = "pending"
-	PaymentStatusCompleted = "completed"
-	PaymentStatusFailed    = "failed"
+	PaymentCurrencyINR      = "INR"
+	PaymentStatusPending    = "pending"
+	PaymentStatusCompleted  = "completed"
+	PaymentStatusFailed     = "failed"
+	PaymentStatusExpired    = "expired"
 
 	// subscription
 	SubscriptionStatusActive    = "active"

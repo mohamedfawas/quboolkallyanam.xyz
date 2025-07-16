@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	PaymentService_CreatePaymentOrder_FullMethodName = "/payment.v1.PaymentService/CreatePaymentOrder"
+	PaymentService_ShowPaymentPage_FullMethodName    = "/payment.v1.PaymentService/ShowPaymentPage"
 	PaymentService_VerifyPayment_FullMethodName      = "/payment.v1.PaymentService/VerifyPayment"
 )
 
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentServiceClient interface {
 	CreatePaymentOrder(ctx context.Context, in *CreatePaymentOrderRequest, opts ...grpc.CallOption) (*CreatePaymentOrderResponse, error)
+	ShowPaymentPage(ctx context.Context, in *ShowPaymentPageRequest, opts ...grpc.CallOption) (*ShowPaymentPageResponse, error)
 	VerifyPayment(ctx context.Context, in *VerifyPaymentRequest, opts ...grpc.CallOption) (*VerifyPaymentResponse, error)
 }
 
@@ -49,6 +51,16 @@ func (c *paymentServiceClient) CreatePaymentOrder(ctx context.Context, in *Creat
 	return out, nil
 }
 
+func (c *paymentServiceClient) ShowPaymentPage(ctx context.Context, in *ShowPaymentPageRequest, opts ...grpc.CallOption) (*ShowPaymentPageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ShowPaymentPageResponse)
+	err := c.cc.Invoke(ctx, PaymentService_ShowPaymentPage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *paymentServiceClient) VerifyPayment(ctx context.Context, in *VerifyPaymentRequest, opts ...grpc.CallOption) (*VerifyPaymentResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(VerifyPaymentResponse)
@@ -64,6 +76,7 @@ func (c *paymentServiceClient) VerifyPayment(ctx context.Context, in *VerifyPaym
 // for forward compatibility.
 type PaymentServiceServer interface {
 	CreatePaymentOrder(context.Context, *CreatePaymentOrderRequest) (*CreatePaymentOrderResponse, error)
+	ShowPaymentPage(context.Context, *ShowPaymentPageRequest) (*ShowPaymentPageResponse, error)
 	VerifyPayment(context.Context, *VerifyPaymentRequest) (*VerifyPaymentResponse, error)
 	mustEmbedUnimplementedPaymentServiceServer()
 }
@@ -77,6 +90,9 @@ type UnimplementedPaymentServiceServer struct{}
 
 func (UnimplementedPaymentServiceServer) CreatePaymentOrder(context.Context, *CreatePaymentOrderRequest) (*CreatePaymentOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePaymentOrder not implemented")
+}
+func (UnimplementedPaymentServiceServer) ShowPaymentPage(context.Context, *ShowPaymentPageRequest) (*ShowPaymentPageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShowPaymentPage not implemented")
 }
 func (UnimplementedPaymentServiceServer) VerifyPayment(context.Context, *VerifyPaymentRequest) (*VerifyPaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyPayment not implemented")
@@ -120,6 +136,24 @@ func _PaymentService_CreatePaymentOrder_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentService_ShowPaymentPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShowPaymentPageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).ShowPaymentPage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_ShowPaymentPage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).ShowPaymentPage(ctx, req.(*ShowPaymentPageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _PaymentService_VerifyPayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VerifyPaymentRequest)
 	if err := dec(in); err != nil {
@@ -148,6 +182,10 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreatePaymentOrder",
 			Handler:    _PaymentService_CreatePaymentOrder_Handler,
+		},
+		{
+			MethodName: "ShowPaymentPage",
+			Handler:    _PaymentService_ShowPaymentPage_Handler,
 		},
 		{
 			MethodName: "VerifyPayment",

@@ -7,7 +7,6 @@ replace github.com/mohamedfawas/quboolkallyanam.xyz/pkg => ../../pkg
 go 1.23.4
 
 require (
-	github.com/google/uuid v1.6.0
 	github.com/mohamedfawas/quboolkallyanam.xyz/api v0.0.0-00010101000000-000000000000
 	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-00010101000000-000000000000
 	github.com/spf13/viper v1.20.1
@@ -29,6 +28,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

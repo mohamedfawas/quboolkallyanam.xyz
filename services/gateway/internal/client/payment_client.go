@@ -8,4 +8,6 @@ import (
 
 type PaymentClient interface {
 	CreatePaymentOrder(ctx context.Context, req dto.PaymentOrderRequest) (*dto.PaymentOrderResponse, error)
+	ShowPaymentPage(ctx context.Context, req dto.ShowPaymentPageRequest) (*dto.ShowPaymentPageResponse, error)
+	VerifyPayment(ctx context.Context, req dto.VerifyPaymentRequest) (*dto.VerifyPaymentResponse, error)
 }

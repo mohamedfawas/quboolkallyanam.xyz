@@ -74,6 +74,7 @@ func NewHTTPServer(config *config.Config) (*Server, error) {
 
 	router := gin.New()
 	router.Use(gin.Recovery())
+	router.LoadHTMLGlob("internal/web/templates/*")
 
 	server.setupRoutes(router)
 

@@ -186,7 +186,7 @@
             order_id: config.orderId,
             handler: function(response) {
                 showLoading();
-                window.location.href = config.gatewayUrl + '/api/v1/payment/verify?' + 
+                window.location.href = config.gatewayUrl + '/payment/verify?' + 
                     'razorpay_payment_id=' + response.razorpay_payment_id +
                     '&razorpay_order_id=' + response.razorpay_order_id +
                     '&razorpay_signature=' + response.razorpay_signature;
@@ -204,7 +204,8 @@
             hideLoading();
             showAlert('Payment failed: ' + response.error.description);
             setTimeout(() => {
-                window.location.href = '/payment/failed?order_id=' + config.orderId + '&error=' + response.error.code;
+                
+                window.location.href = '/payment/failed?order_id=' + config.orderId + '&error=' + encodeURIComponent(response.error.code || 'payment_failed');
             }, 3000);
         });
         

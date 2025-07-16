@@ -4,9 +4,10 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     plan_id VARCHAR(100) NOT NULL REFERENCES subscription_plans(id),
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active','expired','cancelled')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) NOT NULL DEFAULT 'active' 
+        CHECK (status IN ('active', 'expired', 'cancelled')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions (user_id);

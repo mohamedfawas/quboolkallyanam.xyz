@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - Qubool Kallyanam</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 50px 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .error-icon { font-size: 80px; color: #e74c3c; margin-bottom: 20px; }
+        .title { font-size: 32px; color: #333; margin-bottom: 15px; font-weight: bold; }
+        .subtitle { font-size: 18px; color: #666; margin-bottom: 30px; line-height: 1.5; }
+        .error-details {
+            background: #fff5f5;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #e74c3c;
+        }
+        .error-message { 
+            font-size: 16px; 
+            color: #e74c3c; 
+            margin-bottom: 10px; 
+            font-weight: 500; 
+        }
+        .order-info { 
+            font-size: 14px; 
+            color: #666; 
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 25px;
+            margin: 10px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">❌</div>
+        <h1 class="title">Payment Failed</h1>
+        <p class="subtitle">We're sorry, but your payment could not be processed at this time.</p>
+        
+        <div class="error-details">
+            <div class="error-message">
+                {{if .Error}}
+                    Error: {{.Error}}
+                {{else}}
+                    Payment processing failed
+                {{end}}
+            </div>
+            {{if .OrderID}}
+            <div class="order-info">Order ID: {{.OrderID}}</div>
+            {{end}}
+        </div>
+        
+        <div>
+            {{if .OrderID}}
+            <a href="/payment/checkout?razorpay_order_id={{.OrderID}}" class="btn btn-primary">
+                🔄 Try Again
+            </a>
+            {{end}}
+            <a href="/" class="btn btn-secondary">Go Home</a>
+        </div>
+    </div>
+</body>
+</html>

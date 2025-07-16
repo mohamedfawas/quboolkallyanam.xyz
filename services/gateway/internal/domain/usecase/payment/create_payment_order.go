@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
@@ -13,19 +14,14 @@ func (u *paymentUsecase) CreatePaymentOrder(ctx context.Context, req dto.Payment
 		return nil, err
 	}
 
-	amountInINR := fmt.Sprintf("%s %.2f", paymentOrder.Currency, paymentOrder.Amount)
+	paymentURL := fmt.Sprintf("%s/payment/checkout?razorpay_order_id=%s", u.config.BaseURL, paymentOrder.RazorpayOrderID)
+	displayAmount := fmt.Sprintf("%s %.2f", constants.PaymentCurrencyINR, paymentOrder.Amount)
 
-	paymentURL := fmt.Sprintf("%s/payment/checkout?order_id=%s", u.config.BaseURL, paymentOrder.OrderID)
-
-	createPaymentOrderResponse := &dto.CreatePaymentOrderResponse{
-		OrderID:         paymentOrder.OrderID,
+	return &dto.CreatePaymentOrderResponse{
 		PaymentURL:      paymentURL,
-		AmountInINR:     amountInINR,
 		RazorpayOrderID: paymentOrder.RazorpayOrderID,
-		RazorpayKeyID:   paymentOrder.RazorpayKeyID,
+		Amount:          displayAmount,
 		PlanID:          paymentOrder.PlanID,
 		ExpiresAt:       paymentOrder.ExpiresAt,
-	}
-
-	return createPaymentOrderResponse, nil
+	}, nil
 }

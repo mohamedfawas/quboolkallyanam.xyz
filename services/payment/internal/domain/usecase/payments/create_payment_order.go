@@ -7,10 +7,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 )
 
@@ -32,12 +30,10 @@ func (u *paymentUsecase) CreatePaymentOrder(ctx context.Context, userID string, 
 		return nil, err
 	}
 
-	orderID := "order_" + uuid.New().String()
 	now := time.Now().UTC()
 	expiresAt := now.Add(time.Minute * 15)
 
 	payment := &entity.Payment{
-		OrderID:           orderID,
 		UserID:            userID,
 		PlanID:            planID,
 		RazorpayOrderID:   razorpayOrderID,
@@ -56,15 +52,12 @@ func (u *paymentUsecase) CreatePaymentOrder(ctx context.Context, userID string, 
 		return nil, err
 	}
 
-	expiryTimeInIST := timeutil.ToIST(expiresAt)
 	paymentOrderResponse := &entity.PaymentOrderResponse{
-		OrderID:         orderID,
 		RazorpayOrderID: razorpayOrderID,
-		RazorpayKeyID:   u.razorpayService.KeyID(),
 		Amount:          plan.Amount,
 		Currency:        constants.PaymentCurrencyINR,
 		PlanID:          planID,
-		ExpiresAt:       expiryTimeInIST,
+		ExpiresAt:       expiresAt,
 	}
 
 	return paymentOrderResponse, nil

@@ -67,6 +67,26 @@ func (c *paymentGRPCClient) CreatePaymentOrder(ctx context.Context, req dto.Paym
 	return MapCreatePaymentOrderResponse(grpcResp), nil
 }
 
+func (c *paymentGRPCClient) ShowPaymentPage(ctx context.Context, req dto.ShowPaymentPageRequest) (*dto.ShowPaymentPageResponse, error) {
+	grpcReq := MapShowPaymentPageRequest(req)
+	grpcResp, err := c.client.ShowPaymentPage(ctx, grpcReq)
+	if err != nil {
+		log.Printf("ShowPaymentPage error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapShowPaymentPageResponse(grpcResp), nil
+}
+
+func (c *paymentGRPCClient) VerifyPayment(ctx context.Context, req dto.VerifyPaymentRequest) (*dto.VerifyPaymentResponse, error) {
+	grpcReq := MapVerifyPaymentRequest(req)
+	grpcResp, err := c.client.VerifyPayment(ctx, grpcReq)
+	if err != nil {
+		log.Printf("VerifyPayment error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapVerifyPaymentResponse(grpcResp), nil
+}
+
 func (c *paymentGRPCClient) Close() error {
 	return c.conn.Close()
 }
