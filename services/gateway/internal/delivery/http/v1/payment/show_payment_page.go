@@ -8,6 +8,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @Summary Show payment page
+// @Description Show payment page
+// @Tags Payment
+// @Accept json
+// @Produce html
+// @Param razorpay_order_id query string true "Razorpay order ID"
+// @Success 200 {string} string "Success"
+// @Router /api/v1/payment/checkout [get]
 func (h *PaymentHandler) ShowPaymentPage(c *gin.Context) {
 	razorpayOrderID := c.Query("razorpay_order_id")
 	if razorpayOrderID == "" {

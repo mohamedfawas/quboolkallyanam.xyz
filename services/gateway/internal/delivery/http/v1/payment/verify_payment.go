@@ -10,6 +10,16 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
+// @Summary Verify payment
+// @Description Verify payment
+// @Tags Payment
+// @Accept json
+// @Produce html
+// @Param razorpay_order_id query string true "Razorpay order ID"
+// @Param razorpay_payment_id query string true "Razorpay payment ID"
+// @Param razorpay_signature query string true "Razorpay signature"
+// @Success 200 {string} string "Success"
+// @Router /api/v1/payment/verify [get]
 func (h *PaymentHandler) VerifyPayment(c *gin.Context) {
 
 	req := dto.VerifyPaymentRequest{
