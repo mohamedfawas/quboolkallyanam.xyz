@@ -29,9 +29,12 @@ message ShowPaymentPageRequest {
 }
 
 message ShowPaymentPageResponse { 
-    string plan_id = 1;
-    string display_amount = 2;
-    int32 plan_duration_in_days = 3;
+    string razorpay_order_id = 1;
+    string razorpay_key_id = 2;
+    string plan_id = 3;
+    int64 amount = 4;
+    string display_amount = 5;
+    int32 plan_duration_in_days = 6;
 }
 
 message VerifyPaymentRequest {

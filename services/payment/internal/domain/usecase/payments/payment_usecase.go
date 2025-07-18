@@ -2,6 +2,7 @@ package payments
 
 import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/payment/razorpay"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/event"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/repository"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/usecase"
 )
@@ -12,6 +13,7 @@ type paymentUsecase struct {
 	subscriptionRepository     repository.SubscriptionsRepository
 	txManager                  repository.TxManager
 	razorpayService            *razorpay.Service
+	eventPublisher             event.EventPublisher
 }
 
 func NewPaymentUsecase(
@@ -20,6 +22,7 @@ func NewPaymentUsecase(
 	subscriptionRepository repository.SubscriptionsRepository,
 	txManager repository.TxManager,
 	razorpayService *razorpay.Service,
+	eventPublisher event.EventPublisher,
 ) usecase.PaymentUsecase {
 	return &paymentUsecase{
 		paymentRepository:          paymentRepository,
@@ -27,5 +30,6 @@ func NewPaymentUsecase(
 		subscriptionRepository:     subscriptionRepository,
 		txManager:                  txManager,
 		razorpayService:            razorpayService,
+		eventPublisher:             eventPublisher,
 	}
 }

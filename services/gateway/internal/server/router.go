@@ -69,7 +69,7 @@ func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) 
 	{
 
 		payment.GET("/checkout", s.paymentHandler.ShowPaymentPage)
-		payment.POST("/verify", s.paymentHandler.VerifyPayment)
+		payment.GET("/verify", s.paymentHandler.VerifyPayment)
 		payment.GET("/success", s.paymentHandler.ShowSuccessPage)
 		payment.GET("/failed", s.paymentHandler.ShowFailurePage)
 	}

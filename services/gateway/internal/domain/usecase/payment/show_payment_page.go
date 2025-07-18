@@ -3,6 +3,7 @@ package payment
 import (
 	"context"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
@@ -16,9 +17,15 @@ func (u *paymentUsecase) ShowPaymentPage(ctx context.Context, razorpayOrderID st
 		return nil, err
 	}
 
-	// Add gateway-specific data
-	response.RazorpayOrderID = razorpayOrderID
-	response.GatewayURL = u.config.BaseURL
-
-	return response, nil
+	gatewayURL := u.config.BaseURL + constants.HTTPHandlerVersionV1
+	paymentPageResponse := &dto.ShowPaymentPageResponse{
+		RazorpayOrderID:    response.RazorpayOrderID,
+		RazorpayKeyID:      response.RazorpayKeyID,
+		PlanID:             response.PlanID,
+		Amount:             response.Amount,
+		DisplayAmount:      response.DisplayAmount,
+		PlanDurationInDays: response.PlanDurationInDays,
+		GatewayURL:         gatewayURL,
+	}
+	return paymentPageResponse, nil
 }

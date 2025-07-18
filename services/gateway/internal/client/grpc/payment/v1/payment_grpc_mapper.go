@@ -31,13 +31,12 @@ func MapShowPaymentPageRequest(req dto.ShowPaymentPageRequest) *paymentpbv1.Show
 
 func MapShowPaymentPageResponse(resp *paymentpbv1.ShowPaymentPageResponse) *dto.ShowPaymentPageResponse {
 	return &dto.ShowPaymentPageResponse{
-		RazorpayOrderID:    "", // Will be set in usecase
-		RazorpayKeyID:      "", // Will be set in usecase
+		RazorpayOrderID:    resp.RazorpayOrderId,
+		RazorpayKeyID:      resp.RazorpayKeyId,
 		PlanID:             resp.PlanId,
-		Amount:             0, // Will be set in usecase
+		Amount:             resp.Amount,
 		DisplayAmount:      resp.DisplayAmount,
 		PlanDurationInDays: int(resp.PlanDurationInDays),
-		GatewayURL:         "", // Will be set in usecase
 	}
 }
 
@@ -53,8 +52,8 @@ func MapVerifyPaymentRequest(req dto.VerifyPaymentRequest) *paymentpbv1.VerifyPa
 func MapVerifyPaymentResponse(resp *paymentpbv1.VerifyPaymentResponse) *dto.VerifyPaymentResponse {
 	return &dto.VerifyPaymentResponse{
 		SubscriptionID:        resp.SubscriptionId,
-		SubscriptionStartDate: resp.SubscriptionStartDate.AsTime().Format("2006-01-02 15:04:05"),
-		SubscriptionEndDate:   resp.SubscriptionEndDate.AsTime().Format("2006-01-02 15:04:05"),
+		SubscriptionStartDate: resp.SubscriptionStartDate.AsTime(),
+		SubscriptionEndDate:   resp.SubscriptionEndDate.AsTime(),
 		SubscriptionStatus:    resp.SubscriptionStatus,
 	}
 }

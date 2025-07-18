@@ -5,10 +5,12 @@ import (
 	"errors"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	paymentEvents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/payment"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 	"gorm.io/gorm"
@@ -20,7 +22,11 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 		req.RazorpayPaymentID,
 		req.RazorpaySignature); err != nil {
 		log.Printf("failed to verify payment signature: %v", err)
-		return nil, err
+		// Check if it's a signature mismatch vs other errors
+		if strings.Contains(err.Error(), "signature mismatch") {
+			return nil, appErrors.ErrPaymentSignatureInvalid
+		}
+		return nil, appErrors.ErrPaymentProcessingFailed
 	}
 
 	verifyPaymentResponse := &entity.VerifyPaymentResponse{
@@ -29,6 +35,8 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 		SubscriptionEndDate:   time.Time{},
 		SubscriptionStatus:    "",
 	}
+
+	var paymentVerifiedEvent paymentEvents.PaymentVerified
 
 	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		payment, err := u.paymentRepository.GetPaymentDetailsByRazorpayOrderID(txCtx, req.RazorpayOrderID)
@@ -112,6 +120,15 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 		verifyPaymentResponse.SubscriptionEndDate = timeutil.ToIST(newSubscription.EndDate)
 		verifyPaymentResponse.SubscriptionStatus = newSubscription.Status
 
+		paymentVerifiedEvent = paymentEvents.PaymentVerified{
+			UserID:              payment.UserID,
+			SubscriptionID:      strconv.FormatInt(newSubscription.ID, 10),
+			SubscriptionEndDate: newSubscription.EndDate,
+			PlanID:              payment.PlanID,
+			PaymentID:           payment.RazorpayPaymentID,
+			Timestamp:           time.Now().UTC(),
+		}
+
 		log.Printf("Payment verified and subscription created successfully for user %s", payment.UserID)
 		return nil
 	})
@@ -119,6 +136,13 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 	if err != nil {
 		log.Printf("failed to verify payment for razorpay order %s: %v", req.RazorpayOrderID, err)
 		return nil, err
+	}
+
+	if u.eventPublisher != nil {
+		if err := u.eventPublisher.PublishPaymentVerified(ctx, paymentVerifiedEvent); err != nil {
+			log.Printf("failed to publish payment verified event: %v", err)
+			// Note: We don't return error here as the payment was successful
+		}
 	}
 
 	return verifyPaymentResponse, nil

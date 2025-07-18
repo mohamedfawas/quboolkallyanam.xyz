@@ -27,7 +27,6 @@ func UnaryErrorInterceptor() grpc.UnaryServerInterceptor {
 		return nil, st.Err()
 	}
 }
-
 func mapAppErrorToGRPCStatus(err error) *status.Status {
 	switch {
 	// Authentication errors
@@ -61,6 +60,10 @@ func mapAppErrorToGRPCStatus(err error) *status.Status {
 		return status.New(codes.NotFound, "Registration not found")
 	case errors.Is(err, appErrors.ErrOTPNotFound):
 		return status.New(codes.NotFound, "OTP not found")
+	case errors.Is(err, appErrors.ErrPaymentNotFound):
+		return status.New(codes.NotFound, "Payment not found")
+	case errors.Is(err, appErrors.ErrSubscriptionPlanNotFound):
+		return status.New(codes.NotFound, "Subscription plan not found")
 
 	// Conflict errors
 	case errors.Is(err, appErrors.ErrEmailAlreadyExists):
@@ -79,10 +82,26 @@ func mapAppErrorToGRPCStatus(err error) *status.Status {
 		return status.New(codes.InvalidArgument, "Invalid input")
 	case errors.Is(err, appErrors.ErrInvalidOTP):
 		return status.New(codes.InvalidArgument, "Invalid OTP")
+	case errors.Is(err, appErrors.ErrPaymentSignatureInvalid):
+		return status.New(codes.InvalidArgument, "Payment verification failed")
+
+	// Payment state errors
+	case errors.Is(err, appErrors.ErrPaymentAlreadyCompleted):
+		return status.New(codes.FailedPrecondition, "Payment already completed")
+	case errors.Is(err, appErrors.ErrPaymentExpired):
+		return status.New(codes.FailedPrecondition, "Payment has expired")
+	case errors.Is(err, appErrors.ErrSubscriptionPlanNotActive):
+		return status.New(codes.FailedPrecondition, "Subscription plan is not active")
 
 	// Account state errors
 	case errors.Is(err, appErrors.ErrAccountNotVerified):
 		return status.New(codes.FailedPrecondition, "Account not verified")
+
+	// Payment processing errors
+	case errors.Is(err, appErrors.ErrRazorpayOrderCreation):
+		return status.New(codes.Unavailable, "Payment service temporarily unavailable")
+	case errors.Is(err, appErrors.ErrPaymentProcessingFailed):
+		return status.New(codes.Internal, "Payment processing failed")
 
 	default:
 		// Check if it's already a gRPC status error

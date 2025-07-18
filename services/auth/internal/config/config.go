@@ -11,7 +11,6 @@ type Config struct {
 	GRPC        GRPCConfig     `mapstructure:"grpc"`
 	Postgres    PostgresConfig `mapstructure:"postgres"`
 	Redis       RedisConfig    `mapstructure:"redis"`
-	Email       EmailConfig    `mapstructure:"email"`
 	Admin       AdminConfig    `mapstructure:"admin"`
 	RabbitMQ    RabbitMQConfig `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig   `mapstructure:"pubsub"`
@@ -37,15 +36,6 @@ type RedisConfig struct {
 	Port     int    `mapstructure:"port"`
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
-}
-
-type EmailConfig struct {
-	SMTPHost     string `mapstructure:"smtp_host"`
-	SMTPPort     int    `mapstructure:"smtp_port"`
-	SMTPUsername string `mapstructure:"smtp_username"`
-	SMTPPassword string `mapstructure:"smtp_password"`
-	FromEmail    string `mapstructure:"from_email"`
-	FromName     string `mapstructure:"from_name"`
 }
 
 type AdminConfig struct {
@@ -123,12 +113,6 @@ func bindEnvVars(v *viper.Viper) {
 		"redis.port",
 		"redis.password",
 		"redis.db",
-		"email.smtp_host",
-		"email.smtp_port",
-		"email.smtp_username",
-		"email.smtp_password",
-		"email.from_email",
-		"email.from_name",
 		"admin.default_admin_email",
 		"admin.default_admin_password",
 		"rabbitmq.dsn",
@@ -158,19 +142,12 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("postgres.password", "postgres")
 	v.SetDefault("postgres.dbname", "qubool_kallyanam_auth")
 	v.SetDefault("postgres.sslmode", "disable")
-	v.SetDefault("postgres.timezone", "Asia/Kolkata")
+	v.SetDefault("postgres.timezone", "UTC")
 
 	v.SetDefault("redis.host", "localhost")
 	v.SetDefault("redis.port", 6379)
 	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
-
-	v.SetDefault("email.smtp_host", "smtp.gmail.com")
-	v.SetDefault("email.smtp_port", 587)
-	v.SetDefault("email.smtp_username", "")
-	v.SetDefault("email.smtp_password", "")
-	v.SetDefault("email.from_email", "noreply@qubool-kallyanam.xyz")
-	v.SetDefault("email.from_name", "Qubool Kallyanam")
 
 	v.SetDefault("admin.default_admin_email", "adminquboolkallyanam@gmail.com")
 	v.SetDefault("admin.default_admin_password", "Admin@123")

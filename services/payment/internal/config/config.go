@@ -119,7 +119,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("postgres.password", "postgres")
 	v.SetDefault("postgres.dbname", "qubool_kallyanam_payment")
 	v.SetDefault("postgres.sslmode", "disable")
-	v.SetDefault("postgres.timezone", "Asia/Kolkata")
+	v.SetDefault("postgres.timezone", "UTC")
 
 	v.SetDefault("razorpay.key_id", "")
 	v.SetDefault("razorpay.key_secret", "")

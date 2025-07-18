@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging/pubsub"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messaging/rabbitmq"
+	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/config"
 	"google.golang.org/grpc"
 )
@@ -18,7 +19,7 @@ type Server struct {
 	config          *config.Config
 	grpcServer      *grpc.Server
 	pgClient        *postgres.Client
-	messagingClient messaging.Client
+	messagingClient messageBroker.Client
 }
 
 func NewServer(config *config.Config) (*Server, error) {
@@ -38,8 +39,8 @@ func NewServer(config *config.Config) (*Server, error) {
 	}
 	logger.Log.Info("✅ User Service Connected to PostgreSQL ")
 
-	var messagingClient messaging.Client
-	if config.Environment == "production" {
+	var messagingClient messageBroker.Client
+	if config.Environment == constants.EnvProduction {
 		ctx := context.Background()
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
 		if err != nil {
@@ -85,7 +86,6 @@ func (s *Server) Start() error {
 func (s *Server) Stop() {
 	s.grpcServer.GracefulStop()
 
-	// Close messaging client first
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
 			logger.Log.Error("failed to close messaging client", "error", err)

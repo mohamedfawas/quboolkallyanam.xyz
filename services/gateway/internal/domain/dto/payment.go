@@ -37,16 +37,16 @@ type ShowPaymentPageResponse struct {
 }
 
 type VerifyPaymentRequest struct {
-	RazorpayOrderID   string `json:"razorpay_order_id" form:"razorpay_order_id" binding:"required"`
-	RazorpayPaymentID string `json:"razorpay_payment_id" form:"razorpay_payment_id" binding:"required"`
-	RazorpaySignature string `json:"razorpay_signature" form:"razorpay_signature" binding:"required"`
+	RazorpayOrderID   string `json:"razorpay_order_id" binding:"required"`
+	RazorpayPaymentID string `json:"razorpay_payment_id" binding:"required"`
+	RazorpaySignature string `json:"razorpay_signature" binding:"required"`
 }
 
 type VerifyPaymentResponse struct {
-	SubscriptionID        string `json:"subscription_id"`
-	SubscriptionStartDate string `json:"subscription_start_date"`
-	SubscriptionEndDate   string `json:"subscription_end_date"`
-	SubscriptionStatus    string `json:"subscription_status"`
+	SubscriptionID        string    `json:"subscription_id"`
+	SubscriptionStartDate time.Time `json:"subscription_start_date"`
+	SubscriptionEndDate   time.Time `json:"subscription_end_date"`
+	SubscriptionStatus    string    `json:"subscription_status"`
 }
 
 type PaymentPageData struct {
@@ -62,10 +62,10 @@ type PaymentPageData struct {
 }
 
 type PaymentSuccessData struct {
-	OrderID    string `json:"order_id"`
-	PaymentID  string `json:"payment_id"`
-	Amount     string `json:"amount"`
-	ValidUntil string `json:"valid_until"`
+	SubscriptionID        string `json:"subscription_id"`
+	SubscriptionStartDate string `json:"subscription_start_date"`
+	SubscriptionEndDate   string `json:"subscription_end_date"`
+	SubscriptionStatus    string `json:"subscription_status"`
 }
 
 type PaymentFailureData struct {

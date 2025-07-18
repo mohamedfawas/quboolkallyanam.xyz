@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -25,7 +26,15 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	srv, err := server.NewServer(cfg)
+	// Create cancellable context for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Catch SIGINT / SIGTERM
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	srv, err := server.NewServer(ctx, cfg)
 	if err != nil {
 		log.Fatalf("Failed to create server: %v", err)
 	}
@@ -39,10 +48,8 @@ func main() {
 	}()
 	log.Println("Auth Service Server started")
 
-	quit := make(chan os.Signal, 1)
-
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+	cancel()
 
 	log.Println("Shutting down server...")
 	srv.Stop()

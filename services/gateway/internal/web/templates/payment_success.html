@@ -42,7 +42,6 @@
         }
         .detail-label { color: #666; }
         .detail-value { color: #333; font-weight: bold; }
-        .amount { color: #4CAF50; font-size: 24px; font-weight: bold; }
         .footer-note {
             background: #e8f5e8;
             border-radius: 8px;
@@ -57,29 +56,29 @@
     <div class="container">
         <div class="success-icon">✅</div>
         <h1 class="title">Payment Successful!</h1>
-        <p class="subtitle">Congratulations! Your premium membership has been activated successfully.</p>
+        <p class="subtitle">Congratulations! Your subscription has been activated successfully.</p>
         
         <div class="details">
             <div class="detail-row">
-                <span class="detail-label">Amount Paid:</span>
-                <span class="detail-value amount">₹{{.Amount}}</span>
+                <span class="detail-label">Subscription ID:</span>
+                <span class="detail-value">{{.SubscriptionID}}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Order ID:</span>
-                <span class="detail-value">{{.OrderID}}</span>
+                <span class="detail-label">Start Date:</span>
+                <span class="detail-value">{{.SubscriptionStartDate}}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Payment ID:</span>
-                <span class="detail-value">{{.PaymentID}}</span>
+                <span class="detail-label">End Date:</span>
+                <span class="detail-value">{{.SubscriptionEndDate}}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Valid Until:</span>
-                <span class="detail-value">{{.ValidUntil}}</span>
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">{{.SubscriptionStatus}}</span>
             </div>
         </div>
         
         <div class="footer-note">
-            Your payment has been processed successfully. Please save this information for your records.
+            Your subscription details are below. Please save this information for your records.
         </div>
     </div>
 </body>

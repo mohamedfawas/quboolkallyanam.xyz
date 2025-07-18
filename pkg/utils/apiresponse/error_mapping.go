@@ -38,6 +38,16 @@ var ErrorCodeMap = map[error]string{
 	appErrors.ErrAdminNotFound:        "ADMIN_NOT_FOUND",
 	appErrors.ErrAdminAccountDisabled: "ADMIN_ACCOUNT_DISABLED",
 
+	// Payment errors
+	appErrors.ErrPaymentNotFound:           "PAYMENT_NOT_FOUND",
+	appErrors.ErrPaymentAlreadyCompleted:   "PAYMENT_ALREADY_COMPLETED",
+	appErrors.ErrPaymentExpired:            "PAYMENT_EXPIRED",
+	appErrors.ErrPaymentSignatureInvalid:   "PAYMENT_VERIFICATION_FAILED",
+	appErrors.ErrRazorpayOrderCreation:     "PAYMENT_SERVICE_UNAVAILABLE",
+	appErrors.ErrPaymentProcessingFailed:   "PAYMENT_PROCESSING_FAILED",
+	appErrors.ErrSubscriptionPlanNotFound:  "SUBSCRIPTION_PLAN_NOT_FOUND",
+	appErrors.ErrSubscriptionPlanNotActive: "SUBSCRIPTION_PLAN_NOT_ACTIVE",
+
 	// System errors
 	appErrors.ErrInternalServerError: "INTERNAL_SERVER_ERROR",
 	appErrors.ErrUnauthorized:        "UNAUTHORIZED",
@@ -64,9 +74,20 @@ var UserFriendlyMessages = map[error]string{
 	appErrors.ErrOTPNotFound:                 "OTP not found. Please request a new one.",
 	appErrors.ErrAdminNotFound:               "Admin account not found.",
 	appErrors.ErrAdminAccountDisabled:        "Admin account is disabled.",
-	appErrors.ErrInternalServerError:         "Something went wrong. Please try again later.",
-	appErrors.ErrUnauthorized:                "You are not authorized to perform this action.",
-	appErrors.ErrForbidden:                   "Access denied.",
+
+	// Payment error messages
+	appErrors.ErrPaymentNotFound:           "Payment not found. Please check your payment details.",
+	appErrors.ErrPaymentAlreadyCompleted:   "This payment has already been completed.",
+	appErrors.ErrPaymentExpired:            "Payment link has expired. Please create a new payment order.",
+	appErrors.ErrPaymentSignatureInvalid:   "Payment verification failed. Please try again.",
+	appErrors.ErrRazorpayOrderCreation:     "Payment service is temporarily unavailable. Please try again later.",
+	appErrors.ErrPaymentProcessingFailed:   "Payment processing failed. Please try again.",
+	appErrors.ErrSubscriptionPlanNotFound:  "Selected subscription plan not found.",
+	appErrors.ErrSubscriptionPlanNotActive: "Selected subscription plan is no longer available.",
+
+	appErrors.ErrInternalServerError: "Something went wrong. Please try again later.",
+	appErrors.ErrUnauthorized:        "You are not authorized to perform this action.",
+	appErrors.ErrForbidden:           "Access denied.",
 }
 
 // mapErrorToResponse maps errors to HTTP status codes and error info
@@ -145,16 +166,23 @@ func getHTTPStatusForAppError(err error) int {
 		appErrors.ErrExpiredToken, appErrors.ErrInvalidRefreshToken:
 		return http.StatusUnauthorized
 	case appErrors.ErrUserNotFound, appErrors.ErrAdminNotFound,
-		appErrors.ErrPendingRegistrationNotFound, appErrors.ErrOTPNotFound:
+		appErrors.ErrPendingRegistrationNotFound, appErrors.ErrOTPNotFound,
+		appErrors.ErrPaymentNotFound, appErrors.ErrSubscriptionPlanNotFound:
 		return http.StatusNotFound
 	case appErrors.ErrEmailAlreadyExists, appErrors.ErrPhoneAlreadyExists:
 		return http.StatusConflict
 	case appErrors.ErrInvalidEmail, appErrors.ErrInvalidPhoneNumber,
-		appErrors.ErrInvalidPassword, appErrors.ErrInvalidInput, appErrors.ErrInvalidOTP:
+		appErrors.ErrInvalidPassword, appErrors.ErrInvalidInput, appErrors.ErrInvalidOTP,
+		appErrors.ErrPaymentSignatureInvalid:
 		return http.StatusBadRequest
 	case appErrors.ErrAccountDisabled, appErrors.ErrAccountBlocked,
 		appErrors.ErrAdminAccountDisabled:
 		return http.StatusForbidden
+	case appErrors.ErrPaymentAlreadyCompleted, appErrors.ErrPaymentExpired,
+		appErrors.ErrSubscriptionPlanNotActive:
+		return http.StatusConflict
+	case appErrors.ErrRazorpayOrderCreation:
+		return http.StatusServiceUnavailable
 	case appErrors.ErrUnauthorized:
 		return http.StatusUnauthorized
 	case appErrors.ErrForbidden:

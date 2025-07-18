@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	razorpay "github.com/razorpay/razorpay-go"
 )
 
@@ -45,13 +46,13 @@ func (s *Service) CreateOrder(amount float64, currency string) (string, error) {
 	resp, err := s.client.Order.Create(data, nil)
 	if err != nil {
 		log.Printf("razorpay: create order failed: %v", err)
-		return "", fmt.Errorf("razorpay: create order failed: %w", err)
+		return "", appErrors.ErrRazorpayOrderCreation
 	}
 
 	id, ok := resp["id"].(string)
 	if !ok {
 		log.Printf("razorpay: invalid order id in response")
-		return "", fmt.Errorf("razorpay: invalid order id in response")
+		return "", appErrors.ErrRazorpayOrderCreation
 	}
 
 	return id, nil
@@ -65,7 +66,7 @@ func (s *Service) VerifySignature(orderID, paymentID, signature string) error {
 	expected := hex.EncodeToString(mac.Sum(nil))
 	if expected != signature {
 		log.Printf("razorpay: signature mismatch: expected %s, got %s", expected, signature)
-		return fmt.Errorf("razorpay: signature mismatch")
+		return appErrors.ErrPaymentSignatureInvalid
 	}
 	return nil
 }

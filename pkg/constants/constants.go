@@ -16,6 +16,9 @@ const (
 	ServiceChat    = "chat"
 	Env            = "env"
 
+	// HTTP Handler Versions
+	HTTPHandlerVersionV1 = "/api/v1"
+
 	// Auth
 	ContextKeyUserID      = "user_id"
 	ContextKeyRole        = "role"
@@ -47,13 +50,17 @@ const (
 
 	// payment
 	PaymentMethodRazorpay  = "razorpay"
-	PaymentCurrencyINR      = "INR"
-	PaymentStatusPending    = "pending"
-	PaymentStatusCompleted  = "completed"
-	PaymentStatusFailed     = "failed"
-	PaymentStatusExpired    = "expired"
+	PaymentCurrencyINR     = "INR"
+	PaymentStatusPending   = "pending"
+	PaymentStatusCompleted = "completed"
+	PaymentStatusFailed    = "failed"
+	PaymentStatusExpired   = "expired"
 
 	// subscription
 	SubscriptionStatusActive    = "active"
 	SubscriptionStatusCancelled = "cancelled"
+
+	// Events
+	EventUserPaymentVerified = "user.payment.verified"
+	EventUserOTPRequested    = "user.otp.requested"
 )

@@ -153,30 +153,29 @@
             amount: {{.Amount}},
             planId: '{{.PlanID}}',
             planDurationInDays: {{.PlanDurationInDays}},
-            displayAmount: '{{.DisplayAmount}}',
-            gatewayUrl: '{{.GatewayURL}}'
+            displayAmount: '{{.DisplayAmount}}'
         };
-        
+
         const payBtn = document.getElementById('payBtn');
         const loading = document.getElementById('loading');
         const alert = document.getElementById('alert');
-        
+
         function showAlert(message, type = 'error') {
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
             alert.style.display = 'block';
         }
-        
+
         function showLoading() {
             payBtn.style.display = 'none';
             loading.style.display = 'block';
         }
-        
+
         function hideLoading() {
             payBtn.style.display = 'block';
             loading.style.display = 'none';
         }
-        
+
         const rzp = new Razorpay({
             key: config.keyId,
             amount: config.amount,
@@ -186,10 +185,14 @@
             order_id: config.orderId,
             handler: function(response) {
                 showLoading();
-                window.location.href = config.gatewayUrl + '/payment/verify?' + 
-                    'razorpay_payment_id=' + response.razorpay_payment_id +
-                    '&razorpay_order_id=' + response.razorpay_order_id +
-                    '&razorpay_signature=' + response.razorpay_signature;
+                
+                // Simple redirect-based verification (industry standard)
+                const verifyUrl = `/payment/verify?` +
+                    `razorpay_payment_id=${encodeURIComponent(response.razorpay_payment_id)}&` +
+                    `razorpay_order_id=${encodeURIComponent(response.razorpay_order_id)}&` +
+                    `razorpay_signature=${encodeURIComponent(response.razorpay_signature)}`;
+                
+                window.location.href = verifyUrl;
             },
             theme: { color: '#667eea' },
             modal: {
@@ -199,16 +202,16 @@
                 }
             }
         });
-        
+
         rzp.on('payment.failed', function(response) {
             hideLoading();
             showAlert('Payment failed: ' + response.error.description);
             setTimeout(() => {
-                
-                window.location.href = '/payment/failed?order_id=' + config.orderId + '&error=' + encodeURIComponent(response.error.code || 'payment_failed');
+                window.location.href = '/payment/failed?order_id=' + config.orderId + 
+                    '&error=' + encodeURIComponent(response.error.code || 'payment_failed');
             }, 3000);
         });
-        
+
         payBtn.addEventListener('click', function(e) {
             e.preventDefault();
             rzp.open();

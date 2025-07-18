@@ -13,6 +13,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/payment/razorpay"
+	messageBrokerAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/adapters/messageBroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/config"
 
 	// Proto imports
@@ -90,6 +91,9 @@ func NewServer(config *config.Config) (*Server, error) {
 	subscriptionPlansRepo := postgresAdapters.NewSubscriptionPlansRepository(pgClient)
 	subscriptionsRepo := postgresAdapters.NewSubscriptionsRepository(pgClient)
 	txManager := postgresAdapters.NewTxManager(pgClient)
+
+	eventPublisher := messageBrokerAdapters.NewEventPublisher(messagingClient)
+
 	// Initialize use cases
 	paymentUC := paymentUsecase.NewPaymentUsecase(
 		paymentsRepo,
@@ -97,6 +101,7 @@ func NewServer(config *config.Config) (*Server, error) {
 		subscriptionsRepo,
 		txManager,
 		razorpayService,
+		eventPublisher,
 	)
 
 	// Initialize and register gRPC handler

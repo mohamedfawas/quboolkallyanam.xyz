@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/notifications/smtp"
+	authevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/auth"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
@@ -82,17 +81,14 @@ func (u *pendingRegistrationUsecase) RegisterUser(ctx context.Context,
 		return err
 	}
 
-	if err := u.smtpClient.SendEmailByType(smtp.EmailRequest{
-		To:      req.Email,
-		Type:    smtp.EmailTypeOTPVerification,
-		Subject: "Qubool Kallyanam - User Registration OTP Verification",
-		Payload: map[string]string{
-			"email":         req.Email,
-			"otp":           otp,
-			"expiryMinutes": strconv.Itoa(config.Auth.OTPExpiryMinutes),
-		},
-	}); err != nil {
-		return fmt.Errorf("failed to send OTP verification email: %w", err)
+	otpEvent := authevents.UserOTPRequestedEvent{
+		Email:         req.Email,
+		OTP:           otp,
+		ExpiryMinutes: config.Auth.OTPExpiryMinutes,
+	}
+
+	if err := u.eventPublisher.PublishUserOTPRequested(ctx, otpEvent); err != nil {
+		return fmt.Errorf("failed to publish OTP requested event: %w", err)
 	}
 
 	return nil

@@ -67,4 +67,7 @@ var (
 	ErrPaymentNotFound         = errors.New("payment not found")
 	ErrPaymentAlreadyCompleted = errors.New("payment already completed")
 	ErrPaymentExpired          = errors.New("payment has expired")
+	ErrPaymentSignatureInvalid  = errors.New("payment signature verification failed")
+	ErrRazorpayOrderCreation    = errors.New("failed to create payment order")
+	ErrPaymentProcessingFailed  = errors.New("payment processing failed")
 )

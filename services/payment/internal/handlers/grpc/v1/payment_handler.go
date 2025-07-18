@@ -62,8 +62,14 @@ func (h *PaymentHandler) ShowPaymentPage(ctx context.Context, req *paymentpbv1.S
 		switch {
 		case errors.Is(err, appErrors.ErrPaymentNotFound):
 			return nil, status.Errorf(codes.NotFound, "Payment not found")
+		case errors.Is(err, appErrors.ErrPaymentAlreadyCompleted):
+			return nil, status.Errorf(codes.FailedPrecondition, "Payment already completed")
+		case errors.Is(err, appErrors.ErrPaymentExpired):
+			return nil, status.Errorf(codes.FailedPrecondition, "Payment has expired")
 		case errors.Is(err, appErrors.ErrSubscriptionPlanNotFound):
 			return nil, status.Errorf(codes.NotFound, "Subscription plan not found")
+		case errors.Is(err, appErrors.ErrSubscriptionPlanNotActive):
+			return nil, status.Errorf(codes.FailedPrecondition, "Subscription plan is not active")
 		default:
 			log.Printf("Failed to get payment page data: %v", err)
 			return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
@@ -71,13 +77,18 @@ func (h *PaymentHandler) ShowPaymentPage(ctx context.Context, req *paymentpbv1.S
 	}
 
 	return &paymentpbv1.ShowPaymentPageResponse{
+		RazorpayOrderId:    response.RazorpayOrderID,
+		RazorpayKeyId:      response.RazorpayKeyID,
 		PlanId:             response.PlanID,
+		Amount:             response.Amount,
 		DisplayAmount:      response.DisplayAmount,
 		PlanDurationInDays: response.PlanDurationInDays,
 	}, nil
 }
 
 func (h *PaymentHandler) VerifyPayment(ctx context.Context, req *paymentpbv1.VerifyPaymentRequest) (*paymentpbv1.VerifyPaymentResponse, error) {
+	log.Printf("[PAYMENT] Verifying payment Handler called for the razorpay order %s", req.RazorpayOrderId)
+
 	var verifyPaymentRequest entity.VerifyPaymentRequest
 	verifyPaymentRequest.RazorpayOrderID = req.RazorpayOrderId
 	verifyPaymentRequest.RazorpayPaymentID = req.RazorpayPaymentId
@@ -85,8 +96,23 @@ func (h *PaymentHandler) VerifyPayment(ctx context.Context, req *paymentpbv1.Ver
 
 	verifyPaymentResponse, err := h.paymentUsecase.VerifyPayment(ctx, &verifyPaymentRequest)
 	if err != nil {
-		log.Printf("Failed to verify payment for the razorpay order %s: %v", verifyPaymentRequest.RazorpayOrderID, err)
-		return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+		switch {
+		case errors.Is(err, appErrors.ErrPaymentNotFound):
+			return nil, status.Errorf(codes.NotFound, "Payment not found")
+		case errors.Is(err, appErrors.ErrPaymentAlreadyCompleted):
+			return nil, status.Errorf(codes.FailedPrecondition, "Payment already completed")
+		case errors.Is(err, appErrors.ErrPaymentExpired):
+			return nil, status.Errorf(codes.FailedPrecondition, "Payment has expired")
+		case errors.Is(err, appErrors.ErrPaymentSignatureInvalid):
+			return nil, status.Errorf(codes.InvalidArgument, "Payment verification failed")
+		case errors.Is(err, appErrors.ErrSubscriptionPlanNotFound):
+			return nil, status.Errorf(codes.NotFound, "Subscription plan not found")
+		case errors.Is(err, appErrors.ErrSubscriptionPlanNotActive):
+			return nil, status.Errorf(codes.FailedPrecondition, "Subscription plan is not active")
+		default:
+			log.Printf("Failed to verify payment for the razorpay order %s: %v", verifyPaymentRequest.RazorpayOrderID, err)
+			return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+		}
 	}
 
 	subscriptionStartDatePb := timestamppb.New(verifyPaymentResponse.SubscriptionStartDate)

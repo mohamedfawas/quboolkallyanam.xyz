@@ -12,9 +12,10 @@ import (
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/notifications/smtp"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/jwt"
+	messageBrokerAdapter "github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/adapters/messageBroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
+	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/handlers/event"
 
 	// Proto imports
 	authpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1"
@@ -41,10 +42,9 @@ type Server struct {
 	redisClient     *redis.Client
 	messagingClient messageBroker.Client
 	jwtManager      jwt.JWTManager
-	smtpClient      smtp.Client
 }
 
-func NewServer(config *config.Config) (*Server, error) {
+func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
 		Port:     config.Postgres.Port,
@@ -117,19 +117,11 @@ func NewServer(config *config.Config) (*Server, error) {
 		Issuer:             config.Auth.JWT.Issuer,
 	})
 
-	// Initialize SMTP client
-	smtpClient, err := smtp.NewClient(smtp.Config{
-		SMTPHost:     config.Email.SMTPHost,
-		SMTPPort:     config.Email.SMTPPort,
-		SMTPUsername: config.Email.SMTPUsername,
-		SMTPPassword: config.Email.SMTPPassword,
-		FromEmail:    config.Email.FromEmail,
-		FromName:     config.Email.FromName,
-	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create smtp client: %w", err)
 	}
+
+	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
 
 	// Initialize use cases
 	userUC := userUsecase.NewUserUseCase(userRepo, *jwtManager, tokenRepo, config, messagingClient)
@@ -138,8 +130,10 @@ func NewServer(config *config.Config) (*Server, error) {
 		pendingRegistrationRepo,
 		userRepo,
 		otpRepo,
-		*smtpClient,
+		eventPublisher,
 	)
+
+	paymentEventHandler := eventHandlers.NewPaymentEventHandler(messagingClient, userUC)
 
 	// Initialize and register gRPC handler
 	authHandler := grpcHandlerv1.NewAuthHandler(userUC, adminUC, pendingRegistrationUC, config)
@@ -147,11 +141,15 @@ func NewServer(config *config.Config) (*Server, error) {
 
 	log.Println("Auth Service gRPC handlers registered")
 
-	// Initialize default admin if needed
-	ctx := context.Background()
 	if err := adminUC.InitializeDefaultAdmin(ctx, config.Admin.DefaultAdminEmail, config.Admin.DefaultAdminPassword); err != nil {
 		log.Println("Failed to initialize default admin", "error", err)
 	}
+
+	go func() {
+		if err := paymentEventHandler.StartListening(ctx); err != nil {
+			log.Printf("Failed to start payment event handler: %v", err)
+		}
+	}()
 
 	server := &Server{
 		config:          config,
@@ -160,7 +158,6 @@ func NewServer(config *config.Config) (*Server, error) {
 		redisClient:     redisClient,
 		messagingClient: messagingClient,
 		jwtManager:      *jwtManager,
-		smtpClient:      *smtpClient,
 	}
 
 	return server, nil
