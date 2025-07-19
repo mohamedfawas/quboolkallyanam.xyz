@@ -36,3 +36,20 @@ func (p *eventPublisher) PublishUserOTPRequested(ctx context.Context,
 	log.Printf("user otp requested event published successfully for user: %s", event.Email)
 	return nil
 }
+
+func (p *eventPublisher) PublishUserLoginSuccess(ctx context.Context,
+	event authevents.UserLoginSuccessEvent) error {
+
+	if p.messagingClient == nil {
+		log.Println("messaging client is nil, skipping event publishing UserLastLogin event for user: %s", event.Email)
+		return nil
+	}
+
+	if err := p.messagingClient.Publish(constants.EventUserLoginSuccess, event); err != nil {
+		log.Printf("failed to publish user last login event for user: %s, error: %v", event.Email, err)
+		return err
+	}
+
+	log.Printf("user last login event published successfully for user: %s", event.Email)
+	return nil
+}

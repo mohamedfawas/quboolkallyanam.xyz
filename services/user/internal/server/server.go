@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"net"
 
+	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/postgres"
+    eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
+    userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/user_profile"
+    messageBrokerAdapter "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/messageBroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
@@ -63,6 +67,27 @@ func NewServer(config *config.Config) (*Server, error) {
 	}
 
 	grpcServer := grpc.NewServer()
+
+	// Initialize repositories
+	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
+
+	// Initialize event publisher
+eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
+
+	// Initialize use cases
+userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, eventPublisher)
+
+// Initialize event handler
+authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC)
+
+
+// Start event listener
+go func() {
+    if err := authEventHandler.StartListening(context.Background()); err != nil {
+        logger.Log.Error("Failed to start auth event handler", "error", err)
+    }
+}()
+	
 
 	server := &Server{
 		config:          config,

@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	authevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/auth"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 	"gorm.io/gorm"
@@ -37,7 +39,7 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 	if !hash.VerifyPassword(user.PasswordHash, password) {
 		return nil, appErrors.ErrInvalidCredentials
 	}
-	
+
 	role := constants.RoleUser
 	if user.IsPremium() {
 		role = constants.RolePremiumUser
@@ -62,6 +64,17 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to store user refresh token: %w", err)
+	}
+
+	userLoginEvent := authevents.UserLoginSuccessEvent{
+		UserID: user.ID,
+		Email:  user.Email,
+		Phone:  user.Phone,
+	}
+
+	if err := u.eventPublisher.PublishUserLoginSuccess(ctx, userLoginEvent); err != nil {
+		// No need to fail the login process if the event publishing fails
+		log.Printf("failed to publish user login success event: %v", err)
 	}
 
 	tokenPair := &entity.TokenPair{

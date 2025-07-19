@@ -4,6 +4,7 @@ import (
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/jwt"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/config"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/event"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/repository"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/usecase"
 )
@@ -14,6 +15,7 @@ type userUseCase struct {
 	tokenRepository repository.TokenRepository
 	config          *config.Config
 	messageBroker   messageBroker.Client
+	eventPublisher  event.EventPublisher
 }
 
 func NewUserUseCase(
@@ -22,6 +24,7 @@ func NewUserUseCase(
 	tokenRepository repository.TokenRepository,
 	config *config.Config,
 	messageBroker messageBroker.Client,
+	eventPublisher event.EventPublisher,
 ) usecase.UserUsecase {
 	return &userUseCase{
 		userRepository:  userRepository,
@@ -29,5 +32,6 @@ func NewUserUseCase(
 		tokenRepository: tokenRepository,
 		config:          config,
 		messageBroker:   messageBroker,
+		eventPublisher:  eventPublisher,
 	}
 }

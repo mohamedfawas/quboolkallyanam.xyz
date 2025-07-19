@@ -124,7 +124,13 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
 
 	// Initialize use cases
-	userUC := userUsecase.NewUserUseCase(userRepo, *jwtManager, tokenRepo, config, messagingClient)
+	userUC := userUsecase.NewUserUseCase(userRepo,
+		*jwtManager,
+		tokenRepo,
+		config,
+		messagingClient,
+		eventPublisher,
+	)
 	adminUC := adminUsecase.NewAdminUsecase(adminRepo, tokenRepo, *jwtManager, config)
 	pendingRegistrationUC := pendingRegistrationUsecase.NewPendingRegistrationUsecase(
 		pendingRegistrationRepo,

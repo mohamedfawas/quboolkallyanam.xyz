@@ -4,8 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-
-	"gorm.io/datatypes"
 )
 
 type ProfessionTypeEnum string
@@ -19,47 +17,52 @@ const (
 	ProfessionTypeNotMentioned ProfessionTypeEnum = "not_mentioned"
 )
 
+func isValidProfessionType(val string) bool {
+	switch ProfessionTypeEnum(val) {
+	case ProfessionTypeFullTime, ProfessionTypePartTime,
+		ProfessionTypeFreelance, ProfessionTypeSelfEmployed,
+		ProfessionTypeNotWorking, ProfessionTypeNotMentioned:
+		return true
+	default:
+		return false
+	}
+}
+
+func (pt ProfessionTypeEnum) MarshalJSON() ([]byte, error) {
+	if !isValidProfessionType(string(pt)) {
+		return nil, fmt.Errorf("invalid profession type: %q", pt)
+	}
+	return json.Marshal(string(pt))
+}
+
+func (pt *ProfessionTypeEnum) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	if !isValidProfessionType(s) {
+		return fmt.Errorf("invalid profession type: %q", s)
+	}
+	*pt = ProfessionTypeEnum(s)
+	return nil
+}
+
 func (pt ProfessionTypeEnum) Value() (driver.Value, error) {
 	return string(pt), nil
 }
 
 func (pt *ProfessionTypeEnum) Scan(value interface{}) error {
 	if value == nil {
+		*pt = ""
 		return nil
 	}
-	if s, ok := value.(string); ok {
-		*pt = ProfessionTypeEnum(s)
-		return nil
+	s, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("cannot scan %T into ProfessionTypeEnum", value)
 	}
-	return fmt.Errorf("cannot scan %T into ProfessionTypeEnum", value)
-}
-
-func (p *PartnerPreference) SetProfessionTypes(types []ProfessionTypeEnum) error {
-	stringTypes := make([]string, len(types))
-	for i, t := range types {
-		stringTypes[i] = string(t)
+	if !isValidProfessionType(s) {
+		return fmt.Errorf("invalid profession type: %q", s)
 	}
-	data, err := json.Marshal(stringTypes)
-	if err != nil {
-		return err
-	}
-	p.PreferredProfessionTypes = datatypes.JSON(data)
+	*pt = ProfessionTypeEnum(s)
 	return nil
-}
-
-func (p *PartnerPreference) GetProfessionTypes() ([]ProfessionTypeEnum, error) {
-	var stringTypes []string
-	if len(p.PreferredProfessionTypes) == 0 {
-		return []ProfessionTypeEnum{}, nil
-	}
-
-	if err := json.Unmarshal(p.PreferredProfessionTypes, &stringTypes); err != nil {
-		return nil, err
-	}
-
-	types := make([]ProfessionTypeEnum, len(stringTypes))
-	for i, s := range stringTypes {
-		types[i] = ProfessionTypeEnum(s)
-	}
-	return types, nil
 }

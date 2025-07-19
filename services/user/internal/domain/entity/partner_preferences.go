@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -19,12 +18,12 @@ type PartnerPreference struct {
 
 	AcceptPhysicallyChallenged bool `json:"accept_physically_challenged" gorm:"not null;default:true"`
 
-	PreferredCommunities     datatypes.JSON `json:"preferred_communities" gorm:"type:jsonb;not null;default:'[]'"`
-	PreferredMaritalStatus   datatypes.JSON `json:"preferred_marital_status" gorm:"type:jsonb;not null;default:'[]'"`
-	PreferredProfessions     datatypes.JSON `json:"preferred_professions" gorm:"type:jsonb;not null;default:'[]'"`
-	PreferredProfessionTypes datatypes.JSON `json:"preferred_profession_types" gorm:"type:jsonb;not null;default:'[]'"`
-	PreferredEducationLevels datatypes.JSON `json:"preferred_education_levels" gorm:"type:jsonb;not null;default:'[]'"`
-	PreferredHomeDistricts   datatypes.JSON `json:"preferred_home_districts" gorm:"type:jsonb;not null;default:'[]'"`
+	PreferredCommunities     []CommunityEnum      `json:"preferred_communities" gorm:"type:jsonb;serializer:json;default:'[]'"`
+	PreferredMaritalStatus   []MaritalStatusEnum  `json:"preferred_marital_status" gorm:"type:jsonb;serializer:json;default:'[]'"`
+	PreferredProfessions     []ProfessionEnum     `json:"preferred_professions" gorm:"type:jsonb;serializer:json;default:'[]'"`
+	PreferredProfessionTypes []ProfessionTypeEnum `json:"preferred_profession_types" gorm:"type:jsonb;serializer:json;default:'[]'"`
+	PreferredEducationLevels []EducationLevelEnum `json:"preferred_education_levels" gorm:"type:jsonb;serializer:json;default:'[]'"`
+	PreferredHomeDistricts   []HomeDistrictEnum   `json:"preferred_home_districts" gorm:"type:jsonb;serializer:json;default:'[]'"`
 
 	CreatedAt time.Time `json:"created_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"not null;default:CURRENT_TIMESTAMP"`

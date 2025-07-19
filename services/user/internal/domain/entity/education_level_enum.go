@@ -4,8 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-
-	"gorm.io/datatypes"
 )
 
 type EducationLevelEnum string
@@ -19,47 +17,51 @@ const (
 	EducationLevelNotMentioned       EducationLevelEnum = "not_mentioned"
 )
 
+func isValidEducationLevelEnum(val string) bool {
+	switch EducationLevelEnum(val) {
+	case EducationLevelLessThanHighSchool, EducationLevelHighSchool,
+		EducationLevelHigherSecondary, EducationLevelUnderGraduation,
+		EducationLevelPostGraduation, EducationLevelNotMentioned:
+		return true
+	}
+	return false
+}
+
+func (e EducationLevelEnum) MarshalJSON() ([]byte, error) {
+	if !isValidEducationLevelEnum(string(e)) {
+		return nil, fmt.Errorf("invalid EducationLevelEnum: %q", e)
+	}
+	return json.Marshal(string(e))
+}
+
+func (e *EducationLevelEnum) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if !isValidEducationLevelEnum(s) {
+		return fmt.Errorf("invalid EducationLevelEnum: %q", s)
+	}
+	*e = EducationLevelEnum(s)
+	return nil
+}
+
 func (e EducationLevelEnum) Value() (driver.Value, error) {
 	return string(e), nil
 }
 
 func (e *EducationLevelEnum) Scan(value interface{}) error {
 	if value == nil {
+		*e = ""
 		return nil
 	}
-	if s, ok := value.(string); ok {
-		*e = EducationLevelEnum(s)
-		return nil
+	s, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("cannot scan %T into EducationLevelEnum", value)
 	}
-	return fmt.Errorf("cannot scan %T into EducationLevelEnum", value)
-}
-
-func (p *PartnerPreference) SetEducationLevels(levels []EducationLevelEnum) error {
-	stringLevels := make([]string, len(levels))
-	for i, l := range levels {
-		stringLevels[i] = string(l)
+	if !isValidEducationLevelEnum(s) {
+		return fmt.Errorf("invalid EducationLevelEnum: %q", s)
 	}
-	data, err := json.Marshal(stringLevels)
-	if err != nil {
-		return err
-	}
-	p.PreferredEducationLevels = datatypes.JSON(data)
+	*e = EducationLevelEnum(s)
 	return nil
-}
-
-func (p *PartnerPreference) GetEducationLevels() ([]EducationLevelEnum, error) {
-	var stringLevels []string
-	if len(p.PreferredEducationLevels) == 0 {
-		return []EducationLevelEnum{}, nil
-	}
-
-	if err := json.Unmarshal(p.PreferredEducationLevels, &stringLevels); err != nil {
-		return nil, err
-	}
-
-	levels := make([]EducationLevelEnum, len(stringLevels))
-	for i, s := range stringLevels {
-		levels[i] = EducationLevelEnum(s)
-	}
-	return levels, nil
 }

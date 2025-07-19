@@ -4,8 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-
-	"gorm.io/datatypes"
 )
 
 type ProfessionEnum string
@@ -19,47 +17,51 @@ const (
 	ProfessionNotMentioned ProfessionEnum = "not_mentioned"
 )
 
+func isValidProfessionEnum(val string) bool {
+	switch ProfessionEnum(val) {
+	case ProfessionStudent, ProfessionDoctor, ProfessionEngineer,
+		ProfessionFarmer, ProfessionTeacher, ProfessionNotMentioned:
+		return true
+	default:
+		return false
+	}
+}
+
+func (p ProfessionEnum) MarshalJSON() ([]byte, error) {
+	if !isValidProfessionEnum(string(p)) {
+		return nil, fmt.Errorf("invalid profession: %q", p)
+	}
+	return json.Marshal(string(p))
+}
+
+func (p *ProfessionEnum) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if !isValidProfessionEnum(s) {
+		return fmt.Errorf("invalid profession: %q", s)
+	}
+	*p = ProfessionEnum(s)
+	return nil
+}
+
 func (p ProfessionEnum) Value() (driver.Value, error) {
 	return string(p), nil
 }
 
 func (p *ProfessionEnum) Scan(value interface{}) error {
 	if value == nil {
+		*p = ""
 		return nil
 	}
-	if s, ok := value.(string); ok {
-		*p = ProfessionEnum(s)
-		return nil
+	s, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("cannot scan %T into ProfessionEnum", value)
 	}
-	return fmt.Errorf("cannot scan %T into ProfessionEnum", value)
-}
-
-func (p *PartnerPreference) SetProfessions(professions []ProfessionEnum) error {
-	stringProfessions := make([]string, len(professions))
-	for i, prof := range professions {
-		stringProfessions[i] = string(prof)
+	if !isValidProfessionEnum(s) {
+		return fmt.Errorf("invalid profession: %q", s)
 	}
-	data, err := json.Marshal(stringProfessions)
-	if err != nil {
-		return err
-	}
-	p.PreferredProfessions = datatypes.JSON(data)
+	*p = ProfessionEnum(s)
 	return nil
-}
-
-func (p *PartnerPreference) GetProfessions() ([]ProfessionEnum, error) {
-	var stringProfessions []string
-	if len(p.PreferredProfessions) == 0 {
-		return []ProfessionEnum{}, nil
-	}
-
-	if err := json.Unmarshal(p.PreferredProfessions, &stringProfessions); err != nil {
-		return nil, err
-	}
-
-	professions := make([]ProfessionEnum, len(stringProfessions))
-	for i, s := range stringProfessions {
-		professions[i] = ProfessionEnum(s)
-	}
-	return professions, nil
 }

@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Environment string          `mapstructure:"environment"`
 	GRPC        GRPCConfig      `mapstructure:"grpc"`
+	Postgres    PostgresConfig  `mapstructure:"postgres"`
 	Email       EmailConfig     `mapstructure:"email"`
 	RabbitMQ    RabbitMQConfig  `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig    `mapstructure:"pubsub"`
@@ -18,6 +19,16 @@ type Config struct {
 
 type GRPCConfig struct {
 	Port int `mapstructure:"port"`
+}
+
+type PostgresConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
+	SSLMode  string `mapstructure:"sslmode"`
+	TimeZone string `mapstructure:"timezone"`
 }
 
 type EmailConfig struct {
@@ -78,6 +89,13 @@ func bindEnvVars(v *viper.Viper) {
 	keys := []string{
 		"environment",
 		"grpc.port",
+		"postgres.host",
+		"postgres.port",
+		"postgres.user",
+		"postgres.password",
+		"postgres.dbname",
+		"postgres.sslmode",
+		"postgres.timezone",
 		"email.smtp_host",
 		"email.smtp_port",
 		"email.smtp_username",
@@ -100,6 +118,14 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("environment", "development")
 
 	v.SetDefault("grpc.port", 50054)
+
+	v.SetDefault("postgres.host", "localhost")
+	v.SetDefault("postgres.port", 5432)
+	v.SetDefault("postgres.user", "postgres")
+	v.SetDefault("postgres.password", "postgres")
+	v.SetDefault("postgres.dbname", "qubool_kallyanam_chat")
+	v.SetDefault("postgres.sslmode", "disable")
+	v.SetDefault("postgres.timezone", "UTC")
 
 	v.SetDefault("email.smtp_host", "smtp.gmail.com")
 	v.SetDefault("email.smtp_port", 587)

@@ -59,8 +59,4 @@ const (
 	// subscription
 	SubscriptionStatusActive    = "active"
 	SubscriptionStatusCancelled = "cancelled"
-
-	// Events
-	EventUserPaymentVerified = "user.payment.verified"
-	EventUserOTPRequested    = "user.otp.requested"
 )
