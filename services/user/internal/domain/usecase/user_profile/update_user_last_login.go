@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	userevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/user"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 )
 
@@ -59,6 +60,21 @@ func (u *userProfileUsecase) UpdateUserLastLogin(ctx context.Context,
 	if err := u.userProfileRepository.CreateUserProfile(ctx, profile); err != nil {
 		log.Printf("failed to create user profile: %v", err)
 		return fmt.Errorf("failed to create user profile: %w", err)
+	}
+
+	if u.eventPublisher != nil {
+		userProfileCreatedEvent := userevents.UserProfileCreatedEvent{
+			UserID:        userID,
+			Email:         email,
+			Phone:         phone,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+			UserProfileID: profile.ID,
+		}
+
+		if err := u.eventPublisher.PublishUserProfileCreated(ctx, userProfileCreatedEvent); err != nil {
+			log.Printf("failed to publish user profile created event: %v", err)
+		}
 	}
 
 	log.Printf("user profile created successfully for user: %s", userID)

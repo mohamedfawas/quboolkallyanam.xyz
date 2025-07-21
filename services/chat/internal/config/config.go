@@ -2,6 +2,7 @@ package config
 
 import (
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -54,8 +55,9 @@ type FirestoreConfig struct {
 }
 
 type MongoDBConfig struct {
-	URI      string `mapstructure:"uri"`
-	Database string `mapstructure:"database"`
+	URI      string        `mapstructure:"uri"`
+	Database string        `mapstructure:"database"`
+	Timeout  time.Duration `mapstructure:"timeout"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -108,6 +110,7 @@ func bindEnvVars(v *viper.Viper) {
 		"firestore.project_id",
 		"mongodb.uri",
 		"mongodb.database",
+		"mongodb.timeout",
 	}
 	for _, key := range keys {
 		_ = v.BindEnv(key)
@@ -142,5 +145,6 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("firestore.project_id", "qubool-kallyanam-chat")
 
 	v.SetDefault("mongodb.uri", "mongodb://localhost:27017")
-	v.SetDefault("mongodb.database", "qubool_kallyanam_chat")
+	v.SetDefault("mongodb.database", "quboolKallyanam")
+	v.SetDefault("mongodb.timeout", 10*time.Second)
 }

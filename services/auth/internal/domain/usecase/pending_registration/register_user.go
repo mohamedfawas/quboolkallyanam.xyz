@@ -81,6 +81,7 @@ func (u *pendingRegistrationUsecase) RegisterUser(ctx context.Context,
 		return err
 	}
 
+
 	otpEvent := authevents.UserOTPRequestedEvent{
 		Email:         req.Email,
 		OTP:           otp,

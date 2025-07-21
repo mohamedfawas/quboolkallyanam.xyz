@@ -19,3 +19,11 @@ func NewUserProjectionRepository(db *postgres.Client) repository.UserProjectionR
 func (r *userProjectionRepository) CreateUserProjection(ctx context.Context, userProjection *entity.UserProjection) error {
 	return r.db.GormDB.WithContext(ctx).Create(userProjection).Error
 }
+
+func (r *userProjectionRepository) GetUserProjectionByID(ctx context.Context, id int64) (*entity.UserProjection, error) {
+	var userProjection entity.UserProjection
+	if err := r.db.GormDB.WithContext(ctx).Where("user_profile_id = ?", id).First(&userProjection).Error; err != nil {
+		return nil, err
+	}
+	return &userProjection, nil
+}

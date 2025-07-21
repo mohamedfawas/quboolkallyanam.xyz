@@ -17,6 +17,7 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 
 	s.registerAuthRoutes(v1)
 	s.registerPaymentRoutes(v1, router)
+	s.registerChatRoutes(v1)
 
 }
 
@@ -77,4 +78,12 @@ func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) 
 
 func (s *Server) registerUserRoutes(v1 *gin.RouterGroup)  {}
 func (s *Server) registerAdminRoutes(v1 *gin.RouterGroup) {}
-func (s *Server) registerChatRoutes(v1 *gin.RouterGroup)  {}
+func (s *Server) registerChatRoutes(v1 *gin.RouterGroup) {
+	chat := v1.Group("/chat")
+	{
+		chat.POST("/conversation",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RolePremiumUser),
+			s.chatHandler.CreateConversation)
+	}
+}

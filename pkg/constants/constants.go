@@ -59,4 +59,8 @@ const (
 	// subscription
 	SubscriptionStatusActive    = "active"
 	SubscriptionStatusCancelled = "cancelled"
+
+	// MongoDB Collections
+	MongoDBCollectionConversations = "conversations"
+	MongoDBCollectionMessages      = "messages"
 )

@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	Environment string         `mapstructure:"environment"`
-	HTTP        HTTPConfig     `mapstructure:"http"`
-	Services    ServicesConfig `mapstructure:"services"`
-	Auth        AuthConfig     `mapstructure:"auth"`
-	OTP         OTPConfig      `mapstructure:"otp"`
-	BaseURL     string         `mapstructure:"base_url"`
+	Environment     string         `mapstructure:"environment"`
+	HTTP            HTTPConfig     `mapstructure:"http"`
+	Services        ServicesConfig `mapstructure:"services"`
+	Auth            AuthConfig     `mapstructure:"auth"`
+	OTP             OTPConfig      `mapstructure:"otp"`
+	BaseURL         string         `mapstructure:"base_url"`
+	DefaultTimezone string         `mapstructure:"default_timezone"`
 	// Tracing config @TODO: add tracing config
 }
 
@@ -91,6 +92,7 @@ func bindEnvVars(v *viper.Viper) {
 		"auth.jwt.issuer",
 		"otp.length",
 		"base_url",
+		"default_timezone",
 	}
 	for _, key := range keys {
 		_ = v.BindEnv(key)
@@ -117,4 +119,5 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("auth.jwt.issuer", "qubool-kallyanam")
 	v.SetDefault("otp.length", 6)
 	v.SetDefault("base_url", "http://localhost:8080")
+	v.SetDefault("default_timezone", "Asia/Kolkata")
 }

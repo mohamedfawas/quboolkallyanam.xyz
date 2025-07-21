@@ -15,15 +15,18 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth/v1"
 	paymentGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/payment/v1"
+	chatGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/chat"
 
 	// Usecase imports
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase"
 	authUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/auth"
+	chatUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/chat"
 	paymentUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/payment"
 
 	// Handler imports
 	authHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/auth"
 	paymentHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/payment"
+	chatHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/chat"
 )
 
 type Server struct {
@@ -34,14 +37,17 @@ type Server struct {
 	// Interface-based clients (for dependency injection)
 	authClient    client.AuthClient
 	paymentClient client.PaymentClient
+	chatClient    client.ChatClient
 
 	// Usecases (interface-based)
 	authUsecase    usecase.AuthUsecase
 	paymentUsecase usecase.PaymentUsecase
+	chatUsecase   usecase.ChatUsecase
 
 	// Handlers
 	authHandler    *authHandler.AuthHandler
 	paymentHandler *paymentHandler.PaymentHandler
+	chatHandler    *chatHandler.ChatHandler
 }
 
 func NewHTTPServer(config *config.Config) (*Server, error) {
@@ -119,6 +125,18 @@ func (s *Server) initClients() error {
 	}
 	s.paymentClient = paymentGRPCClient
 
+	// Initialize Chat gRPC Client
+	chatGRPCClient, err := chatGRPC.NewChatGRPCClient(
+		ctx,
+		fmt.Sprintf("localhost:%s", s.config.Services.ChatServicePort),
+		false, // useTLS - set to true in production
+		nil,   // tlsConfig
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create chat gRPC client: %w", err)
+	}
+	s.chatClient = chatGRPCClient
+
 	// TODO: Add other clients as you implement them
 
 	return nil
@@ -127,7 +145,7 @@ func (s *Server) initClients() error {
 func (s *Server) initUsecases() error {
 	s.authUsecase = authUsecase.NewAuthUsecase(s.authClient)
 	s.paymentUsecase = paymentUsecase.NewPaymentUsecase(s.paymentClient, s.config)
-
+	s.chatUsecase = chatUsecase.NewChatUsecase(s.chatClient)
 	// TODO: Add other usecases as you implement them
 	// s.adminUsecase = adminUsecase.NewAdminUsecase(s.adminClient)
 	// s.userUsecase = userUsecase.NewUserUsecase(s.userClient)
@@ -140,7 +158,7 @@ func (s *Server) initUsecases() error {
 func (s *Server) initHandlers() error {
 	s.authHandler = authHandler.NewAuthHandler(s.authUsecase, *s.config)
 	s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase)
-
+	s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase)
 	// TODO: Add other handlers as you implement them
 	// s.adminHandler = adminHandler.NewAdminHandler(s.adminUsecase, *s.config)
 	// s.userHandler = userHandler.NewUserHandler(s.userUsecase, *s.config)

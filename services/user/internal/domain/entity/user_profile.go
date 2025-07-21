@@ -7,7 +7,7 @@ import (
 )
 
 type UserProfile struct {
-	ID                    uint                `json:"id" gorm:"primaryKey"`
+	ID                    int64                `json:"id" gorm:"primaryKey"`
 	UserID                uuid.UUID           `json:"user_id" gorm:"type:uuid;not null;uniqueIndex"`
 	IsBride               bool                `json:"is_bride" gorm:"not null;default:false"`
 	FullName              *string             `json:"full_name" gorm:"size:200"`

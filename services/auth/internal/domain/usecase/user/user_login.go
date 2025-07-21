@@ -83,5 +83,7 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 		ExpiresIn:    int64(u.config.Auth.JWT.AccessTokenMinutes) * 60,
 	}
 
+	log.Printf("The user is logged in successfully, user id: %s", user.ID.String())
+
 	return tokenPair, nil
 }

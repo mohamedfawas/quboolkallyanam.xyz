@@ -3,19 +3,19 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 
-	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/postgres"
-    eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
-    userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/user_profile"
-    messageBrokerAdapter "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/messageBroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
+	messageBrokerAdapter "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/messageBroker"
+	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/config"
+	userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/user_profile"
+	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
 	"google.golang.org/grpc"
 )
 
@@ -39,9 +39,10 @@ func NewServer(config *config.Config) (*Server, error) {
 	})
 
 	if err != nil {
+		log.Println("failed to create postgres client", err)
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
-	logger.Log.Info("✅ User Service Connected to PostgreSQL ")
+	log.Println("User Service Connected to PostgreSQL ")
 
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
@@ -50,9 +51,10 @@ func NewServer(config *config.Config) (*Server, error) {
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
+			log.Println("failed to create pubsub client", err)
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		logger.Log.Info("✅ User Service Connected to PubSub")
+		log.Println("User Service Connected to PubSub")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -61,9 +63,10 @@ func NewServer(config *config.Config) (*Server, error) {
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
+			log.Println("failed to create rabbitmq client", err)
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		logger.Log.Info("✅ User Service Connected to RabbitMQ")
+		log.Println("User Service Connected to RabbitMQ")
 	}
 
 	grpcServer := grpc.NewServer()
@@ -72,22 +75,20 @@ func NewServer(config *config.Config) (*Server, error) {
 	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
 
 	// Initialize event publisher
-eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
+	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
 
 	// Initialize use cases
-userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, eventPublisher)
+	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, eventPublisher)
 
-// Initialize event handler
-authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC)
+	// Initialize event handler
+	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC)
 
-
-// Start event listener
-go func() {
-    if err := authEventHandler.StartListening(context.Background()); err != nil {
-        logger.Log.Error("Failed to start auth event handler", "error", err)
-    }
-}()
-	
+	// Start event listener
+	go func() {
+		if err := authEventHandler.StartListening(context.Background()); err != nil {
+			log.Println("Failed to start auth event handler", err)
+		}
+	}()
 
 	server := &Server{
 		config:          config,
@@ -105,6 +106,7 @@ func (s *Server) Start() error {
 		return err
 	}
 
+	log.Println("User Service starting on port ", s.config.GRPC.Port)
 	return s.grpcServer.Serve(listener)
 }
 
@@ -113,13 +115,13 @@ func (s *Server) Stop() {
 
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
-			logger.Log.Error("failed to close messaging client", "error", err)
+			log.Println("failed to close messaging client", err)
 		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			logger.Log.Error("failed to close postgres client: %w", err)
+			log.Println("failed to close postgres client", err)
 		}
 	}
 }

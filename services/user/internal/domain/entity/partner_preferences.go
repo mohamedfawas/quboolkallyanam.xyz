@@ -8,8 +8,8 @@ import (
 )
 
 type PartnerPreference struct {
-	ID            uint `json:"id" gorm:"primaryKey"`
-	UserProfileID uint `json:"user_profile_id" gorm:"not null;uniqueIndex;constraint:OnDelete:CASCADE"`
+	ID            int64 `json:"id" gorm:"primaryKey"`
+	UserProfileID int64 `json:"user_profile_id" gorm:"not null;uniqueIndex;constraint:OnDelete:CASCADE"`
 
 	MinAgeYears *int `json:"min_age_years" gorm:"check:min_age_years BETWEEN 18 AND 100"`
 	MaxAgeYears *int `json:"max_age_years" gorm:"check:max_age_years BETWEEN 18 AND 100"`

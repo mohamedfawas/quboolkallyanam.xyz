@@ -20,7 +20,10 @@ func NewUserRepository(db *postgres.Client) repository.UserRepository {
 
 func (r *userRepository) GetUser(ctx context.Context, field, value string) (*entity.User, error) {
 	var user entity.User
-	if err := r.db.GormDB.WithContext(ctx).Where(field+" = ?", value).First(&user).Error; err != nil {
+	if err := r.db.GormDB.WithContext(ctx).
+	Where(field+" = ?", value).
+	Where("is_active = ?", true).
+	First(&user).Error; err != nil {
 		log.Printf("GetUser error in user repository: %v", err)
 		return nil, err
 	}

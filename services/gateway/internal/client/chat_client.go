@@ -1,4 +1,4 @@
-package usecase
+package client
 
 import (
 	"context"
@@ -6,6 +6,6 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-type ChatUsecase interface {
+type ChatClient interface {
 	CreateConversation(ctx context.Context, req dto.CreateConversationRequest) (*dto.CreateConversationResponse, error)
 }

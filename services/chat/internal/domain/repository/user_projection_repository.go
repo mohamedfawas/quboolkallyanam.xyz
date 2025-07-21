@@ -8,4 +8,5 @@ import (
 
 type UserProjectionRepository interface {
 	CreateUserProjection(ctx context.Context, userProjection *entity.UserProjection) error
+	GetUserProjectionByID(ctx context.Context, id int64) (*entity.UserProjection, error)
 }
