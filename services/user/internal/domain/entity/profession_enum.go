@@ -4,17 +4,19 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type ProfessionEnum string
 
 const (
-	ProfessionStudent      ProfessionEnum = "student"
-	ProfessionDoctor       ProfessionEnum = "doctor"
-	ProfessionEngineer     ProfessionEnum = "engineer"
-	ProfessionFarmer       ProfessionEnum = "farmer"
-	ProfessionTeacher      ProfessionEnum = "teacher"
-	ProfessionNotMentioned ProfessionEnum = "not_mentioned"
+	ProfessionStudent      ProfessionEnum = validation.ConstantProfessionStudent
+	ProfessionDoctor       ProfessionEnum = validation.ConstantProfessionDoctor
+	ProfessionEngineer     ProfessionEnum = validation.ConstantProfessionEngineer
+	ProfessionFarmer       ProfessionEnum = validation.ConstantProfessionFarmer
+	ProfessionTeacher      ProfessionEnum = validation.ConstantProfessionTeacher
+	ProfessionNotMentioned ProfessionEnum = validation.ConstantProfessionNotMentioned
 )
 
 func isValidProfessionEnum(val string) bool {

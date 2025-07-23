@@ -7,10 +7,18 @@ import (
 )
 
 type userProfileUsecase struct {
-	userProfileRepository repository.UserProfileRepository
-	eventPublisher event.EventPublisher
+	userProfileRepository        repository.UserProfileRepository
+	partnerPreferencesRepository repository.PartnerPreferencesRepository
+	eventPublisher               event.EventPublisher
 }
 
-func NewUserProfileUsecase(userProfileRepository repository.UserProfileRepository, eventPublisher event.EventPublisher) usecase.UserProfileUsecase {
-	return &userProfileUsecase{userProfileRepository: userProfileRepository, eventPublisher: eventPublisher}
+func NewUserProfileUsecase(
+	userProfileRepository repository.UserProfileRepository,
+	partnerPreferencesRepository repository.PartnerPreferencesRepository,
+	eventPublisher event.EventPublisher) usecase.UserProfileUsecase {
+	return &userProfileUsecase{
+		userProfileRepository:        userProfileRepository,
+		partnerPreferencesRepository: partnerPreferencesRepository,
+		eventPublisher:               eventPublisher,
+	}
 }

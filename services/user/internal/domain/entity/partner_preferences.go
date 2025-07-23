@@ -1,10 +1,7 @@
 package entity
 
 import (
-	"fmt"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type PartnerPreference struct {
@@ -36,71 +33,16 @@ func (PartnerPreference) TableName() string {
 	return "partner_preferences"
 }
 
-func (p *PartnerPreference) ValidateAgeRange() error {
-	if p.MinAgeYears != nil && p.MaxAgeYears != nil {
-		if *p.MaxAgeYears < *p.MinAgeYears {
-			return fmt.Errorf("max age cannot be less than min age")
-		}
-	}
-	return nil
-}
-
-func (p *PartnerPreference) ValidateHeightRange() error {
-	if p.MinHeightCm != nil && p.MaxHeightCm != nil {
-		if *p.MaxHeightCm < *p.MinHeightCm {
-			return fmt.Errorf("max height cannot be less than min height")
-		}
-	}
-	return nil
-}
-
-func (p *PartnerPreference) BeforeCreate(tx *gorm.DB) error {
-	if err := p.ValidateAgeRange(); err != nil {
-		return err
-	}
-	return p.ValidateHeightRange()
-}
-
-func (p *PartnerPreference) BeforeUpdate(tx *gorm.DB) error {
-	if err := p.ValidateAgeRange(); err != nil {
-		return err
-	}
-	return p.ValidateHeightRange()
-}
-
-func (u *UserProfile) GetAge() *int {
-	if u.DateOfBirth == nil {
-		return nil
-	}
-	age := int(time.Since(*u.DateOfBirth).Hours() / 24 / 365)
-	return &age
-}
-
-func (u *UserProfile) MatchesPreferences(prefs *PartnerPreference) bool {
-	// Age check
-	if age := u.GetAge(); age != nil {
-		if prefs.MinAgeYears != nil && *age < *prefs.MinAgeYears {
-			return false
-		}
-		if prefs.MaxAgeYears != nil && *age > *prefs.MaxAgeYears {
-			return false
-		}
-	}
-
-	// Height check
-	if u.HeightCm != nil {
-		if prefs.MinHeightCm != nil && *u.HeightCm < *prefs.MinHeightCm {
-			return false
-		}
-		if prefs.MaxHeightCm != nil && *u.HeightCm > *prefs.MaxHeightCm {
-			return false
-		}
-	}
-
-	// Physical challenge check
-	if u.PhysicallyChallenged && !prefs.AcceptPhysicallyChallenged {
-		return false
-	}
-
-	return true
+type UpdateUserPartnerPreferencesRequest struct {
+	MinAgeYears                *int      `json:"min_age_years,omitempty"`
+	MaxAgeYears                *int      `json:"max_age_years,omitempty"`
+	MinHeightCM                *int      `json:"min_height_cm,omitempty"`
+	MaxHeightCM                *int      `json:"max_height_cm,omitempty"`
+	AcceptPhysicallyChallenged *bool     `json:"accept_physically_challenged,omitempty"`
+	PreferredCommunities       *[]string `json:"preferred_communities,omitempty"`
+	PreferredMaritalStatus     *[]string `json:"preferred_marital_status,omitempty"`
+	PreferredProfessions       *[]string `json:"preferred_professions,omitempty"`
+	PreferredProfessionTypes   *[]string `json:"preferred_profession_types,omitempty"`
+	PreferredEducationLevels   *[]string `json:"preferred_education_levels,omitempty"`
+	PreferredHomeDistricts     *[]string `json:"preferred_home_districts,omitempty"`
 }

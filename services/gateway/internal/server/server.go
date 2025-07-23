@@ -16,17 +16,20 @@ import (
 	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth/v1"
 	paymentGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/payment/v1"
 	chatGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/chat"
+	userGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/user"
 
 	// Usecase imports
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase"
 	authUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/auth"
 	chatUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/chat"
 	paymentUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/payment"
+	userUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/usecase/user"
 
 	// Handler imports
 	authHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/auth"
 	paymentHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/payment"
 	chatHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/chat"
+	userHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/user"
 )
 
 type Server struct {
@@ -38,16 +41,19 @@ type Server struct {
 	authClient    client.AuthClient
 	paymentClient client.PaymentClient
 	chatClient    client.ChatClient
+	userClient    client.UserClient
 
 	// Usecases (interface-based)
 	authUsecase    usecase.AuthUsecase
 	paymentUsecase usecase.PaymentUsecase
 	chatUsecase   usecase.ChatUsecase
+	userUsecase   usecase.UserUsecase
 
 	// Handlers
 	authHandler    *authHandler.AuthHandler
 	paymentHandler *paymentHandler.PaymentHandler
 	chatHandler    *chatHandler.ChatHandler
+	userHandler    *userHandler.UserHandler
 }
 
 func NewHTTPServer(config *config.Config) (*Server, error) {
@@ -137,6 +143,19 @@ func (s *Server) initClients() error {
 	}
 	s.chatClient = chatGRPCClient
 
+
+	// Initialize User gRPC Client
+	userGRPCClient, err := userGRPC.NewUserGRPCClient(
+		ctx,
+		fmt.Sprintf("localhost:%s", s.config.Services.UserServicePort),
+		false, // useTLS - set to true in production
+		nil,   // tlsConfig
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create user gRPC client: %w", err)
+	}
+	s.userClient = userGRPCClient
+
 	// TODO: Add other clients as you implement them
 
 	return nil
@@ -146,6 +165,7 @@ func (s *Server) initUsecases() error {
 	s.authUsecase = authUsecase.NewAuthUsecase(s.authClient)
 	s.paymentUsecase = paymentUsecase.NewPaymentUsecase(s.paymentClient, s.config)
 	s.chatUsecase = chatUsecase.NewChatUsecase(s.chatClient)
+	s.userUsecase = userUsecase.NewUserUsecase(s.userClient)
 	// TODO: Add other usecases as you implement them
 	// s.adminUsecase = adminUsecase.NewAdminUsecase(s.adminClient)
 	// s.userUsecase = userUsecase.NewUserUsecase(s.userClient)
@@ -159,6 +179,7 @@ func (s *Server) initHandlers() error {
 	s.authHandler = authHandler.NewAuthHandler(s.authUsecase, *s.config)
 	s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase)
 	s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase)
+	s.userHandler = userHandler.NewUserHandler(s.userUsecase)
 	// TODO: Add other handlers as you implement them
 	// s.adminHandler = adminHandler.NewAdminHandler(s.adminUsecase, *s.config)
 	// s.userHandler = userHandler.NewUserHandler(s.userUsecase, *s.config)

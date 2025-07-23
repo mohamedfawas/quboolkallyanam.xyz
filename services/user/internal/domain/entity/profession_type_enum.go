@@ -4,17 +4,19 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type ProfessionTypeEnum string
 
 const (
-	ProfessionTypeFullTime     ProfessionTypeEnum = "full_time"
-	ProfessionTypePartTime     ProfessionTypeEnum = "part_time"
-	ProfessionTypeFreelance    ProfessionTypeEnum = "freelance"
-	ProfessionTypeSelfEmployed ProfessionTypeEnum = "self_employed"
-	ProfessionTypeNotWorking   ProfessionTypeEnum = "not_working"
-	ProfessionTypeNotMentioned ProfessionTypeEnum = "not_mentioned"
+	ProfessionTypeFullTime     ProfessionTypeEnum = validation.ConstantProfessionTypeFullTime
+	ProfessionTypePartTime     ProfessionTypeEnum = validation.ConstantProfessionTypePartTime
+	ProfessionTypeFreelance    ProfessionTypeEnum = validation.ConstantProfessionTypeFreelance
+	ProfessionTypeSelfEmployed ProfessionTypeEnum = validation.ConstantProfessionTypeSelfEmployed
+	ProfessionTypeNotWorking   ProfessionTypeEnum = validation.ConstantProfessionTypeNotWorking
+	ProfessionTypeNotMentioned ProfessionTypeEnum = validation.ConstantProfessionTypeNotMentioned
 )
 
 func isValidProfessionType(val string) bool {

@@ -10,12 +10,23 @@ import (
 
 type UserProfileRepository interface {
 	CreateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
-	// GetUserProfileByID(ctx context.Context, id uint) (*entity.UserProfile, error)
-	// GetUserProfileByUserID(ctx context.Context, userID uuid.UUID) (*entity.UserProfile, error)
 	ProfileExists(ctx context.Context, userID uuid.UUID) (bool, error)
-	// PatchUserProfile(ctx context.Context, userID uuid.UUID, patch map[string]interface{}) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID, lastLogin time.Time) error
-	// UpdateProfilePicture(ctx context.Context, userID uuid.UUID, profilePictureURL string) error
-	// RemoveProfilePicture(ctx context.Context, userID uuid.UUID) error
-	// SoftDeleteUserProfile(ctx context.Context, userID uuid.UUID) error
+	GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*entity.UserProfile, error)
+	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
+	GetUserProfileByID(ctx context.Context, id uint) (*entity.UserProfile, error)
+	/*
+		GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
+		GetProfileByID(ctx context.Context, id uint) (*models.UserProfile, error)
+		GetBasicProfileByUUID(ctx context.Context, userUUID uuid.UUID) (*models.UserProfile, error)
+		GetUserUUIDByProfileID(ctx context.Context, profileID uint64) (uuid.UUID, error)
+		ProfileExists(ctx context.Context, userID uuid.UUID) (bool, error)
+		UpdateProfile(ctx context.Context, profile *models.UserProfile) error
+		PatchProfile(ctx context.Context, userID uuid.UUID, updates map[string]interface{}) error
+		UpdateLastLogin(ctx context.Context, userID uuid.UUID, lastLogin time.Time) error
+		UpdateEmail(ctx context.Context, userID uuid.UUID, email string) error
+		UpdateProfilePhoto(ctx context.Context, userID uuid.UUID, photoURL string) error
+		RemoveProfilePhoto(ctx context.Context, userID uuid.UUID) error
+		SoftDeleteUserProfile(ctx context.Context, userID uuid.UUID) error
+	*/
 }

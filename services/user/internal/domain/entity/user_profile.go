@@ -7,7 +7,7 @@ import (
 )
 
 type UserProfile struct {
-	ID                    int64                `json:"id" gorm:"primaryKey"`
+	ID                    int64               `json:"id" gorm:"primaryKey"`
 	UserID                uuid.UUID           `json:"user_id" gorm:"type:uuid;not null;uniqueIndex"`
 	IsBride               bool                `json:"is_bride" gorm:"not null;default:false"`
 	FullName              *string             `json:"full_name" gorm:"size:200"`
@@ -35,4 +35,18 @@ type UserProfile struct {
 
 func (UserProfile) TableName() string {
 	return "user_profiles"
+}
+
+type UpdateUserProfileRequest struct {
+	IsBride               *bool      `json:"is_bride"`
+	FullName              *string    `json:"full_name"`
+	DateOfBirth           *time.Time `json:"date_of_birth"`
+	HeightCm              *int       `json:"height_cm"`
+	PhysicallyChallenged  *bool      `json:"physically_challenged"`
+	Community             *string    `json:"community"`
+	MaritalStatus         *string    `json:"marital_status"`
+	Profession            *string    `json:"profession"`
+	ProfessionType        *string    `json:"profession_type"`
+	HighestEducationLevel *string    `json:"highest_education_level"`
+	HomeDistrict          *string    `json:"home_district"`
 }

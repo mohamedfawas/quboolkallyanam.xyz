@@ -4,16 +4,18 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type MaritalStatusEnum string
 
 const (
-	MaritalStatusNeverMarried  MaritalStatusEnum = "never_married"
-	MaritalStatusDivorced      MaritalStatusEnum = "divorced"
-	MaritalStatusNikkahDivorce MaritalStatusEnum = "nikkah_divorce"
-	MaritalStatusWidowed       MaritalStatusEnum = "widowed"
-	MaritalStatusNotMentioned  MaritalStatusEnum = "not_mentioned"
+	MaritalStatusNeverMarried  MaritalStatusEnum = validation.ConstantMaritalStatusNeverMarried
+	MaritalStatusDivorced      MaritalStatusEnum = validation.ConstantMaritalStatusDivorced
+	MaritalStatusNikkahDivorce MaritalStatusEnum = validation.ConstantMaritalStatusNikkahDivorce
+	MaritalStatusWidowed       MaritalStatusEnum = validation.ConstantMaritalStatusWidowed
+	MaritalStatusNotMentioned  MaritalStatusEnum = validation.ConstantMaritalStatusNotMentioned
 )
 
 func isValidMaritalStatusEnum(s string) bool {

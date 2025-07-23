@@ -4,18 +4,20 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type CommunityEnum string
 
 const (
-	CommunitySunni        CommunityEnum = "sunni"
-	CommunityMujahid      CommunityEnum = "mujahid"
-	CommunityTabligh      CommunityEnum = "tabligh"
-	CommunityJamateIslami CommunityEnum = "jamate_islami"
-	CommunityShia         CommunityEnum = "shia"
-	CommunityMuslim       CommunityEnum = "muslim"
-	CommunityNotMentioned CommunityEnum = "not_mentioned"
+	CommunitySunni        CommunityEnum = validation.ConstantCommunitySunni
+	CommunityMujahid      CommunityEnum = validation.ConstantCommunityMujahid
+	CommunityTabligh      CommunityEnum = validation.ConstantCommunityTabligh
+	CommunityJamateIslami CommunityEnum = validation.ConstantCommunityJamateIslami
+	CommunityShia         CommunityEnum = validation.ConstantCommunityShia
+	CommunityMuslim       CommunityEnum = validation.ConstantCommunityMuslim
+	CommunityNotMentioned CommunityEnum = validation.ConstantCommunityNotMentioned
 )
 
 func isValidCommunityEnum(val string) bool {

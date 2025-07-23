@@ -16,6 +16,10 @@ const (
 	ServiceChat    = "chat"
 	Env            = "env"
 
+	// Operation Types
+	CreateOperationType = "create"
+	UpdateOperationType = "update"
+
 	// HTTP Handler Versions
 	HTTPHandlerVersionV1 = "/api/v1"
 

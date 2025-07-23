@@ -8,7 +8,7 @@ import (
 	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
-	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/vaidation"
+	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 )
 

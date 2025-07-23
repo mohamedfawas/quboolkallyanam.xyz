@@ -18,6 +18,7 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 	s.registerAuthRoutes(v1)
 	s.registerPaymentRoutes(v1, router)
 	s.registerChatRoutes(v1)
+	s.registerUserRoutes(v1)
 
 }
 
@@ -76,8 +77,36 @@ func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) 
 	}
 }
 
-func (s *Server) registerUserRoutes(v1 *gin.RouterGroup)  {}
-func (s *Server) registerAdminRoutes(v1 *gin.RouterGroup) {}
+func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
+	user := v1.Group("/user")
+	{
+		user.PATCH("/profile",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.PatchUserProfile)
+		user.PUT("/profile",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.PutUserProfile)
+		user.POST("/preference",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.PostPartnerPreference)
+		user.PATCH("/preference",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.PatchPartnerPreference)
+		user.POST("/match-action",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.PostRecordMatchAction)
+		user.PUT("/match-action",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.PutRecordMatchAction)
+	}
+}
+
 func (s *Server) registerChatRoutes(v1 *gin.RouterGroup) {
 	chat := v1.Group("/chat")
 	{

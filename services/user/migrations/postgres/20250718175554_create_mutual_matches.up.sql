@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS mutual_matches (
   matched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   -- Status tracking
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   deleted_at TIMESTAMPTZ,
 
@@ -17,8 +16,8 @@ CREATE TABLE IF NOT EXISTS mutual_matches (
   CONSTRAINT unique_mutual_match UNIQUE (user_id_1, user_id_2)
 );
 
-CREATE INDEX IF NOT EXISTS idx_mutual_matches_user1 ON mutual_matches (user_id_1) WHERE is_active = TRUE AND is_deleted = FALSE;
-CREATE INDEX IF NOT EXISTS idx_mutual_matches_user2 ON mutual_matches (user_id_2) WHERE is_active = TRUE AND is_deleted = FALSE;
+CREATE INDEX IF NOT EXISTS idx_mutual_matches_user1 ON mutual_matches (user_id_1) WHERE  is_deleted = FALSE;
+CREATE INDEX IF NOT EXISTS idx_mutual_matches_user2 ON mutual_matches (user_id_2) WHERE  is_deleted = FALSE;
 
 -- for clean up
 CREATE INDEX IF NOT EXISTS idx_mutual_matches_is_deleted ON mutual_matches (is_deleted) WHERE is_deleted = TRUE;

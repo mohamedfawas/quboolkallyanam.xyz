@@ -45,6 +45,25 @@ func RequireRole(role string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		userRole := val.(string)
+		if !hasRequiredRole(userRole, role) {
+			apiresponse.Fail(c, status.Errorf(codes.PermissionDenied, "insufficient role"))
+			c.Abort()
+			return
+		}
 		c.Next()
+	}
+}
+
+func hasRequiredRole(userRole, requiredRole string) bool {
+	switch requiredRole {
+	case constants.RoleUser:
+		return userRole == constants.RoleUser || userRole == constants.RolePremiumUser
+	case constants.RolePremiumUser:
+		return userRole == constants.RolePremiumUser
+	case constants.RoleAdmin:
+		return userRole == constants.RoleAdmin
+	default:
+		return false
 	}
 }

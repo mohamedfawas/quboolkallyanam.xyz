@@ -4,12 +4,16 @@ import (
 	"context"
 
 	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/vaidation"
+	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-func (u *authUsecase) UserVerification(ctx context.Context, req dto.UserVerificationRequest, config config.Config) (*dto.UserVerificationResponse, error) {
+func (u *authUsecase) UserVerification(
+	ctx context.Context,
+	req dto.UserVerificationRequest,
+	config config.Config) (*dto.UserVerificationResponse, error) {
+
 	if !validation.IsValidEmail(req.Email) {
 		return nil, errors.ErrInvalidEmail
 	}

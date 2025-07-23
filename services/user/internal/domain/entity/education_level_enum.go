@@ -4,17 +4,19 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type EducationLevelEnum string
 
 const (
-	EducationLevelLessThanHighSchool EducationLevelEnum = "less_than_high_school"
-	EducationLevelHighSchool         EducationLevelEnum = "high_school"
-	EducationLevelHigherSecondary    EducationLevelEnum = "higher_secondary"
-	EducationLevelUnderGraduation    EducationLevelEnum = "under_graduation"
-	EducationLevelPostGraduation     EducationLevelEnum = "post_graduation"
-	EducationLevelNotMentioned       EducationLevelEnum = "not_mentioned"
+	EducationLevelLessThanHighSchool EducationLevelEnum = validation.ConstantEducationLevelLessThanHighSchool
+	EducationLevelHighSchool         EducationLevelEnum = validation.ConstantEducationLevelHighSchool
+	EducationLevelHigherSecondary    EducationLevelEnum = validation.ConstantEducationLevelHigherSecondary
+	EducationLevelUnderGraduation    EducationLevelEnum = validation.ConstantEducationLevelUnderGraduation
+	EducationLevelPostGraduation     EducationLevelEnum = validation.ConstantEducationLevelPostGraduation
+	EducationLevelNotMentioned       EducationLevelEnum = validation.ConstantEducationLevelNotMentioned
 )
 
 func isValidEducationLevelEnum(val string) bool {

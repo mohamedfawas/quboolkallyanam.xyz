@@ -4,26 +4,28 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type HomeDistrictEnum string
 
 const (
-	HomeDistrictThiruvananthapuram HomeDistrictEnum = "thiruvananthapuram"
-	HomeDistrictKollam             HomeDistrictEnum = "kollam"
-	HomeDistrictPathanamthitta     HomeDistrictEnum = "pathanamthitta"
-	HomeDistrictAlappuzha          HomeDistrictEnum = "alappuzha"
-	HomeDistrictKottayam           HomeDistrictEnum = "kottayam"
-	HomeDistrictErnakulam          HomeDistrictEnum = "ernakulam"
-	HomeDistrictThrissur           HomeDistrictEnum = "thrissur"
-	HomeDistrictPalakkad           HomeDistrictEnum = "palakkad"
-	HomeDistrictMalappuram         HomeDistrictEnum = "malappuram"
-	HomeDistrictKozhikode          HomeDistrictEnum = "kozhikode"
-	HomeDistrictWayanad            HomeDistrictEnum = "wayanad"
-	HomeDistrictKannur             HomeDistrictEnum = "kannur"
-	HomeDistrictKasaragod          HomeDistrictEnum = "kasaragod"
-	HomeDistrictIdukki             HomeDistrictEnum = "idukki"
-	HomeDistrictNotMentioned       HomeDistrictEnum = "not_mentioned"
+	HomeDistrictThiruvananthapuram HomeDistrictEnum = validation.ConstantHomeDistrictThiruvananthapuram
+	HomeDistrictKollam             HomeDistrictEnum = validation.ConstantHomeDistrictKollam
+	HomeDistrictPathanamthitta     HomeDistrictEnum = validation.ConstantHomeDistrictPathanamthitta
+	HomeDistrictAlappuzha          HomeDistrictEnum = validation.ConstantHomeDistrictAlappuzha
+	HomeDistrictKottayam           HomeDistrictEnum = validation.ConstantHomeDistrictKottayam
+	HomeDistrictErnakulam          HomeDistrictEnum = validation.ConstantHomeDistrictErnakulam
+	HomeDistrictThrissur           HomeDistrictEnum = validation.ConstantHomeDistrictThrissur
+	HomeDistrictPalakkad           HomeDistrictEnum = validation.ConstantHomeDistrictPalakkad
+	HomeDistrictMalappuram         HomeDistrictEnum = validation.ConstantHomeDistrictMalappuram
+	HomeDistrictKozhikode          HomeDistrictEnum = validation.ConstantHomeDistrictKozhikode
+	HomeDistrictWayanad            HomeDistrictEnum = validation.ConstantHomeDistrictWayanad
+	HomeDistrictKannur             HomeDistrictEnum = validation.ConstantHomeDistrictKannur
+	HomeDistrictKasaragod          HomeDistrictEnum = validation.ConstantHomeDistrictKasaragod
+	HomeDistrictIdukki             HomeDistrictEnum = validation.ConstantHomeDistrictIdukki
+	HomeDistrictNotMentioned       HomeDistrictEnum = validation.ConstantHomeDistrictNotMentioned
 )
 
 func isValidHomeDistrictEnum(s string) bool {

@@ -2,37 +2,62 @@ syntax = "proto3";
 
 package user.v1;
 
-import "google/protobuf/timestamp.proto";
+// import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1;userpbv1";
 
 service UserService {
-    rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+    rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
+    rpc UpdateUserPartnerPreferences(UpdateUserPartnerPreferencesRequest) returns (UpdateUserPartnerPreferencesResponse);
+    rpc RecordMatchAction(RecordMatchActionRequest) returns (RecordMatchActionResponse);
 }
 
-message ProfileData {
-    uint64 id = 1;
-    bool is_bride = 2;
-    string full_name = 3;
-    string phone = 4;
-    string date_of_birth = 5;
-    int32 height_cm = 6;
-    bool physically_challenged = 7;
-    string community = 8;
-    string marital_status = 9;
-    string profession = 10;
-    string profession_type = 11;
-    string highest_education_level = 12;
-    string home_district = 13;
-    string profile_picture_url = 14;
-    google.protobuf.Timestamp last_login = 15;
-    google.protobuf.Timestamp created_at = 16;
+message UpdateUserProfileRequest {
+    google.protobuf.BoolValue   is_bride                = 1;
+    google.protobuf.StringValue full_name               = 2;
+    google.protobuf.StringValue date_of_birth           = 3;
+    google.protobuf.Int32Value  height_cm               = 4;
+    google.protobuf.BoolValue   physically_challenged   = 5;
+    google.protobuf.StringValue community               = 6;
+    google.protobuf.StringValue marital_status          = 7;
+    google.protobuf.StringValue profession              = 8;
+    google.protobuf.StringValue profession_type         = 9;
+    google.protobuf.StringValue highest_education_level = 10;
+    google.protobuf.StringValue home_district           = 11;
 }
 
-message GetProfileRequest {
-    // No fields needed as user ID will be extracted from auth context
+message UpdateUserProfileResponse {
+    google.protobuf.BoolValue success = 1;
 }
 
-message GetProfileResponse {
-    ProfileData profile = 1;
+message UpdateUserPartnerPreferencesRequest {
+    google.protobuf.StringValue operation_type = 1;
+    google.protobuf.Int32Value  min_age_years = 2;
+    google.protobuf.Int32Value  max_age_years = 3;
+    google.protobuf.Int32Value  min_height_cm = 4;
+    google.protobuf.Int32Value  max_height_cm = 5;
+    google.protobuf.BoolValue   accept_physically_challenged = 6;
+
+    // Repeated already supports optional values, so no need wrapper
+    repeated string preferred_communities = 7;
+    repeated string preferred_marital_status = 8;
+    repeated string preferred_professions = 9;
+    repeated string preferred_profession_types = 10;
+    repeated string preferred_education_levels = 11;
+    repeated string preferred_home_districts = 12;
+}
+
+
+message UpdateUserPartnerPreferencesResponse {
+    google.protobuf.BoolValue success = 1;
+}
+
+message RecordMatchActionRequest {
+    string action = 1;
+    uint32 target_profile_id = 2;
+}
+
+message RecordMatchActionResponse {
+    bool success = 1;
 }

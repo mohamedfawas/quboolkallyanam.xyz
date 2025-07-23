@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 
+	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
@@ -14,8 +15,11 @@ import (
 	messageBrokerAdapter "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/messageBroker"
 	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/config"
+	matchmaking "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/match_making"
 	userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/user_profile"
 	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
+	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/grpc/v1"
+
 	"google.golang.org/grpc"
 )
 
@@ -73,12 +77,20 @@ func NewServer(config *config.Config) (*Server, error) {
 
 	// Initialize repositories
 	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
-
+	partnerPreferencesRepo := postgresAdapters.NewPartnerPreferencesRepository(pgClient)
+	profileMatchRepo := postgresAdapters.NewProfileMatchRepository(pgClient)
+	mutualMatchRepo := postgresAdapters.NewMutualMatchRepository(pgClient)
+	transactionManager := postgres.NewTransactionManager(pgClient)
 	// Initialize event publisher
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
 
 	// Initialize use cases
-	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, eventPublisher)
+	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, partnerPreferencesRepo, eventPublisher)
+	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager)
+
+	// Initialize and register gRPC handler
+	userHandler := grpcHandlerv1.NewUserHandler(userProfileUC, matchMakingUC)
+	userpbv1.RegisterUserServiceServer(grpcServer, userHandler)
 
 	// Initialize event handler
 	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC)
