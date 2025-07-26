@@ -24,6 +24,7 @@ import (
 
 	// Use case imports
 	paymentUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/usecase/payments"
+	subscriptionUsecase "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/usecase/subscription"
 
 	// Handler imports
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/handlers/grpc/v1"
@@ -103,9 +104,10 @@ func NewServer(config *config.Config) (*Server, error) {
 		razorpayService,
 		eventPublisher,
 	)
+	subscriptionUC := subscriptionUsecase.NewSubscriptionUsecase(subscriptionPlansRepo, subscriptionsRepo)
 
 	// Initialize and register gRPC handler
-	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC)
+	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC, subscriptionUC)
 	paymentpbv1.RegisterPaymentServiceServer(grpcServer, paymentHandler)
 
 	log.Println("Payment Service gRPC handlers registered")

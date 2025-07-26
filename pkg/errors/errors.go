@@ -59,8 +59,14 @@ var (
 
 // Subscription Plan errors
 var (
-	ErrSubscriptionPlanNotFound  = errors.New("subscription plan not found")
-	ErrSubscriptionPlanNotActive = errors.New("subscription plan is not active")
+	ErrInvalidSubscriptionPlanID           = errors.New("invalid subscription plan ID")
+	ErrInvalidSubscriptionPlanDurationDays = errors.New("invalid subscription plan duration days")
+	ErrInvalidSubscriptionPlanAmount       = errors.New("invalid subscription plan amount")
+	ErrInvalidCurrency                     = errors.New("invalid subscription plan currency")
+	ErrInvalidSubscriptionPlanDescription  = errors.New("invalid subscription plan description")
+	ErrSubscriptionPlanNotFound            = errors.New("subscription plan not found")
+	ErrSubscriptionPlanNotActive           = errors.New("subscription plan is not active")
+	ErrMissingRequiredFields               = errors.New("missing required fields")
 )
 
 // Payment errors
@@ -71,6 +77,11 @@ var (
 	ErrPaymentSignatureInvalid = errors.New("payment signature verification failed")
 	ErrRazorpayOrderCreation   = errors.New("failed to create payment order")
 	ErrPaymentProcessingFailed = errors.New("payment processing failed")
+)
+
+// Subscription errors
+var (
+	ErrActiveSubscriptionNotFound = errors.New("active subscription not found")
 )
 
 // User errors
@@ -87,14 +98,14 @@ var (
 	ErrInvalidHomeDistrict   = errors.New("invalid home district")
 
 	// Partner Preference errors
-	ErrInvalidAgeRange    = errors.New("invalid age range: must be between 18 and 100 years")
-	ErrInvalidHeightRange = errors.New("invalid height range: must be between 130 and 220 cm")
+	ErrInvalidAgeRange                 = errors.New("invalid age range: must be between 18 and 100 years")
+	ErrInvalidHeightRange              = errors.New("invalid height range: must be between 130 and 220 cm")
 	ErrPartnerPreferencesAlreadyExists = errors.New("partner preferences already exists")
-	ErrPartnerPreferencesNotFound = errors.New("partner preferences not found")
+	ErrPartnerPreferencesNotFound      = errors.New("partner preferences not found")
 
 	ErrUserProfileNotFound = errors.New("user profile not found")
 
 	// Match Making
-	ErrInvalidMatchAction = errors.New("invalid match action")
+	ErrInvalidMatchAction     = errors.New("invalid match action")
 	ErrInvalidTargetProfileID = errors.New("invlaid target profile id")
 )

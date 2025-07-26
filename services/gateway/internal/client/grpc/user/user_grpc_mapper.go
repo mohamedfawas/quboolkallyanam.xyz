@@ -138,3 +138,81 @@ func MapRecordMatchActionResponse(resp *userpbv1.RecordMatchActionResponse) *dto
 		Success: resp.Success,
 	}
 }
+
+
+
+////////////////////////////// Get Match Recommendations //////////////////////////////
+
+func MapGetMatchRecommendationsRequest(req dto.GetMatchRecommendationsRequest) *userpbv1.GetMatchRecommendationsRequest {
+	return &userpbv1.GetMatchRecommendationsRequest{
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+}
+
+func MapGetMatchRecommendationsResponse(resp *userpbv1.GetMatchRecommendationsResponse) *dto.GetMatchRecommendationsResponse {
+	profiles := make([]dto.UserProfileRecommendation, len(resp.Profiles))
+	for i, profile := range resp.Profiles {
+		profiles[i] = dto.UserProfileRecommendation{
+			ID:                profile.Id,
+			FullName:          profile.FullName,
+			ProfilePictureURL: profile.ProfilePictureUrl,
+			Age:               int(profile.Age),
+			HeightCm:          int(profile.HeightCm),
+			MaritalStatus:     profile.MaritalStatus,
+			Profession:        profile.Profession,
+			HomeDistrict:      profile.HomeDistrict,
+		}
+	}
+
+	pagination := dto.PaginationInfo{
+		TotalCount: resp.Pagination.TotalCount,
+		Limit:      int(resp.Pagination.Limit),
+		Offset:     int(resp.Pagination.Offset),
+		HasMore:    resp.Pagination.HasMore,
+	}
+
+	return &dto.GetMatchRecommendationsResponse{
+		Profiles:   profiles,
+		Pagination: pagination,
+	}
+}
+
+
+////////////////////////////// Get Profiles By Match Action //////////////////////////////
+
+func MapGetProfilesByMatchActionRequest(req dto.GetProfilesByMatchActionRequest) *userpbv1.GetProfilesByMatchActionRequest {
+	return &userpbv1.GetProfilesByMatchActionRequest{
+		Action: req.Action,
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	}
+}
+
+func MapGetProfilesByMatchActionResponse(resp *userpbv1.GetProfilesByMatchActionResponse) *dto.GetProfilesByMatchActionResponse {
+	profiles := make([]dto.UserProfileRecommendation, len(resp.Profiles))
+	for i, profile := range resp.Profiles {
+		profiles[i] = dto.UserProfileRecommendation{
+			ID:                profile.Id,
+			FullName:          profile.FullName,
+			ProfilePictureURL: profile.ProfilePictureUrl,
+			Age:               int(profile.Age),
+			HeightCm:          int(profile.HeightCm),
+			MaritalStatus:     profile.MaritalStatus,
+			Profession:        profile.Profession,
+			HomeDistrict:      profile.HomeDistrict,
+		}
+	}
+
+	pagination := dto.PaginationInfo{
+		TotalCount: resp.Pagination.TotalCount,
+		Limit:      int(resp.Pagination.Limit),
+		Offset:     int(resp.Pagination.Offset),
+		HasMore:    resp.Pagination.HasMore,
+	}
+
+	return &dto.GetProfilesByMatchActionResponse{
+		Profiles:   profiles,
+		Pagination: pagination,
+	}
+}

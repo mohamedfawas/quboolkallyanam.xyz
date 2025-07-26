@@ -87,6 +87,38 @@ func (c *paymentGRPCClient) VerifyPayment(ctx context.Context, req dto.VerifyPay
 	return MapVerifyPaymentResponse(grpcResp), nil
 }
 
+func (c *paymentGRPCClient) CreateOrUpdateSubscriptionPlan(ctx context.Context, req dto.UpdateSubscriptionPlanRequest) (*dto.CreateOrUpdateSubscriptionPlanResponse, error) {
+	grpcReq := MapCreateOrUpdateSubscriptionPlanRequest(req)
+	grpcResp, err := c.client.CreateOrUpdateSubscriptionPlan(ctx, grpcReq)
+	if err != nil {
+		log.Printf("CreateOrUpdateSubscriptionPlan error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapCreateOrUpdateSubscriptionPlanResponse(grpcResp), nil
+}
+
+func (c *paymentGRPCClient) GetSubscriptionPlan(ctx context.Context, planID string) (*dto.SubscriptionPlan, error) {
+	grpcReq := &paymentpbv1.GetSubscriptionPlanRequest{
+		PlanId: planID,
+	}
+	grpcResp, err := c.client.GetSubscriptionPlan(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetSubscriptionPlan error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetSubscriptionPlanResponse(grpcResp), nil
+}
+
+func (c *paymentGRPCClient) GetActiveSubscriptionPlans(ctx context.Context) ([]*dto.SubscriptionPlan, error) {
+	grpcReq := &paymentpbv1.GetActiveSubscriptionPlansRequest{}
+	grpcResp, err := c.client.GetActiveSubscriptionPlans(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetActiveSubscriptionPlans error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetActiveSubscriptionPlansResponse(grpcResp), nil
+}
+
 func (c *paymentGRPCClient) Close() error {
 	return c.conn.Close()
 }

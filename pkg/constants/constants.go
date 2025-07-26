@@ -67,4 +67,8 @@ const (
 	// MongoDB Collections
 	MongoDBCollectionConversations = "conversations"
 	MongoDBCollectionMessages      = "messages"
+
+	// Conversation display limits
+	DefaultConversationDisplayLimit = 10
+	MaxConversationDisplayLimit     = 50
 )

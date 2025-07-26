@@ -2,16 +2,18 @@ package config
 
 import (
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Environment string         `mapstructure:"environment"`
-	GRPC        GRPCConfig     `mapstructure:"grpc"`
-	Postgres    PostgresConfig `mapstructure:"postgres"`
-	RabbitMQ    RabbitMQConfig `mapstructure:"rabbitmq"`
-	PubSub      PubSubConfig   `mapstructure:"pubsub"`
+	Environment string           `mapstructure:"environment"`
+	GRPC        GRPCConfig       `mapstructure:"grpc"`
+	Postgres    PostgresConfig   `mapstructure:"postgres"`
+	RabbitMQ    RabbitMQConfig   `mapstructure:"rabbitmq"`
+	PubSub      PubSubConfig     `mapstructure:"pubsub"`
+	GCPStorage  GCPStorageConfig `mapstructure:"gcp_storage"`
 }
 
 type GRPCConfig struct {
@@ -28,8 +30,6 @@ type PostgresConfig struct {
 	TimeZone string `mapstructure:"timezone"`
 }
 
-
-
 type RabbitMQConfig struct {
 	DSN          string `mapstructure:"dsn"`
 	ExchangeName string `mapstructure:"exchange_name"`
@@ -37,6 +37,14 @@ type RabbitMQConfig struct {
 
 type PubSubConfig struct {
 	ProjectID string `mapstructure:"project_id"`
+}
+
+type GCPStorageConfig struct {
+	Bucket          string        `mapstructure:"bucket"`
+	CredentialsFile string        `mapstructure:"credentials_file"`
+	URLExpiry       time.Duration `mapstructure:"url_expiry"`
+	Endpoint        string        `mapstructure:"endpoint"` // For GCS emulator
+	ProjectID       string        `mapstructure:"project_id"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -80,6 +88,11 @@ func bindEnvVars(v *viper.Viper) {
 		"rabbitmq.dsn",
 		"rabbitmq.exchange_name",
 		"pubsub.project_id",
+		"gcp_storage.bucket",
+		"gcp_storage.credentials_file",
+		"gcp_storage.url_expiry",
+		"gcp_storage.endpoint",
+		"gcp_storage.project_id",
 	}
 	for _, key := range keys {
 		_ = v.BindEnv(key)
@@ -103,4 +116,10 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rabbitmq.exchange_name", "qubool_kallyanam_events")
 
 	v.SetDefault("pubsub.project_id", "qubool-kallyanam-events")
+
+	// GCP Storage defaults
+	v.SetDefault("gcp_storage.bucket", "qubool-kallyanam-user-photos")
+	v.SetDefault("gcp_storage.url_expiry", 24*time.Hour) // 24 hours
+	v.SetDefault("gcp_storage.endpoint", "")             // Empty for production GCS
+	v.SetDefault("gcp_storage.project_id", "qubool-kallyanam")
 }

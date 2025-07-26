@@ -6,15 +6,18 @@ import (
 )
 
 type chatUsecase struct {
-	conversationRepository repository.ConversationRepository
-	// messageRepository        repository.MessageRepository
+	conversationRepository   repository.ConversationRepository
+	messageRepository        repository.MessageRepository
 	userProjectionRepository repository.UserProjectionRepository
 }
 
-func NewChatUsecase(conversationRepository repository.ConversationRepository,
-	//messageRepository repository.MessageRepository,
+func NewChatUsecase(
+	conversationRepository repository.ConversationRepository,
+	messageRepository repository.MessageRepository,
 	userProjectionRepository repository.UserProjectionRepository) usecase.ChatUsecase {
-	return &chatUsecase{conversationRepository: conversationRepository,
-		//messageRepository:        messageRepository,
-		userProjectionRepository: userProjectionRepository}
+	return &chatUsecase{
+		conversationRepository:   conversationRepository,
+		messageRepository:        messageRepository,
+		userProjectionRepository: userProjectionRepository,
+	}
 }

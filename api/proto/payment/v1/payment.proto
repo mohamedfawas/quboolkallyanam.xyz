@@ -3,6 +3,7 @@ syntax = "proto3";
 package payment.v1;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/payment/v1;paymentpbv1";
 
@@ -10,6 +11,9 @@ service PaymentService {
     rpc CreatePaymentOrder(CreatePaymentOrderRequest) returns (CreatePaymentOrderResponse);
     rpc ShowPaymentPage(ShowPaymentPageRequest) returns (ShowPaymentPageResponse);
     rpc VerifyPayment(VerifyPaymentRequest) returns (VerifyPaymentResponse);
+    rpc CreateOrUpdateSubscriptionPlan(CreateOrUpdateSubscriptionPlanRequest) returns (CreateOrUpdateSubscriptionPlanResponse);
+    rpc GetSubscriptionPlan(GetSubscriptionPlanRequest) returns (GetSubscriptionPlanResponse);
+    rpc GetActiveSubscriptionPlans(GetActiveSubscriptionPlansRequest) returns (GetActiveSubscriptionPlansResponse);
 }
 
 message CreatePaymentOrderRequest {
@@ -48,4 +52,44 @@ message VerifyPaymentResponse {
     google.protobuf.Timestamp subscription_start_date = 2;
     google.protobuf.Timestamp subscription_end_date = 3;
     string subscription_status = 4;
+}
+
+message CreateOrUpdateSubscriptionPlanRequest {
+    string id = 1;
+    google.protobuf.Int32Value duration_days = 2;
+    google.protobuf.DoubleValue amount = 3;
+    google.protobuf.StringValue currency = 4;
+    google.protobuf.StringValue description = 5;
+    google.protobuf.BoolValue is_active = 6;
+}
+
+message CreateOrUpdateSubscriptionPlanResponse {
+    bool success = 1;
+}
+
+
+message GetSubscriptionPlanRequest {
+    string plan_id = 1;
+}
+
+message GetSubscriptionPlanResponse {
+    SubscriptionPlan plan = 1;
+}
+
+message GetActiveSubscriptionPlansRequest {
+}
+
+message GetActiveSubscriptionPlansResponse {
+    repeated SubscriptionPlan plans = 1;
+}
+
+message SubscriptionPlan {
+    string id = 1;
+    int32 duration_days = 2;
+    double amount = 3;
+    string currency = 4;
+    string description = 5;
+    bool is_active = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
 }

@@ -194,3 +194,114 @@ func (h *UserHandler) RecordMatchAction(ctx context.Context, req *userpbv1.Recor
 
 	return &userpbv1.RecordMatchActionResponse{Success: success}, nil
 }
+
+func (h *UserHandler) GetMatchRecommendations(ctx context.Context, req *userpbv1.GetMatchRecommendationsRequest) (*userpbv1.GetMatchRecommendationsResponse, error) {
+	userID, err := contextutils.GetUserID(ctx)
+	if err != nil {
+		log.Printf("Failed to get user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+	}
+
+	userIDUUID, err := uuid.Parse(userID)
+	if err != nil {
+		log.Printf("Failed to parse user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user ID: %v", err)
+	}
+
+	limit := int(req.Limit)
+	offset := int(req.Offset)
+
+	profiles, pagination, err := h.matchMakingUsecase.RecommendUserProfiles(ctx, userIDUUID, limit, offset)
+	if err != nil {
+		log.Printf("Failed to get match recommendations: %v", err)
+		return nil, err
+	}
+
+	protoProfiles := make([]*userpbv1.UserProfileRecommendation, len(profiles))
+	for i, profile := range profiles {
+		protoProfiles[i] = &userpbv1.UserProfileRecommendation{
+			Id:                profile.ID,
+			FullName:          profile.FullName,
+			ProfilePictureUrl: getStringValue(profile.ProfilePictureURL),
+			Age:               int32(profile.Age),
+			HeightCm:          int32(profile.HeightCm),
+			MaritalStatus:     profile.MaritalStatus,
+			Profession:        profile.Profession,
+			HomeDistrict:      profile.HomeDistrict,
+		}
+	}
+
+	protoPagination := &userpbv1.PaginationInfo{
+		TotalCount: pagination.TotalCount,
+		Limit:      int32(pagination.Limit),
+		Offset:     int32(pagination.Offset),
+		HasMore:    pagination.HasMore,
+	}
+
+	return &userpbv1.GetMatchRecommendationsResponse{
+		Profiles:   protoProfiles,
+		Pagination: protoPagination,
+	}, nil
+}
+
+
+func (h *UserHandler) GetProfilesByMatchAction(ctx context.Context, req *userpbv1.GetProfilesByMatchActionRequest) (*userpbv1.GetProfilesByMatchActionResponse, error) {
+	userID, err := contextutils.GetUserID(ctx)
+	if err != nil {
+		log.Printf("Failed to get user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+	}
+
+	userIDUUID, err := uuid.Parse(userID)
+	if err != nil {
+		log.Printf("Failed to parse user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user ID: %v", err)
+	}
+
+	if req.Action == "" {
+		log.Printf("Action is required")
+		return nil, status.Errorf(codes.InvalidArgument, "action is required")
+	}
+
+	limit := int(req.Limit)
+	offset := int(req.Offset)
+
+	profiles, pagination, err := h.matchMakingUsecase.GetProfilesByMatchAction(ctx, userIDUUID, req.Action, limit, offset)
+	if err != nil {
+		log.Printf("Failed to get profiles by match action: %v", err)
+		return nil, err
+	}
+
+	protoProfiles := make([]*userpbv1.UserProfileRecommendation, len(profiles))
+	for i, profile := range profiles {
+		protoProfiles[i] = &userpbv1.UserProfileRecommendation{
+			Id:                profile.ID,
+			FullName:          profile.FullName,
+			ProfilePictureUrl: getStringValue(profile.ProfilePictureURL),
+			Age:               int32(profile.Age),
+			HeightCm:          int32(profile.HeightCm),
+			MaritalStatus:     profile.MaritalStatus,
+			Profession:        profile.Profession,
+			HomeDistrict:      profile.HomeDistrict,
+		}
+	}
+
+	protoPagination := &userpbv1.PaginationInfo{
+		TotalCount: pagination.TotalCount,
+		Limit:      int32(pagination.Limit),
+		Offset:     int32(pagination.Offset),
+		HasMore:    pagination.HasMore,
+	}
+
+	return &userpbv1.GetProfilesByMatchActionResponse{
+		Profiles:   protoProfiles,
+		Pagination: protoPagination,
+	}, nil
+}
+
+func getStringValue(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
+}

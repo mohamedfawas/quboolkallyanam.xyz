@@ -18,11 +18,18 @@ import (
 
 type PaymentHandler struct {
 	paymentpbv1.UnimplementedPaymentServiceServer
-	paymentUsecase usecase.PaymentUsecase
+	paymentUsecase      usecase.PaymentUsecase
+	subscriptionUsecase usecase.SubscriptionUsecase
 }
 
-func NewPaymentHandler(paymentUsecase usecase.PaymentUsecase) *PaymentHandler {
-	return &PaymentHandler{paymentUsecase: paymentUsecase}
+func NewPaymentHandler(
+	paymentUsecase usecase.PaymentUsecase,
+	subscriptionUsecase usecase.SubscriptionUsecase,
+) *PaymentHandler {
+	return &PaymentHandler{
+		paymentUsecase:      paymentUsecase,
+		subscriptionUsecase: subscriptionUsecase,
+	}
 }
 
 func (h *PaymentHandler) CreatePaymentOrder(ctx context.Context, req *paymentpbv1.CreatePaymentOrderRequest) (*paymentpbv1.CreatePaymentOrderResponse, error) {
@@ -123,5 +130,121 @@ func (h *PaymentHandler) VerifyPayment(ctx context.Context, req *paymentpbv1.Ver
 		SubscriptionStartDate: subscriptionStartDatePb,
 		SubscriptionEndDate:   subscriptionEndDatePb,
 		SubscriptionStatus:    verifyPaymentResponse.SubscriptionStatus,
+	}, nil
+}
+
+func (h *PaymentHandler) CreateOrUpdateSubscriptionPlan(ctx context.Context, req *paymentpbv1.CreateOrUpdateSubscriptionPlanRequest) (*paymentpbv1.CreateOrUpdateSubscriptionPlanResponse, error) {
+	updateRequest := entity.UpdateSubscriptionPlanRequest{
+		ID: req.Id,
+	}
+
+	// Convert optional fields from protobuf wrappers to pointers
+	if req.DurationDays != nil {
+		durationDays := int(req.DurationDays.Value)
+		updateRequest.DurationDays = &durationDays
+	}
+
+	if req.Amount != nil {
+		amount := req.Amount.Value
+		updateRequest.Amount = &amount
+	}
+
+	if req.Currency != nil {
+		currency := req.Currency.Value
+		updateRequest.Currency = &currency
+	}
+
+	if req.Description != nil {
+		description := req.Description.Value
+		updateRequest.Description = &description
+	}
+
+	if req.IsActive != nil {
+		isActive := req.IsActive.Value
+		updateRequest.IsActive = &isActive
+	}
+
+	err := h.subscriptionUsecase.CreateOrUpdateSubscriptionPlans(ctx, updateRequest)
+	if err != nil {
+		switch {
+		case errors.Is(err, appErrors.ErrInvalidSubscriptionPlanID):
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid subscription plan ID")
+		case errors.Is(err, appErrors.ErrInvalidSubscriptionPlanDurationDays):
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid subscription plan duration days")
+		case errors.Is(err, appErrors.ErrInvalidSubscriptionPlanAmount):
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid subscription plan amount")
+		case errors.Is(err, appErrors.ErrInvalidCurrency):
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid currency")
+		case errors.Is(err, appErrors.ErrMissingRequiredFields):
+			return nil, status.Errorf(codes.InvalidArgument, "Missing required fields for plan creation")
+		default:
+			log.Printf("Failed to create or update subscription plan: %v", err)
+			return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+		}
+	}
+
+	return &paymentpbv1.CreateOrUpdateSubscriptionPlanResponse{
+		Success: true,
+	}, nil
+}
+
+func (h *PaymentHandler) GetSubscriptionPlan(ctx context.Context, req *paymentpbv1.GetSubscriptionPlanRequest) (*paymentpbv1.GetSubscriptionPlanResponse, error) {
+	plan, err := h.subscriptionUsecase.GetSubscriptionPlan(ctx, req.PlanId)
+	if err != nil {
+		switch {
+		case errors.Is(err, appErrors.ErrSubscriptionPlanNotFound):
+			return nil, status.Errorf(codes.NotFound, "Subscription plan not found")
+		default:
+			log.Printf("Failed to get subscription plan: %v", err)
+			return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+		}
+	}
+
+	createdAtPb := timestamppb.New(plan.CreatedAt)
+	updatedAtPb := timestamppb.New(plan.UpdatedAt)
+
+	subscriptionPlan := &paymentpbv1.SubscriptionPlan{
+		Id:           plan.ID,
+		DurationDays: int32(plan.DurationDays),
+		Amount:       plan.Amount,
+		Currency:     plan.Currency,
+		Description:  plan.Description,
+		IsActive:     plan.IsActive,
+		CreatedAt:    createdAtPb,
+		UpdatedAt:    updatedAtPb,
+	}
+
+	return &paymentpbv1.GetSubscriptionPlanResponse{
+		Plan: subscriptionPlan,
+	}, nil
+}
+
+func (h *PaymentHandler) GetActiveSubscriptionPlans(ctx context.Context, req *paymentpbv1.GetActiveSubscriptionPlansRequest) (*paymentpbv1.GetActiveSubscriptionPlansResponse, error) {
+	plans, err := h.subscriptionUsecase.GetActiveSubscriptionPlans(ctx)
+	if err != nil {
+		log.Printf("Failed to get active subscription plans: %v", err)
+		return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+	}
+
+	var subscriptionPlans []*paymentpbv1.SubscriptionPlan
+	for _, plan := range plans {
+		createdAtPb := timestamppb.New(plan.CreatedAt)
+		updatedAtPb := timestamppb.New(plan.UpdatedAt)
+
+		subscriptionPlan := &paymentpbv1.SubscriptionPlan{
+			Id:           plan.ID,
+			DurationDays: int32(plan.DurationDays),
+			Amount:       plan.Amount,
+			Currency:     plan.Currency,
+			Description:  plan.Description,
+			IsActive:     plan.IsActive,
+			CreatedAt:    createdAtPb,
+			UpdatedAt:    updatedAtPb,
+		}
+		subscriptionPlans = append(subscriptionPlans, subscriptionPlan)
+	}
+
+	return &paymentpbv1.GetActiveSubscriptionPlansResponse{
+		Plans: subscriptionPlans,
 	}, nil
 }

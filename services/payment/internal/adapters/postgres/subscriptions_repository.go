@@ -2,6 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
+	"log"
+
+	"gorm.io/gorm"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
@@ -30,6 +34,10 @@ func (r *subscriptionsRepository) GetActiveSubscriptionByUserID(ctx context.Cont
 		First(&subscription).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		log.Printf("GetActiveSubscriptionByUserID error in subscriptions repository: %v", err)
 		return nil, err
 	}
 

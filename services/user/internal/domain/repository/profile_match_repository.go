@@ -14,4 +14,7 @@ type ProfileMatchRepository interface {
 	CreateMatchActionTx(ctx context.Context, tx *gorm.DB, userID uuid.UUID, targetID uuid.UUID, isLiked bool) error
 	UpdateMatchAction(ctx context.Context, userID uuid.UUID, targetID uuid.UUID, isLiked bool) error
 	UpdateMatchActionTx(ctx context.Context, tx *gorm.DB, userID uuid.UUID, targetID uuid.UUID, isLiked bool) error
+	GetMatchedProfileIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	GetLikedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	GetPassedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }

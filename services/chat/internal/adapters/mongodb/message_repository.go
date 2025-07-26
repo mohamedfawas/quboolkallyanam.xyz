@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/mongodb"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/entity"

@@ -96,6 +96,27 @@ CREATE TABLE IF NOT EXISTS partner_preferences (
 );
 
 
+-- PRIMARY MATCHING INDEX 
+CREATE INDEX IF NOT EXISTS idx_user_profiles_matching 
+ON user_profiles (is_deleted, is_bride, last_login DESC) 
+WHERE is_deleted = false;
+
+--  AGE RANGE INDEX (Critical for age filtering)
+CREATE INDEX IF NOT EXISTS idx_user_profiles_age_range 
+ON user_profiles (is_deleted, date_of_birth, last_login DESC) 
+WHERE is_deleted = false;
+
+--  HEIGHT RANGE INDEX (Critical for height filtering)
+CREATE INDEX IF NOT EXISTS idx_user_profiles_height_range 
+ON user_profiles (is_deleted, height_cm, last_login DESC) 
+WHERE is_deleted = false;
+
+-- PHYSICALLY CHALLENGED INDEX (For boolean filtering)
+CREATE INDEX IF NOT EXISTS idx_user_profiles_physically_challenged 
+ON user_profiles (is_deleted, physically_challenged, last_login DESC) 
+WHERE is_deleted = false;
+
+
 -- GIN indexes for JSONB fields (essential for performance)
 CREATE INDEX IF NOT EXISTS idx_partner_pref_communities 
 ON partner_preferences USING GIN (preferred_communities);

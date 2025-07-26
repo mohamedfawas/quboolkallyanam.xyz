@@ -22,6 +22,8 @@ const (
 	UserService_UpdateUserProfile_FullMethodName            = "/user.v1.UserService/UpdateUserProfile"
 	UserService_UpdateUserPartnerPreferences_FullMethodName = "/user.v1.UserService/UpdateUserPartnerPreferences"
 	UserService_RecordMatchAction_FullMethodName            = "/user.v1.UserService/RecordMatchAction"
+	UserService_GetMatchRecommendations_FullMethodName      = "/user.v1.UserService/GetMatchRecommendations"
+	UserService_GetProfilesByMatchAction_FullMethodName     = "/user.v1.UserService/GetProfilesByMatchAction"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -31,6 +33,8 @@ type UserServiceClient interface {
 	UpdateUserProfile(ctx context.Context, in *UpdateUserProfileRequest, opts ...grpc.CallOption) (*UpdateUserProfileResponse, error)
 	UpdateUserPartnerPreferences(ctx context.Context, in *UpdateUserPartnerPreferencesRequest, opts ...grpc.CallOption) (*UpdateUserPartnerPreferencesResponse, error)
 	RecordMatchAction(ctx context.Context, in *RecordMatchActionRequest, opts ...grpc.CallOption) (*RecordMatchActionResponse, error)
+	GetMatchRecommendations(ctx context.Context, in *GetMatchRecommendationsRequest, opts ...grpc.CallOption) (*GetMatchRecommendationsResponse, error)
+	GetProfilesByMatchAction(ctx context.Context, in *GetProfilesByMatchActionRequest, opts ...grpc.CallOption) (*GetProfilesByMatchActionResponse, error)
 }
 
 type userServiceClient struct {
@@ -71,6 +75,26 @@ func (c *userServiceClient) RecordMatchAction(ctx context.Context, in *RecordMat
 	return out, nil
 }
 
+func (c *userServiceClient) GetMatchRecommendations(ctx context.Context, in *GetMatchRecommendationsRequest, opts ...grpc.CallOption) (*GetMatchRecommendationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMatchRecommendationsResponse)
+	err := c.cc.Invoke(ctx, UserService_GetMatchRecommendations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetProfilesByMatchAction(ctx context.Context, in *GetProfilesByMatchActionRequest, opts ...grpc.CallOption) (*GetProfilesByMatchActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProfilesByMatchActionResponse)
+	err := c.cc.Invoke(ctx, UserService_GetProfilesByMatchAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type UserServiceServer interface {
 	UpdateUserProfile(context.Context, *UpdateUserProfileRequest) (*UpdateUserProfileResponse, error)
 	UpdateUserPartnerPreferences(context.Context, *UpdateUserPartnerPreferencesRequest) (*UpdateUserPartnerPreferencesResponse, error)
 	RecordMatchAction(context.Context, *RecordMatchActionRequest) (*RecordMatchActionResponse, error)
+	GetMatchRecommendations(context.Context, *GetMatchRecommendationsRequest) (*GetMatchRecommendationsResponse, error)
+	GetProfilesByMatchAction(context.Context, *GetProfilesByMatchActionRequest) (*GetProfilesByMatchActionResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedUserServiceServer) UpdateUserPartnerPreferences(context.Conte
 }
 func (UnimplementedUserServiceServer) RecordMatchAction(context.Context, *RecordMatchActionRequest) (*RecordMatchActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecordMatchAction not implemented")
+}
+func (UnimplementedUserServiceServer) GetMatchRecommendations(context.Context, *GetMatchRecommendationsRequest) (*GetMatchRecommendationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMatchRecommendations not implemented")
+}
+func (UnimplementedUserServiceServer) GetProfilesByMatchAction(context.Context, *GetProfilesByMatchActionRequest) (*GetProfilesByMatchActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfilesByMatchAction not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -172,6 +204,42 @@ func _UserService_RecordMatchAction_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetMatchRecommendations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMatchRecommendationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetMatchRecommendations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetMatchRecommendations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetMatchRecommendations(ctx, req.(*GetMatchRecommendationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetProfilesByMatchAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfilesByMatchActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetProfilesByMatchAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetProfilesByMatchAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetProfilesByMatchAction(ctx, req.(*GetProfilesByMatchActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RecordMatchAction",
 			Handler:    _UserService_RecordMatchAction_Handler,
+		},
+		{
+			MethodName: "GetMatchRecommendations",
+			Handler:    _UserService_GetMatchRecommendations_Handler,
+		},
+		{
+			MethodName: "GetProfilesByMatchAction",
+			Handler:    _UserService_GetProfilesByMatchAction_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

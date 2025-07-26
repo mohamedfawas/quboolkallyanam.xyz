@@ -8,6 +8,9 @@
 *.so
 *.dylib
 
+# chat test
+test_chat.html
+
 # Test binary, built with `go test -c`
 *.test
 

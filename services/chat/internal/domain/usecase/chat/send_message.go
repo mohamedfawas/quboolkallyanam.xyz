@@ -10,16 +10,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (c *chatUsecase) SendMessage(ctx context.Context,
-	 conversationIDStr, senderID, content string) (*entity.Message, error) {
-	
+func (c *chatUsecase) SendMessage(ctx context.Context, conversationIDStr, senderID, content string) (*entity.Message, error) {
 	conversationObjID, err := primitive.ObjectIDFromHex(conversationIDStr)
 	if err != nil {
 		log.Printf("failed to parse conversation ID: %v", err)
 		return nil, fmt.Errorf("invalid conversation ID: %w", err)
 	}
 
-	
 	now := time.Now().UTC()
 	message := &entity.Message{
 		ID:             entity.NewMessageID(),

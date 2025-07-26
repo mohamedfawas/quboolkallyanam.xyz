@@ -66,3 +66,45 @@ func (c *chatGRPCClient) CreateConversation(ctx context.Context, req dto.CreateC
 	}
 	return MapCreateConversationResponse(grpcResp), nil
 }
+
+func (c *chatGRPCClient) SendMessage(ctx context.Context, req dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, errors.New("user ID not found in context")
+	}
+	ctx = contextutils.SetUserContext(ctx, userID)
+
+	grpcReq := MapSendMessageRequest(req)
+	grpcResp, err := c.client.SendMessage(ctx, grpcReq)
+	if err != nil {
+		log.Printf("SendMessage error in chat grpc client: %v", err)
+		return nil, err
+	}
+	return MapSendMessageResponse(grpcResp), nil
+}
+
+func (c *chatGRPCClient) GetConversation(ctx context.Context, req dto.GetConversationRequest) (*dto.GetConversationResponse, error) {
+	grpcReq := MapGetConversationRequest(req)
+	grpcResp, err := c.client.GetConversation(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetConversation error in chat grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetConversationResponse(grpcResp), nil
+}
+
+func (c *chatGRPCClient) GetUserConversations(ctx context.Context, req dto.GetUserConversationsRequest) (*dto.GetUserConversationsResponse, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, errors.New("user ID not found in context")
+	}
+	ctx = contextutils.SetUserContext(ctx, userID)
+
+	grpcReq := MapGetUserConversationsRequest(req)
+	grpcResp, err := c.client.GetUserConversations(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetUserConversations error in chat grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetUserConversationsResponse(grpcResp), nil
+}

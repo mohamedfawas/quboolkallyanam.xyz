@@ -60,6 +60,16 @@ func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) 
 	// ============= PAYMENT API ROUTES  =============
 	apiPayment := v1.Group("/payment")
 	{
+		apiPayment.GET("/subscription-plans", s.paymentHandler.GetActiveSubscriptionPlans)
+		apiPayment.GET("/subscription-plan", s.paymentHandler.GetSubscriptionPlanByID)
+		apiPayment.POST("/subscription-plan",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleAdmin),
+			s.paymentHandler.CreateSubscriptionPlan)
+		apiPayment.PATCH("/subscription-plan",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleAdmin),
+			s.paymentHandler.UpdateSubscriptionPlan)
 		apiPayment.POST("/order",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
@@ -96,6 +106,10 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.PatchPartnerPreference)
+		user.GET("/recommendations",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetMatchRecommendations)
 		user.POST("/match-action",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
@@ -104,6 +118,18 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.PutRecordMatchAction)
+		user.GET("/matches/liked",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetLikedProfiles)
+		user.GET("/matches/passed",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetPassedProfiles)
+		user.GET("/matches/mutual",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetMutuallyMatchedProfiles)
 	}
 }
 
@@ -114,5 +140,10 @@ func (s *Server) registerChatRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RolePremiumUser),
 			s.chatHandler.CreateConversation)
+		chat.GET("/conversations",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RolePremiumUser),
+			s.chatHandler.GetUserConversations)
+		chat.GET("/ws", s.chatHandler.HandleWebSocket)
 	}
 }

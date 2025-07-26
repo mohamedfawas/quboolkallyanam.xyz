@@ -99,6 +99,39 @@ func (c *userGRPCClient) RecordMatchAction(ctx context.Context, req dto.RecordMa
 	return MapRecordMatchActionResponse(resp), nil
 }
 
+
+func (c *userGRPCClient) GetMatchRecommendations(ctx context.Context, req dto.GetMatchRecommendationsRequest) (*dto.GetMatchRecommendationsResponse, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, fmt.Errorf("user ID not found in context")
+	}
+
+	ctx = contextutils.SetUserContext(ctx, userID)
+	grpcReq := MapGetMatchRecommendationsRequest(req)
+	resp, err := c.client.GetMatchRecommendations(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetMatchRecommendations error in user grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetMatchRecommendationsResponse(resp), nil
+}
+
+func (c *userGRPCClient) GetProfilesByMatchAction(ctx context.Context, req dto.GetProfilesByMatchActionRequest) (*dto.GetProfilesByMatchActionResponse, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, fmt.Errorf("user ID not found in context")
+	}
+
+	ctx = contextutils.SetUserContext(ctx, userID)
+	grpcReq := MapGetProfilesByMatchActionRequest(req)
+	resp, err := c.client.GetProfilesByMatchAction(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetProfilesByMatchAction error in user grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetProfilesByMatchActionResponse(resp), nil
+}
+
 func (c *userGRPCClient) Close() error {
 	return c.conn.Close()
 }

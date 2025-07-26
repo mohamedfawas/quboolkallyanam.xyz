@@ -90,11 +90,11 @@ func NewServer(config *config.Config) (*Server, error) {
 	// Initialize repositories
 	userProjectionRepo := postgresAdapters.NewUserProjectionRepository(pgClient)
 	conversationRepo := mongodbAdapters.NewConversationRepository(mongoClient)
-	//messageRepo := mongodbAdapters.NewMessageRepository(mongoClient)
+	messageRepo := mongodbAdapters.NewMessageRepository(mongoClient)
 
 	// Initialize use cases
 	userProjectionUC := userProjectionUsecaseImpl.NewUserProjectionUsecase(userProjectionRepo)
-	chatUC := chatUsecaseImpl.NewChatUsecase(conversationRepo, userProjectionRepo)
+	chatUC := chatUsecaseImpl.NewChatUsecase(conversationRepo, messageRepo, userProjectionRepo)
 
 	// Initialize event handler
 	userEventHandler := eventHandlers.NewUserEventHandler(messagingClient, userProjectionUC)

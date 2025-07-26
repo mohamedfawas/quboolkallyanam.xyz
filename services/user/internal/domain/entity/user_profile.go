@@ -50,3 +50,14 @@ type UpdateUserProfileRequest struct {
 	HighestEducationLevel *string    `json:"highest_education_level"`
 	HomeDistrict          *string    `json:"home_district"`
 }
+
+type UserProfileResponse struct {
+	ID                int64   `json:"id"`
+	FullName          string  `json:"full_name"`
+	ProfilePictureURL *string `json:"profile_picture_url"`
+	Age               int     `json:"age"`
+	HeightCm          int     `json:"height_cm"`
+	MaritalStatus     string  `json:"marital_status"`
+	Profession        string  `json:"profession"`
+	HomeDistrict      string  `json:"home_district"`
+}

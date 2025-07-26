@@ -19,9 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PaymentService_CreatePaymentOrder_FullMethodName = "/payment.v1.PaymentService/CreatePaymentOrder"
-	PaymentService_ShowPaymentPage_FullMethodName    = "/payment.v1.PaymentService/ShowPaymentPage"
-	PaymentService_VerifyPayment_FullMethodName      = "/payment.v1.PaymentService/VerifyPayment"
+	PaymentService_CreatePaymentOrder_FullMethodName             = "/payment.v1.PaymentService/CreatePaymentOrder"
+	PaymentService_ShowPaymentPage_FullMethodName                = "/payment.v1.PaymentService/ShowPaymentPage"
+	PaymentService_VerifyPayment_FullMethodName                  = "/payment.v1.PaymentService/VerifyPayment"
+	PaymentService_CreateOrUpdateSubscriptionPlan_FullMethodName = "/payment.v1.PaymentService/CreateOrUpdateSubscriptionPlan"
+	PaymentService_GetSubscriptionPlan_FullMethodName            = "/payment.v1.PaymentService/GetSubscriptionPlan"
+	PaymentService_GetActiveSubscriptionPlans_FullMethodName     = "/payment.v1.PaymentService/GetActiveSubscriptionPlans"
 )
 
 // PaymentServiceClient is the client API for PaymentService service.
@@ -31,6 +34,9 @@ type PaymentServiceClient interface {
 	CreatePaymentOrder(ctx context.Context, in *CreatePaymentOrderRequest, opts ...grpc.CallOption) (*CreatePaymentOrderResponse, error)
 	ShowPaymentPage(ctx context.Context, in *ShowPaymentPageRequest, opts ...grpc.CallOption) (*ShowPaymentPageResponse, error)
 	VerifyPayment(ctx context.Context, in *VerifyPaymentRequest, opts ...grpc.CallOption) (*VerifyPaymentResponse, error)
+	CreateOrUpdateSubscriptionPlan(ctx context.Context, in *CreateOrUpdateSubscriptionPlanRequest, opts ...grpc.CallOption) (*CreateOrUpdateSubscriptionPlanResponse, error)
+	GetSubscriptionPlan(ctx context.Context, in *GetSubscriptionPlanRequest, opts ...grpc.CallOption) (*GetSubscriptionPlanResponse, error)
+	GetActiveSubscriptionPlans(ctx context.Context, in *GetActiveSubscriptionPlansRequest, opts ...grpc.CallOption) (*GetActiveSubscriptionPlansResponse, error)
 }
 
 type paymentServiceClient struct {
@@ -71,6 +77,36 @@ func (c *paymentServiceClient) VerifyPayment(ctx context.Context, in *VerifyPaym
 	return out, nil
 }
 
+func (c *paymentServiceClient) CreateOrUpdateSubscriptionPlan(ctx context.Context, in *CreateOrUpdateSubscriptionPlanRequest, opts ...grpc.CallOption) (*CreateOrUpdateSubscriptionPlanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateOrUpdateSubscriptionPlanResponse)
+	err := c.cc.Invoke(ctx, PaymentService_CreateOrUpdateSubscriptionPlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentServiceClient) GetSubscriptionPlan(ctx context.Context, in *GetSubscriptionPlanRequest, opts ...grpc.CallOption) (*GetSubscriptionPlanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSubscriptionPlanResponse)
+	err := c.cc.Invoke(ctx, PaymentService_GetSubscriptionPlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentServiceClient) GetActiveSubscriptionPlans(ctx context.Context, in *GetActiveSubscriptionPlansRequest, opts ...grpc.CallOption) (*GetActiveSubscriptionPlansResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetActiveSubscriptionPlansResponse)
+	err := c.cc.Invoke(ctx, PaymentService_GetActiveSubscriptionPlans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServiceServer is the server API for PaymentService service.
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility.
@@ -78,6 +114,9 @@ type PaymentServiceServer interface {
 	CreatePaymentOrder(context.Context, *CreatePaymentOrderRequest) (*CreatePaymentOrderResponse, error)
 	ShowPaymentPage(context.Context, *ShowPaymentPageRequest) (*ShowPaymentPageResponse, error)
 	VerifyPayment(context.Context, *VerifyPaymentRequest) (*VerifyPaymentResponse, error)
+	CreateOrUpdateSubscriptionPlan(context.Context, *CreateOrUpdateSubscriptionPlanRequest) (*CreateOrUpdateSubscriptionPlanResponse, error)
+	GetSubscriptionPlan(context.Context, *GetSubscriptionPlanRequest) (*GetSubscriptionPlanResponse, error)
+	GetActiveSubscriptionPlans(context.Context, *GetActiveSubscriptionPlansRequest) (*GetActiveSubscriptionPlansResponse, error)
 	mustEmbedUnimplementedPaymentServiceServer()
 }
 
@@ -96,6 +135,15 @@ func (UnimplementedPaymentServiceServer) ShowPaymentPage(context.Context, *ShowP
 }
 func (UnimplementedPaymentServiceServer) VerifyPayment(context.Context, *VerifyPaymentRequest) (*VerifyPaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyPayment not implemented")
+}
+func (UnimplementedPaymentServiceServer) CreateOrUpdateSubscriptionPlan(context.Context, *CreateOrUpdateSubscriptionPlanRequest) (*CreateOrUpdateSubscriptionPlanResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrUpdateSubscriptionPlan not implemented")
+}
+func (UnimplementedPaymentServiceServer) GetSubscriptionPlan(context.Context, *GetSubscriptionPlanRequest) (*GetSubscriptionPlanResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSubscriptionPlan not implemented")
+}
+func (UnimplementedPaymentServiceServer) GetActiveSubscriptionPlans(context.Context, *GetActiveSubscriptionPlansRequest) (*GetActiveSubscriptionPlansResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetActiveSubscriptionPlans not implemented")
 }
 func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 func (UnimplementedPaymentServiceServer) testEmbeddedByValue()                        {}
@@ -172,6 +220,60 @@ func _PaymentService_VerifyPayment_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentService_CreateOrUpdateSubscriptionPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrUpdateSubscriptionPlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).CreateOrUpdateSubscriptionPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_CreateOrUpdateSubscriptionPlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).CreateOrUpdateSubscriptionPlan(ctx, req.(*CreateOrUpdateSubscriptionPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PaymentService_GetSubscriptionPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSubscriptionPlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetSubscriptionPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_GetSubscriptionPlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetSubscriptionPlan(ctx, req.(*GetSubscriptionPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PaymentService_GetActiveSubscriptionPlans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActiveSubscriptionPlansRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetActiveSubscriptionPlans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_GetActiveSubscriptionPlans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetActiveSubscriptionPlans(ctx, req.(*GetActiveSubscriptionPlansRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +292,18 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyPayment",
 			Handler:    _PaymentService_VerifyPayment_Handler,
+		},
+		{
+			MethodName: "CreateOrUpdateSubscriptionPlan",
+			Handler:    _PaymentService_CreateOrUpdateSubscriptionPlan_Handler,
+		},
+		{
+			MethodName: "GetSubscriptionPlan",
+			Handler:    _PaymentService_GetSubscriptionPlan_Handler,
+		},
+		{
+			MethodName: "GetActiveSubscriptionPlans",
+			Handler:    _PaymentService_GetActiveSubscriptionPlans_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

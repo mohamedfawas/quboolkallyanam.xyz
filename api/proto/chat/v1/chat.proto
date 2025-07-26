@@ -9,6 +9,8 @@ option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/chat/
 service ChatService {
     rpc CreateConversation(CreateConversationRequest) returns (CreateConversationResponse);
     rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+    rpc GetConversation(GetConversationRequest) returns (GetConversationResponse);
+    rpc GetUserConversations(GetUserConversationsRequest) returns (GetUserConversationsResponse);
 }
 
 message CreateConversationRequest {
@@ -34,4 +36,42 @@ message SendMessageResponse {
     string sender_id = 3;
     string content = 4;
     google.protobuf.Timestamp sent_at = 5;
+}
+
+
+message GetConversationRequest {
+    string conversation_id = 1;
+}
+
+message GetConversationResponse {
+    string conversation_id = 1;
+    repeated string participant_ids = 2;
+    google.protobuf.Timestamp created_at = 3;
+    google.protobuf.Timestamp updated_at = 4;
+}
+
+
+message GetUserConversationsRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+message ConversationInfo {
+    string conversation_id = 1;
+    repeated string participant_ids = 2;
+    google.protobuf.Timestamp created_at = 3;
+    google.protobuf.Timestamp updated_at = 4;
+    google.protobuf.Timestamp last_message_at = 5;
+}
+
+message GetUserConversationsResponse {
+    repeated ConversationInfo conversations = 1;
+    PaginationInfo pagination = 2;
+}
+
+message PaginationInfo {
+    int64 total_count = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+    bool has_more = 4;
 }

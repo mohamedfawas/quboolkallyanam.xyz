@@ -18,3 +18,21 @@ type SubscriptionPlan struct {
 func (SubscriptionPlan) TableName() string {
 	return "subscription_plans"
 }
+
+type CreateSubscriptionPlanRequest struct {
+	ID           string  `json:"id"`
+	DurationDays int     `json:"duration_days"`
+	Amount       float64 `json:"amount"`
+	Currency     string  `json:"currency"`
+	Description  string  `json:"description"`
+	IsActive     bool    `json:"is_active"`
+}
+
+type UpdateSubscriptionPlanRequest struct {
+	ID           string   `json:"id"`
+	DurationDays *int     `json:"duration_days,omitempty"`
+	Amount       *float64 `json:"amount,omitempty"`
+	Currency     *string  `json:"currency,omitempty"`
+	Description  *string  `json:"description,omitempty"`
+	IsActive     *bool    `json:"is_active,omitempty"`
+}

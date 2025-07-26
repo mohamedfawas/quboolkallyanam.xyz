@@ -72,3 +72,36 @@ type PaymentFailureData struct {
 	OrderID string `json:"order_id"`
 	Error   string `json:"error"`
 }
+
+type CreateSubscriptionPlanRequest struct {
+	ID           string  `json:"id" binding:"required"`
+	DurationDays int     `json:"duration_days" binding:"required"`
+	Amount       float64 `json:"amount" binding:"required"`
+	Currency     string  `json:"currency" binding:"required"`
+	Description  string  `json:"description" binding:"required"`
+	IsActive     bool    `json:"is_active" binding:"required"`
+}
+
+type UpdateSubscriptionPlanRequest struct {
+	ID           string   `json:"id" binding:"required"`
+	DurationDays *int     `json:"duration_days,omitempty"`
+	Amount       *float64 `json:"amount,omitempty"`
+	Currency     *string  `json:"currency,omitempty"`
+	Description  *string  `json:"description,omitempty"`
+	IsActive     *bool    `json:"is_active,omitempty"`
+}
+
+type CreateOrUpdateSubscriptionPlanResponse struct {
+	Success bool `json:"success"`
+}
+
+type SubscriptionPlan struct {
+	ID           string    `json:"id"`
+	DurationDays int       `json:"duration_days"`
+	Amount       float64   `json:"amount"`
+	Currency     string    `json:"currency"`
+	Description  string    `json:"description"`
+	IsActive     bool      `json:"is_active"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}

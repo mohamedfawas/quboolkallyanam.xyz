@@ -2,6 +2,8 @@ package v1
 
 import (
 	paymentpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/payment/v1"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
@@ -56,4 +58,79 @@ func MapVerifyPaymentResponse(resp *paymentpbv1.VerifyPaymentResponse) *dto.Veri
 		SubscriptionEndDate:   resp.SubscriptionEndDate.AsTime(),
 		SubscriptionStatus:    resp.SubscriptionStatus,
 	}
+}
+
+// /////////////////////////// Create Or Update Subscription Plan //////////////////////////////
+func MapCreateOrUpdateSubscriptionPlanRequest(req dto.UpdateSubscriptionPlanRequest) *paymentpbv1.CreateOrUpdateSubscriptionPlanRequest {
+	grpcReq := &paymentpbv1.CreateOrUpdateSubscriptionPlanRequest{
+		Id: req.ID,
+	}
+
+	// Convert optional fields to protobuf wrappers
+	if req.DurationDays != nil {
+		grpcReq.DurationDays = &wrapperspb.Int32Value{Value: int32(*req.DurationDays)}
+	}
+
+	if req.Amount != nil {
+		grpcReq.Amount = &wrapperspb.DoubleValue{Value: *req.Amount}
+	}
+
+	if req.Currency != nil {
+		grpcReq.Currency = &wrapperspb.StringValue{Value: *req.Currency}
+	}
+
+	if req.Description != nil {
+		grpcReq.Description = &wrapperspb.StringValue{Value: *req.Description}
+	}
+
+	if req.IsActive != nil {
+		grpcReq.IsActive = &wrapperspb.BoolValue{Value: *req.IsActive}
+	}
+
+	return grpcReq
+}
+
+func MapCreateOrUpdateSubscriptionPlanResponse(resp *paymentpbv1.CreateOrUpdateSubscriptionPlanResponse) *dto.CreateOrUpdateSubscriptionPlanResponse {
+	return &dto.CreateOrUpdateSubscriptionPlanResponse{
+		Success: resp.Success,
+	}
+}
+
+// /////////////////////////// Get Subscription Plan //////////////////////////////
+func MapGetSubscriptionPlanResponse(resp *paymentpbv1.GetSubscriptionPlanResponse) *dto.SubscriptionPlan {
+	if resp.Plan == nil {
+		return nil
+	}
+
+	return &dto.SubscriptionPlan{
+		ID:           resp.Plan.Id,
+		DurationDays: int(resp.Plan.DurationDays),
+		Amount:       resp.Plan.Amount,
+		Currency:     resp.Plan.Currency,
+		Description:  resp.Plan.Description,
+		IsActive:     resp.Plan.IsActive,
+		CreatedAt:    resp.Plan.CreatedAt.AsTime(),
+		UpdatedAt:    resp.Plan.UpdatedAt.AsTime(),
+	}
+}
+
+// /////////////////////////// Get Active Subscription Plans //////////////////////////////
+func MapGetActiveSubscriptionPlansResponse(resp *paymentpbv1.GetActiveSubscriptionPlansResponse) []*dto.SubscriptionPlan {
+	var plans []*dto.SubscriptionPlan
+
+	for _, plan := range resp.Plans {
+		subscriptionPlan := &dto.SubscriptionPlan{
+			ID:           plan.Id,
+			DurationDays: int(plan.DurationDays),
+			Amount:       plan.Amount,
+			Currency:     plan.Currency,
+			Description:  plan.Description,
+			IsActive:     plan.IsActive,
+			CreatedAt:    plan.CreatedAt.AsTime(),
+			UpdatedAt:    plan.UpdatedAt.AsTime(),
+		}
+		plans = append(plans, subscriptionPlan)
+	}
+
+	return plans
 }

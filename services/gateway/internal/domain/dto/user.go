@@ -73,3 +73,42 @@ type RecordMatchActionRequest struct {
 type RecordMatchActionResponse struct {
 	Success bool `json:"success"`
 }
+
+type GetMatchRecommendationsRequest struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type UserProfileRecommendation struct {
+	ID                int64   `json:"id"`
+	FullName          string  `json:"full_name"`
+	ProfilePictureURL string  `json:"profile_picture_url"`
+	Age               int     `json:"age"`
+	HeightCm          int     `json:"height_cm"`
+	MaritalStatus     string  `json:"marital_status"`
+	Profession        string  `json:"profession"`
+	HomeDistrict      string  `json:"home_district"`
+}
+
+type PaginationInfo struct {
+	TotalCount int64 `json:"total_count"`
+	Limit      int   `json:"limit"`
+	Offset     int   `json:"offset"`
+	HasMore    bool  `json:"has_more"`
+}
+
+type GetMatchRecommendationsResponse struct {
+	Profiles   []UserProfileRecommendation `json:"profiles"`
+	Pagination PaginationInfo             `json:"pagination"`
+}
+
+type GetProfilesByMatchActionRequest struct {
+	Action string `json:"action"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+}
+
+type GetProfilesByMatchActionResponse struct {
+	Profiles   []UserProfileRecommendation `json:"profiles"`
+	Pagination PaginationInfo             `json:"pagination"`
+}

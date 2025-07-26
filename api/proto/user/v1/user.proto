@@ -11,6 +11,8 @@ service UserService {
     rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
     rpc UpdateUserPartnerPreferences(UpdateUserPartnerPreferencesRequest) returns (UpdateUserPartnerPreferencesResponse);
     rpc RecordMatchAction(RecordMatchActionRequest) returns (RecordMatchActionResponse);
+    rpc GetMatchRecommendations(GetMatchRecommendationsRequest) returns (GetMatchRecommendationsResponse);
+    rpc GetProfilesByMatchAction(GetProfilesByMatchActionRequest) returns (GetProfilesByMatchActionResponse);
 }
 
 message UpdateUserProfileRequest {
@@ -61,3 +63,43 @@ message RecordMatchActionRequest {
 message RecordMatchActionResponse {
     bool success = 1;
 }
+
+message GetMatchRecommendationsRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+message UserProfileRecommendation {
+    int64 id = 1;
+    string full_name = 2;
+    string profile_picture_url = 3;
+    int32 age = 4;
+    int32 height_cm = 5;
+    string marital_status = 6;
+    string profession = 7;
+    string home_district = 8;
+}
+
+message GetMatchRecommendationsResponse {
+    repeated UserProfileRecommendation profiles = 1;
+    PaginationInfo pagination = 2;
+}
+
+message PaginationInfo {
+    int64 total_count = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+    bool has_more = 4;
+}
+
+message GetProfilesByMatchActionRequest {
+    string action = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+}
+
+message GetProfilesByMatchActionResponse {
+    repeated UserProfileRecommendation profiles = 1;
+    PaginationInfo pagination = 2;
+}
+
