@@ -2,26 +2,39 @@ package user
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"go.uber.org/zap"
 )
 
+// @Summary Partial update user profile
+// @Description Partial update user profile
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user_profile_patch_request body dto.UserProfilePatchRequest true "User profile patch request"
+// @Success 200 {object} apiresponse.Response "User profile updated successfully"
+// @Failure 400 {object} apiresponse.Response "Bad request"
+// @Failure 401 {object} apiresponse.Response "Unauthorized"
+// @Failure 500 {object} apiresponse.Response "Internal server error"
+// @Router /api/v1/user/profile [patch]
+
 func (h *UserHandler) PatchUserProfile(c *gin.Context) {
+	requestID, _ := c.Get(constants.ContextKeyRequestID)
+
 	var req dto.UserProfilePatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("Invalid request body: %v", err)
-		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
+		apiresponse.Error(c, apperrors.ErrBindingJSON, nil)
 		return
 	}
 
 	userID, exists := c.Get(constants.ContextKeyUserID)
 	if !exists {
-		apiresponse.Fail(c, fmt.Errorf("user ID not found in context"))
+		apiresponse.Error(c, apperrors.ErrUserContextMissing, nil)
 		return
 	}
 
@@ -29,10 +42,21 @@ func (h *UserHandler) PatchUserProfile(c *gin.Context) {
 
 	err := h.userUsecase.UpdateUserProfile(ctx, req)
 	if err != nil {
-		log.Printf("Failed to update user profile: %v", err)
-		apiresponse.Fail(c, err)
+		// Log only internal server errors
+		if !apperrors.IsAppError(err) {
+			h.logger.Error("Failed to update user profile",
+				zap.String(constants.RequestID, requestID.(string)),
+				zap.String(constants.UserIDS, userID.(string)),
+				zap.Error(err))
+		}
+
+		apiresponse.Error(c, err, nil)
 		return
 	}
+
+	h.logger.Info("User profile updated successfully",
+		zap.String(constants.RequestID, requestID.(string)),
+		zap.String(constants.UserIDS, userID.(string)))
 
 	apiresponse.Success(c, "User profile updated successfully", nil)
 }

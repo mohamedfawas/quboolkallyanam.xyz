@@ -7,5 +7,5 @@ import (
 )
 
 type UserProjectionUsecase interface {
-	CreateUserProjection(ctx context.Context, userProjection *entity.UserProjection) error
+	CreateOrUpdateUserProjection(ctx context.Context, userProjection *entity.UserProjection) error
 }

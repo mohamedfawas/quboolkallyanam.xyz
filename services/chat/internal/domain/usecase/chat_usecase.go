@@ -11,7 +11,7 @@ import (
 type ChatUsecase interface {
 	CreateConversation(ctx context.Context,
 		userUUIDStr string,
-		partnerProfileID int64) (*entity.Conversation, error)
+		partnerProfileID int64) (*entity.CreateConversationResponse, error)
 	SendMessage(ctx context.Context,
 		conversationID,
 		senderID,

@@ -13,4 +13,6 @@ type PaymentUsecase interface {
 	CreateOrUpdateSubscriptionPlan(ctx context.Context, req dto.UpdateSubscriptionPlanRequest) (*dto.CreateOrUpdateSubscriptionPlanResponse, error)
 	GetSubscriptionPlan(ctx context.Context, planID string) (*dto.SubscriptionPlan, error)
 	GetActiveSubscriptionPlans(ctx context.Context) ([]*dto.SubscriptionPlan, error)
+	GetActiveSubscriptionByUserID(ctx context.Context) (*dto.ActiveSubscription, error)
+	GetPaymentHistory(ctx context.Context) ([]*dto.GetPaymentHistoryResponse, error)
 }

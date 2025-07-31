@@ -3,11 +3,11 @@ package userprofile
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	userevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/user"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 )
 
@@ -18,11 +18,11 @@ func (u *userProfileUsecase) UpdateUserProfile(
 
 	existingProfile, err := u.userProfileRepository.GetProfileByUserID(ctx, userID)
 	if err != nil {
-		if err == appError.ErrUserProfileNotFound {
-			return appError.ErrUserProfileNotFound
-		}
-		log.Printf("failed to get user profile: %v", err)
 		return fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	if existingProfile == nil {
+		return appError.ErrUserProfileNotFound
 	}
 
 	existingProfile.IsBride = *req.IsBride
@@ -42,10 +42,22 @@ func (u *userProfileUsecase) UpdateUserProfile(
 	existingProfile.LastLogin = now
 
 	if err := u.userProfileRepository.UpdateUserProfile(ctx, existingProfile); err != nil {
-		log.Printf("failed to update user profile: %v", err)
 		return fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	log.Printf("user profile updated successfully")
+	userProfileUpdatedEvent := userevents.UserProfileUpdatedEvent{
+		UserID:        userID,
+		UserProfileID: int64(existingProfile.ID),
+		Email:         *existingProfile.Email,
+		Phone:         *existingProfile.Phone,
+		FullName:      *existingProfile.FullName,
+		CreatedAt:     existingProfile.CreatedAt,
+		UpdatedAt:     existingProfile.UpdatedAt,
+	}
+
+	if err := u.eventPublisher.PublishUserProfileUpdated(ctx, userProfileUpdatedEvent); err != nil {
+		// No need to fail, logging is done in event publishing code.
+	}
+
 	return nil
 }

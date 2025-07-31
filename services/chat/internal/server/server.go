@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
 	chatpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/chat/v1"
@@ -16,10 +15,12 @@ import (
 	mongodbAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/adapters/mongodb"
 	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/adapters/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/config"
-	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/event"
 	chatUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/usecase/chat"
 	userProjectionUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/usecase/user_projection"
+	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/handlers/event"
 	v1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/handlers/grpc/v1"
+	interceptors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -29,9 +30,10 @@ type Server struct {
 	pgClient        *postgres.Client
 	mongoClient     *mongodb.Client
 	messagingClient messageBroker.Client
+	logger          *zap.Logger
 }
 
-func NewServer(config *config.Config) (*Server, error) {
+func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 	ctx := context.Background()
 
 	pgClient, err := postgres.NewClient(postgres.Config{
@@ -47,7 +49,6 @@ func NewServer(config *config.Config) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
-	log.Println("Chat Service Connected to PostgreSQL ")
 
 	mongoClient, err := mongodb.NewClient(ctx, mongodb.Config{
 		URI:      config.MongoDB.URI,
@@ -58,7 +59,6 @@ func NewServer(config *config.Config) (*Server, error) {
 		pgClient.Close()
 		return nil, fmt.Errorf("mongodb connect: %w", err)
 	}
-	log.Printf("Connected to MongoDB (%s)\n", config.Environment)
 
 	// Initialize messaging client based on environment
 	var messagingClient messageBroker.Client
@@ -67,10 +67,8 @@ func NewServer(config *config.Config) (*Server, error) {
 		if err != nil {
 			// Clean up existing connections before returning error
 			mongoClient.Close()
-			log.Println("failed to create pubsub client: %w", err)
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		log.Println("Chat Service Connected to PubSub")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -79,13 +77,13 @@ func NewServer(config *config.Config) (*Server, error) {
 		if err != nil {
 			// Clean up existing connections before returning error
 			mongoClient.Close()
-			log.Println("failed to create rabbitmq client: %w", err)
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		log.Println("Chat Service Connected to RabbitMQ")
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
+	)
 
 	// Initialize repositories
 	userProjectionRepo := postgresAdapters.NewUserProjectionRepository(pgClient)
@@ -97,17 +95,16 @@ func NewServer(config *config.Config) (*Server, error) {
 	chatUC := chatUsecaseImpl.NewChatUsecase(conversationRepo, messageRepo, userProjectionRepo)
 
 	// Initialize event handler
-	userEventHandler := eventHandlers.NewUserEventHandler(messagingClient, userProjectionUC)
+	userEventHandler := eventHandlers.NewUserEventListener(messagingClient, userProjectionUC, rootLogger)
 
 	// Initialize handlers
-	chatHandler := v1.NewChatHandler(chatUC)
+	chatHandler := v1.NewChatHandler(chatUC, rootLogger)
 
 	chatpbv1.RegisterChatServiceServer(grpcServer, chatHandler)
-	log.Println("Chat Service gRPC handlers registered")
 
 	go func() {
 		if err := userEventHandler.StartListening(context.Background()); err != nil {
-			log.Printf("Failed to start user event handler: %v", err)
+			// log is already done by the event handler
 		}
 	}()
 
@@ -117,6 +114,7 @@ func NewServer(config *config.Config) (*Server, error) {
 		pgClient:        pgClient,
 		mongoClient:     mongoClient,
 		messagingClient: messagingClient,
+		logger:          rootLogger,
 	}
 
 	return server, nil
@@ -125,37 +123,34 @@ func NewServer(config *config.Config) (*Server, error) {
 func (s *Server) Start() error {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.config.GRPC.Port))
 	if err != nil {
-		log.Println("Chat Service failed to listen: %w", err)
 		return err
 	}
 
-	log.Println("Chat Service starting on port ", s.config.GRPC.Port)
 	return s.grpcServer.Serve(listener)
 }
 
 func (s *Server) Stop() {
-	log.Println("Chat Service shutting down...")
 	s.grpcServer.GracefulStop()
 
 	// Close messaging client first
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
-			log.Println("Chat Service failed to close messaging client", "error", err)
+			s.logger.Error("failed to close messaging client", zap.Error(err))
 		}
 	}
 
 	// Close NoSQL client
 	if s.mongoClient != nil {
 		if err := s.mongoClient.Close(); err != nil {
-			log.Println("Chat Service failed to close mongo client", "error", err)
+			s.logger.Error("failed to close mongo client", zap.Error(err))
 		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			log.Println("failed to close postgres client: %w", err)
+			s.logger.Error("failed to close postgres client", zap.Error(err))
 		}
 	}
 
-	log.Println("Chat Service stopped gracefully")
+	s.logger.Info("stopped gracefully")
 }

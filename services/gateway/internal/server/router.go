@@ -11,6 +11,7 @@ import (
 )
 
 func (s *Server) setupRoutes(router *gin.Engine) {
+	router.Use(middleware.RequestIDMiddleware())
 	router.Use(middleware.ErrorHandler())
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	v1 := router.Group("/api/v1")
@@ -74,6 +75,14 @@ func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) 
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.paymentHandler.CreatePaymentOrder)
+		apiPayment.GET("/subscriptions",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.paymentHandler.GetActiveSubscriptionByUserID)
+		apiPayment.GET("/payments-history",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.paymentHandler.GetPaymentHistory)
 	}
 
 	// ============= PAYMENT WEB PAGES (Public) =============

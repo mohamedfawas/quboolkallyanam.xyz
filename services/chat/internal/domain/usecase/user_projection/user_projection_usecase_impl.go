@@ -1,9 +1,6 @@
 package userprojection
 
 import (
-	"context"
-
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/repository"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/usecase"
 )
@@ -16,10 +13,4 @@ func NewUserProjectionUsecase(userProjectionRepository repository.UserProjection
 	return &userProjectionUsecase{
 		userProjectionRepository: userProjectionRepository,
 	}
-}
-
-func (u *userProjectionUsecase) CreateUserProjection(
-	ctx context.Context,
-	userProjection *entity.UserProjection) error {
-	return u.userProjectionRepository.CreateUserProjection(ctx, userProjection)
 }

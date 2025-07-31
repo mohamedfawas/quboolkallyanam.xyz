@@ -36,3 +36,9 @@ func NewConversationID() ConversationID {
 func NewMessageID() MessageID {
 	return primitive.NewObjectID()
 }
+
+type CreateConversationResponse struct {
+	ConversationID ConversationID `json:"conversation_id"`
+	Participants   []string       `json:"participants"`
+	CreatedAt      time.Time      `json:"created_at"`
+}

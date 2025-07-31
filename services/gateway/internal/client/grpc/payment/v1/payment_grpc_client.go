@@ -119,6 +119,38 @@ func (c *paymentGRPCClient) GetActiveSubscriptionPlans(ctx context.Context) ([]*
 	return MapGetActiveSubscriptionPlansResponse(grpcResp), nil
 }
 
+func (c *paymentGRPCClient) GetActiveSubscriptionByUserID(ctx context.Context) (*dto.ActiveSubscription, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, fmt.Errorf("user ID not found in context")
+	}
+	ctx = contextutils.SetUserContext(ctx, userID)
+
+	grpcReq := &paymentpbv1.GetActiveSubscriptionByUserIDRequest{}
+	grpcResp, err := c.client.GetActiveSubscriptionByUserID(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetActiveSubscriptionByUserID error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetActiveSubscriptionByUserIDResponse(grpcResp), nil
+}
+
+func (c *paymentGRPCClient) GetPaymentHistory(ctx context.Context) ([]*dto.GetPaymentHistoryResponse, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, fmt.Errorf("user ID not found in context")
+	}
+	ctx = contextutils.SetUserContext(ctx, userID)
+
+	grpcReq := &paymentpbv1.GetPaymentHistoryRequest{}
+	grpcResp, err := c.client.GetPaymentHistory(ctx, grpcReq)
+	if err != nil {
+		log.Printf("GetPaymentHistory error in payment grpc client: %v", err)
+		return nil, err
+	}
+	return MapGetPaymentHistoryResponse(grpcResp), nil
+}
+
 func (c *paymentGRPCClient) Close() error {
 	return c.conn.Close()
 }

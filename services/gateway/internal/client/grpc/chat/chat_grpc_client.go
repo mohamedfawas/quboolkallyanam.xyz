@@ -3,9 +3,7 @@ package chat
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"google.golang.org/grpc"
@@ -54,30 +52,41 @@ func NewChatGRPCClient(ctx context.Context,
 func (c *chatGRPCClient) CreateConversation(ctx context.Context, req dto.CreateConversationRequest) (*dto.CreateConversationResponse, error) {
 	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
 	if !ok {
-		return nil, errors.New("user ID not found in context")
+		return nil, fmt.Errorf("user ID context missing")
 	}
 	ctx = contextutils.SetUserContext(ctx, userID)
+
+	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
+	if !ok {
+		return nil, fmt.Errorf("request ID context missing")
+	}
+	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapCreateConversationRequest(req)
 	grpcResp, err := c.client.CreateConversation(ctx, grpcReq)
 	if err != nil {
-		log.Printf("CreateConversation error in chat grpc client: %v", err)
 		return nil, err
 	}
 	return MapCreateConversationResponse(grpcResp), nil
 }
 
 func (c *chatGRPCClient) SendMessage(ctx context.Context, req dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
+
 	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
 	if !ok {
-		return nil, errors.New("user ID not found in context")
+		return nil, fmt.Errorf("user ID context missing")
 	}
 	ctx = contextutils.SetUserContext(ctx, userID)
+
+	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
+	if !ok {
+		return nil, fmt.Errorf("request ID context missing")
+	}
+	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapSendMessageRequest(req)
 	grpcResp, err := c.client.SendMessage(ctx, grpcReq)
 	if err != nil {
-		log.Printf("SendMessage error in chat grpc client: %v", err)
 		return nil, err
 	}
 	return MapSendMessageResponse(grpcResp), nil
@@ -87,7 +96,6 @@ func (c *chatGRPCClient) GetConversation(ctx context.Context, req dto.GetConvers
 	grpcReq := MapGetConversationRequest(req)
 	grpcResp, err := c.client.GetConversation(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetConversation error in chat grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetConversationResponse(grpcResp), nil
@@ -96,14 +104,19 @@ func (c *chatGRPCClient) GetConversation(ctx context.Context, req dto.GetConvers
 func (c *chatGRPCClient) GetUserConversations(ctx context.Context, req dto.GetUserConversationsRequest) (*dto.GetUserConversationsResponse, error) {
 	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
 	if !ok {
-		return nil, errors.New("user ID not found in context")
+		return nil, fmt.Errorf("user ID context missing")
 	}
 	ctx = contextutils.SetUserContext(ctx, userID)
+
+	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
+	if !ok {
+		return nil, fmt.Errorf("request ID context missing")
+	}
+	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapGetUserConversationsRequest(req)
 	grpcResp, err := c.client.GetUserConversations(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetUserConversations error in chat grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetUserConversationsResponse(grpcResp), nil

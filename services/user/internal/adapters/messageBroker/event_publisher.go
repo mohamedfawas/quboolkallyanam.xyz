@@ -2,38 +2,39 @@ package messagebroker
 
 import (
 	"context"
-	"log"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	userevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/user"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/event"
+	"go.uber.org/zap"
 )
 
 type eventPublisher struct {
 	messagingClient messageBroker.Client
+	logger          *zap.Logger
 }
 
-func NewEventPublisher(messagingClient messageBroker.Client) event.EventPublisher {
+func NewEventPublisher(
+	messagingClient messageBroker.Client,
+	logger *zap.Logger) event.EventPublisher {
+
 	return &eventPublisher{
 		messagingClient: messagingClient,
+		logger:          logger,
 	}
 }
 
-func (p *eventPublisher) PublishUserProfileCreated(
+func (p *eventPublisher) PublishUserProfileUpdated(
 	ctx context.Context,
-	event userevents.UserProfileCreatedEvent) error {
+	event userevents.UserProfileUpdatedEvent) error {
 
-	if p.messagingClient == nil {
-		log.Println("messaging client is nil, skipping event publishing UserProfileCreated event for user: %s", event.Email)
-		return nil
-	}
-
-	if err := p.messagingClient.Publish(constants.EventUserProfileCreated, event); err != nil {
-		log.Printf("failed to publish user profile created event for user: %s, error: %v", event.Email, err)
+	if err := p.messagingClient.Publish(constants.EventUserProfileUpdated, event); err != nil {
+		p.logger.Error("failed to publish user profile updated event",
+			zap.String(constants.UserIDS, event.UserID.String()),
+			zap.Error(err))
 		return err
 	}
 
-	log.Printf("user profile created event published successfully for user: %s", event.Email)
 	return nil
 }

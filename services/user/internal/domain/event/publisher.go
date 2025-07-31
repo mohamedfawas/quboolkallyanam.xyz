@@ -7,5 +7,5 @@ import (
 )
 
 type EventPublisher interface {
-	PublishUserProfileCreated(ctx context.Context, event userevents.UserProfileCreatedEvent) error
+	PublishUserProfileUpdated(ctx context.Context, event userevents.UserProfileUpdatedEvent) error
 }

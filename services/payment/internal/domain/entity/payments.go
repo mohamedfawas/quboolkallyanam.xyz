@@ -53,3 +53,14 @@ type ShowPaymentPageResponse struct {
 	DisplayAmount      string `json:"display_amount"`
 	PlanDurationInDays int32  `json:"plan_duration_in_days"`
 }
+
+type GetPaymentHistoryResponse struct {
+	ID              int64     `json:"id"`
+	PlanID          string    `json:"plan_id"`
+	RazorpayOrderID string    `json:"razorpay_order_id"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	Status          string    `json:"status"`
+	PaymentMethod   string    `json:"payment_method"`
+	CreatedAt       time.Time `json:"created_at"`
+}

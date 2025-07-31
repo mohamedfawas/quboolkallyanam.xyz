@@ -4,47 +4,54 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/server"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 func main() {
 
-	configPath := "./config/config.yaml"
-	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
-		configPath = envPath
+	cfgPath := os.Getenv("CONFIG_PATH")
+	if cfgPath == "" {
+		cfgPath = "./config/config.yaml"
+	}
+	cfg, err := config.LoadConfig(cfgPath)
+	if err != nil {
+		log.Fatalf("[USER] Failed to load config: %v", err)
 	}
 
-	cfg, err := config.LoadConfig(configPath)
+	rootLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
-		log.Fatal("Failed to load config: ", err)
+		log.Fatalf("[USER] Failed to init logger: %v", err)
 	}
-	log.Println("User Service Config loaded")
+	defer rootLogger.Sync()
 
-	srv, err := server.NewServer(cfg)
+	srv, err := server.NewServer(cfg, rootLogger)
 	if err != nil {
-		log.Fatal("Failed to create server: ", err)
+		rootLogger.Fatal("[USER] Failed to create server", zap.Error(err))
 	}
-	log.Println("User Service Server created")
 
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != grpc.ErrServerStopped {
-				log.Fatal("Failed to start server: ", err)
+				rootLogger.Fatal("[USER] Failed to start server", zap.Error(err))
 			}
 		}
 	}()
-	log.Println("User Service Server started")
+	rootLogger.Info("[USER] User Service Server started", zap.String("port", strconv.Itoa(cfg.GRPC.Port)))
 
 	quit := make(chan os.Signal, 1)
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	rootLogger.Info("[USER] Shutting down server...")
 	srv.Stop()
-	log.Println("Server stopped")
+	rootLogger.Info("[USER] Server stopped")
 }

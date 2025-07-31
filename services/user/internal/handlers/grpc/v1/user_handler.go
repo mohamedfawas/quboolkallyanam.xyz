@@ -244,7 +244,6 @@ func (h *UserHandler) GetMatchRecommendations(ctx context.Context, req *userpbv1
 	}, nil
 }
 
-
 func (h *UserHandler) GetProfilesByMatchAction(ctx context.Context, req *userpbv1.GetProfilesByMatchActionRequest) (*userpbv1.GetProfilesByMatchActionResponse, error) {
 	userID, err := contextutils.GetUserID(ctx)
 	if err != nil {

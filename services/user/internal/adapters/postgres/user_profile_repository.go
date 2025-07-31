@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/repository"
 	"gorm.io/gorm"
@@ -29,7 +28,10 @@ func (r *userProfileRepository) UpdateLastLogin(ctx context.Context, userID uuid
 	return r.db.GormDB.WithContext(ctx).
 		Model(&entity.UserProfile{}).
 		Where("user_id = ?", userID).
-		Update("last_login", lastLogin).Error
+		Updates(map[string]interface{}{
+			"last_login": lastLogin,
+			"updated_at": time.Now().UTC(),
+		}).Error
 }
 
 func (r *userProfileRepository) ProfileExists(ctx context.Context, userID uuid.UUID) (bool, error) {
@@ -52,7 +54,7 @@ func (r *userProfileRepository) GetProfileByUserID(ctx context.Context, userID u
 		First(&profile).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, appError.ErrUserProfileNotFound
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -74,7 +76,7 @@ func (r *userProfileRepository) GetUserProfileByID(ctx context.Context, id uint)
 		First(&profile).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, appError.ErrUserProfileNotFound
+			return nil, nil
 		}
 		return nil, err
 	}

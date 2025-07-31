@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
@@ -61,7 +60,6 @@ func (c *userGRPCClient) UpdateUserProfile(ctx context.Context, req dto.UserProf
 	grpcReq := MapUpdateUserProfileRequest(req)
 	_, err := c.client.UpdateUserProfile(ctx, grpcReq)
 	if err != nil {
-		log.Printf("UpdateUserProfile error in user grpc client: %v", err)
 		return err
 	}
 	return nil
@@ -77,7 +75,6 @@ func (c *userGRPCClient) UpdateUserPartnerPreferences(ctx context.Context, opera
 	grpcReq := MapUpdateUserPartnerPreferencesRequest(operationType, req)
 	_, err := c.client.UpdateUserPartnerPreferences(ctx, grpcReq)
 	if err != nil {
-		log.Printf("UpdateUserPartnerPreferences error in user grpc client: %v", err)
 		return err
 	}
 	return nil
@@ -93,12 +90,10 @@ func (c *userGRPCClient) RecordMatchAction(ctx context.Context, req dto.RecordMa
 	grpcReq := MapRecordMatchActionRequest(req)
 	resp, err := c.client.RecordMatchAction(ctx, grpcReq)
 	if err != nil {
-		log.Printf("RecordMatchAction error in user grpc client: %v", err)
 		return nil, err
 	}
 	return MapRecordMatchActionResponse(resp), nil
 }
-
 
 func (c *userGRPCClient) GetMatchRecommendations(ctx context.Context, req dto.GetMatchRecommendationsRequest) (*dto.GetMatchRecommendationsResponse, error) {
 	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
@@ -110,7 +105,6 @@ func (c *userGRPCClient) GetMatchRecommendations(ctx context.Context, req dto.Ge
 	grpcReq := MapGetMatchRecommendationsRequest(req)
 	resp, err := c.client.GetMatchRecommendations(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetMatchRecommendations error in user grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetMatchRecommendationsResponse(resp), nil
@@ -126,7 +120,6 @@ func (c *userGRPCClient) GetProfilesByMatchAction(ctx context.Context, req dto.G
 	grpcReq := MapGetProfilesByMatchActionRequest(req)
 	resp, err := c.client.GetProfilesByMatchAction(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetProfilesByMatchAction error in user grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetProfilesByMatchActionResponse(resp), nil

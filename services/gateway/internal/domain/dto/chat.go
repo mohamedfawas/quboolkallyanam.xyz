@@ -11,10 +11,9 @@ type CreateConversationRequest struct {
 }
 
 type CreateConversationResponse struct {
-	ConversationID string    `json:"conversation_id"`
-	ParticipantIDs []string  `json:"participant_ids"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ConversationID   string    `json:"conversation_id"`
+	ParticipantNames []string  `json:"participant_names"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 type SendMessageRequest struct {

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/repository"
@@ -39,4 +40,20 @@ func (r *paymentsRepository) GetPaymentDetailsByRazorpayOrderID(ctx context.Cont
 func (r *paymentsRepository) UpdatePayment(ctx context.Context, payment *entity.Payment) error {
 	db := GetDBFromContext(ctx, r.db.GormDB)
 	return db.WithContext(ctx).Save(payment).Error
+}
+
+func (r *paymentsRepository) GetPaymentHistory(ctx context.Context, userID uuid.UUID) ([]*entity.Payment, error) {
+	var payments []*entity.Payment
+	db := GetDBFromContext(ctx, r.db.GormDB)
+
+	err := db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Find(&payments).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return payments, nil
 }

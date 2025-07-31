@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
@@ -20,6 +19,7 @@ import (
 	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/grpc/v1"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -28,9 +28,10 @@ type Server struct {
 	grpcServer      *grpc.Server
 	pgClient        *postgres.Client
 	messagingClient messageBroker.Client
+	logger          *zap.Logger
 }
 
-func NewServer(config *config.Config) (*Server, error) {
+func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
@@ -41,12 +42,9 @@ func NewServer(config *config.Config) (*Server, error) {
 		SSLMode:  config.Postgres.SSLMode,
 		TimeZone: config.Postgres.TimeZone,
 	})
-
 	if err != nil {
-		log.Println("failed to create postgres client", err)
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
-	log.Println("User Service Connected to PostgreSQL ")
 
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
@@ -55,10 +53,8 @@ func NewServer(config *config.Config) (*Server, error) {
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
-			log.Println("failed to create pubsub client", err)
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		log.Println("User Service Connected to PubSub")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -67,10 +63,8 @@ func NewServer(config *config.Config) (*Server, error) {
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
-			log.Println("failed to create rabbitmq client", err)
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		log.Println("User Service Connected to RabbitMQ")
 	}
 
 	grpcServer := grpc.NewServer()
@@ -82,7 +76,7 @@ func NewServer(config *config.Config) (*Server, error) {
 	mutualMatchRepo := postgresAdapters.NewMutualMatchRepository(pgClient)
 	transactionManager := postgres.NewTransactionManager(pgClient)
 	// Initialize event publisher
-	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
+	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
 
 	// Initialize use cases
 	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, partnerPreferencesRepo, eventPublisher)
@@ -93,12 +87,12 @@ func NewServer(config *config.Config) (*Server, error) {
 	userpbv1.RegisterUserServiceServer(grpcServer, userHandler)
 
 	// Initialize event handler
-	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC)
+	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC, rootLogger)
 
 	// Start event listener
 	go func() {
 		if err := authEventHandler.StartListening(context.Background()); err != nil {
-			log.Println("Failed to start auth event handler", err)
+			rootLogger.Error("failed to start auth event listener", zap.Error(err))
 		}
 	}()
 
@@ -107,6 +101,7 @@ func NewServer(config *config.Config) (*Server, error) {
 		grpcServer:      grpcServer,
 		pgClient:        pgClient,
 		messagingClient: messagingClient,
+		logger:          rootLogger,
 	}
 
 	return server, nil
@@ -117,8 +112,6 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("User Service starting on port ", s.config.GRPC.Port)
 	return s.grpcServer.Serve(listener)
 }
 
@@ -127,13 +120,13 @@ func (s *Server) Stop() {
 
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
-			log.Println("failed to close messaging client", err)
+			s.logger.Error("failed to close messaging client", zap.Error(err))
 		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			log.Println("failed to close postgres client", err)
+			s.logger.Error("failed to close postgres client", zap.Error(err))
 		}
 	}
 }

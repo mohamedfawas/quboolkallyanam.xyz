@@ -134,3 +134,36 @@ func MapGetActiveSubscriptionPlansResponse(resp *paymentpbv1.GetActiveSubscripti
 
 	return plans
 }
+
+// /////////////////////////// Get Active Subscription By User ID //////////////////////////////
+func MapGetActiveSubscriptionByUserIDResponse(resp *paymentpbv1.GetActiveSubscriptionByUserIDResponse) *dto.ActiveSubscription {
+	return &dto.ActiveSubscription{
+		SubscriptionID: resp.SubscriptionId,
+		PlanID:         resp.PlanId,
+		StartDate:      resp.StartDate.AsTime(),
+		EndDate:        resp.EndDate.AsTime(),
+		Status:         resp.Status,
+		CreatedAt:      resp.CreatedAt.AsTime(),
+		UpdatedAt:      resp.UpdatedAt.AsTime(),
+	}
+}
+
+// /////////////////////////// Get Payment History //////////////////////////////
+func MapGetPaymentHistoryResponse(resp *paymentpbv1.GetPaymentHistoryResponse) []*dto.GetPaymentHistoryResponse {
+	var paymentHistory []*dto.GetPaymentHistoryResponse
+
+	for _, payment := range resp.PaymentHistory {
+		paymentHistory = append(paymentHistory, &dto.GetPaymentHistoryResponse{
+			ID:              payment.Id,
+			PlanID:          payment.PlanId,
+			RazorpayOrderID: payment.RazorpayOrderId,
+			Amount:          payment.Amount,
+			Currency:        payment.Currency,
+			Status:          payment.Status,
+			PaymentMethod:   payment.PaymentMethod,
+			CreatedAt:       payment.CreatedAt.AsTime(),
+		})
+	}
+
+	return paymentHistory
+}

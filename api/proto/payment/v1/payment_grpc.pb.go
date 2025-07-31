@@ -25,6 +25,8 @@ const (
 	PaymentService_CreateOrUpdateSubscriptionPlan_FullMethodName = "/payment.v1.PaymentService/CreateOrUpdateSubscriptionPlan"
 	PaymentService_GetSubscriptionPlan_FullMethodName            = "/payment.v1.PaymentService/GetSubscriptionPlan"
 	PaymentService_GetActiveSubscriptionPlans_FullMethodName     = "/payment.v1.PaymentService/GetActiveSubscriptionPlans"
+	PaymentService_GetActiveSubscriptionByUserID_FullMethodName  = "/payment.v1.PaymentService/GetActiveSubscriptionByUserID"
+	PaymentService_GetPaymentHistory_FullMethodName              = "/payment.v1.PaymentService/GetPaymentHistory"
 )
 
 // PaymentServiceClient is the client API for PaymentService service.
@@ -37,6 +39,8 @@ type PaymentServiceClient interface {
 	CreateOrUpdateSubscriptionPlan(ctx context.Context, in *CreateOrUpdateSubscriptionPlanRequest, opts ...grpc.CallOption) (*CreateOrUpdateSubscriptionPlanResponse, error)
 	GetSubscriptionPlan(ctx context.Context, in *GetSubscriptionPlanRequest, opts ...grpc.CallOption) (*GetSubscriptionPlanResponse, error)
 	GetActiveSubscriptionPlans(ctx context.Context, in *GetActiveSubscriptionPlansRequest, opts ...grpc.CallOption) (*GetActiveSubscriptionPlansResponse, error)
+	GetActiveSubscriptionByUserID(ctx context.Context, in *GetActiveSubscriptionByUserIDRequest, opts ...grpc.CallOption) (*GetActiveSubscriptionByUserIDResponse, error)
+	GetPaymentHistory(ctx context.Context, in *GetPaymentHistoryRequest, opts ...grpc.CallOption) (*GetPaymentHistoryResponse, error)
 }
 
 type paymentServiceClient struct {
@@ -107,6 +111,26 @@ func (c *paymentServiceClient) GetActiveSubscriptionPlans(ctx context.Context, i
 	return out, nil
 }
 
+func (c *paymentServiceClient) GetActiveSubscriptionByUserID(ctx context.Context, in *GetActiveSubscriptionByUserIDRequest, opts ...grpc.CallOption) (*GetActiveSubscriptionByUserIDResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetActiveSubscriptionByUserIDResponse)
+	err := c.cc.Invoke(ctx, PaymentService_GetActiveSubscriptionByUserID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentServiceClient) GetPaymentHistory(ctx context.Context, in *GetPaymentHistoryRequest, opts ...grpc.CallOption) (*GetPaymentHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPaymentHistoryResponse)
+	err := c.cc.Invoke(ctx, PaymentService_GetPaymentHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServiceServer is the server API for PaymentService service.
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility.
@@ -117,6 +141,8 @@ type PaymentServiceServer interface {
 	CreateOrUpdateSubscriptionPlan(context.Context, *CreateOrUpdateSubscriptionPlanRequest) (*CreateOrUpdateSubscriptionPlanResponse, error)
 	GetSubscriptionPlan(context.Context, *GetSubscriptionPlanRequest) (*GetSubscriptionPlanResponse, error)
 	GetActiveSubscriptionPlans(context.Context, *GetActiveSubscriptionPlansRequest) (*GetActiveSubscriptionPlansResponse, error)
+	GetActiveSubscriptionByUserID(context.Context, *GetActiveSubscriptionByUserIDRequest) (*GetActiveSubscriptionByUserIDResponse, error)
+	GetPaymentHistory(context.Context, *GetPaymentHistoryRequest) (*GetPaymentHistoryResponse, error)
 	mustEmbedUnimplementedPaymentServiceServer()
 }
 
@@ -144,6 +170,12 @@ func (UnimplementedPaymentServiceServer) GetSubscriptionPlan(context.Context, *G
 }
 func (UnimplementedPaymentServiceServer) GetActiveSubscriptionPlans(context.Context, *GetActiveSubscriptionPlansRequest) (*GetActiveSubscriptionPlansResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetActiveSubscriptionPlans not implemented")
+}
+func (UnimplementedPaymentServiceServer) GetActiveSubscriptionByUserID(context.Context, *GetActiveSubscriptionByUserIDRequest) (*GetActiveSubscriptionByUserIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetActiveSubscriptionByUserID not implemented")
+}
+func (UnimplementedPaymentServiceServer) GetPaymentHistory(context.Context, *GetPaymentHistoryRequest) (*GetPaymentHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPaymentHistory not implemented")
 }
 func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 func (UnimplementedPaymentServiceServer) testEmbeddedByValue()                        {}
@@ -274,6 +306,42 @@ func _PaymentService_GetActiveSubscriptionPlans_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentService_GetActiveSubscriptionByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActiveSubscriptionByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetActiveSubscriptionByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_GetActiveSubscriptionByUserID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetActiveSubscriptionByUserID(ctx, req.(*GetActiveSubscriptionByUserIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PaymentService_GetPaymentHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPaymentHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetPaymentHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_GetPaymentHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetPaymentHistory(ctx, req.(*GetPaymentHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -304,6 +372,14 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetActiveSubscriptionPlans",
 			Handler:    _PaymentService_GetActiveSubscriptionPlans_Handler,
+		},
+		{
+			MethodName: "GetActiveSubscriptionByUserID",
+			Handler:    _PaymentService_GetActiveSubscriptionByUserID_Handler,
+		},
+		{
+			MethodName: "GetPaymentHistory",
+			Handler:    _PaymentService_GetPaymentHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

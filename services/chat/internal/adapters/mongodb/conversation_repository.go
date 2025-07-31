@@ -67,7 +67,7 @@ func (r *conversationRepository) GetConversationByID(ctx context.Context, conver
 	err = coll.FindOne(ctx, filter).Decode(&conv)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, fmt.Errorf("conversation not found")
+			return nil, nil
 		}
 		return nil, fmt.Errorf("mongodb: find conversation: %w", err)
 	}

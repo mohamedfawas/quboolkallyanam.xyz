@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/google/uuid"
@@ -14,46 +13,64 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/usecase"
 
 	chatpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/chat/v1"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"go.uber.org/zap"
 )
 
 type ChatHandler struct {
 	chatpbv1.UnimplementedChatServiceServer
 	chatUsecase usecase.ChatUsecase
+	logger      *zap.Logger
 }
 
-func NewChatHandler(chatUsecase usecase.ChatUsecase) *ChatHandler {
-	return &ChatHandler{chatUsecase: chatUsecase}
+func NewChatHandler(
+	chatUsecase usecase.ChatUsecase,
+	logger *zap.Logger) *ChatHandler {
+
+	return &ChatHandler{
+		chatUsecase: chatUsecase,
+		logger:      logger}
 }
 
-func (h *ChatHandler) CreateConversation(ctx context.Context, req *chatpbv1.CreateConversationRequest) (*chatpbv1.CreateConversationResponse, error) {
+func (h *ChatHandler) CreateConversation(
+	ctx context.Context,
+	req *chatpbv1.CreateConversationRequest) (*chatpbv1.CreateConversationResponse, error) {
+
+	requestID, err := contextutils.GetRequestID(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get request ID From Context",
+			zap.Error(err))
+		return nil, status.Errorf(codes.Internal, constants.InteralServerErrorMessage)
+	}
+
 	userID, err := contextutils.GetUserID(ctx)
 	if err != nil {
-		log.Printf("Failed to get user ID: %v", err)
-		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, constants.InteralServerErrorMessage)
 	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, requestID),
+		zap.String(constants.ContextKeyUserID, userID),
+	)
 
 	conversation, err := h.chatUsecase.CreateConversation(ctx, userID, req.PartnerProfileId)
 	if err != nil {
-		switch {
-		case errors.Is(err, appErrors.ErrUserNotFound):
-			return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
-		default:
-			return nil, status.Errorf(codes.Internal, "failed to create conversation: %v", err)
+		if !appErrors.IsAppError(err) {
+			log.Error("Failed to create conversation",
+				zap.Error(err))
 		}
-		return nil, status.Errorf(codes.Internal, "failed to create conversation: %v", err)
+		return nil, err
 	}
 
-	participantIDs := make([]string, len(conversation.ParticipantIDs))
-	for i, id := range conversation.ParticipantIDs {
-		participantIDs[i] = string(id)
-	}
+	log.Info("Conversation created successfully",
+		zap.String("conversation_id", conversation.ConversationID.Hex()))
 
 	return &chatpbv1.CreateConversationResponse{
-		ConversationId: conversation.ID.Hex(),
-		ParticipantIds: participantIDs,
-		CreatedAt:      timestamppb.New(conversation.CreatedAt),
-		UpdatedAt:      timestamppb.New(conversation.UpdatedAt),
+		ConversationId:   conversation.ConversationID.Hex(),
+		ParticipantNames: conversation.Participants,
+		CreatedAt:        timestamppb.New(conversation.CreatedAt),
 	}, nil
 }
 

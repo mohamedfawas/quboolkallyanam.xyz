@@ -15,10 +15,9 @@ func MapCreateConversationRequest(req dto.CreateConversationRequest) *chatpbv1.C
 
 func MapCreateConversationResponse(resp *chatpbv1.CreateConversationResponse) *dto.CreateConversationResponse {
 	return &dto.CreateConversationResponse{
-		ConversationID: resp.ConversationId,
-		ParticipantIDs: resp.ParticipantIds,
-		CreatedAt:      resp.CreatedAt.AsTime(),
-		UpdatedAt:      resp.UpdatedAt.AsTime(),
+		ConversationID:   resp.ConversationId,
+		ParticipantNames: resp.ParticipantNames,
+		CreatedAt:        resp.CreatedAt.AsTime(),
 	}
 }
 

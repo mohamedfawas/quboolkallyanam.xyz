@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -246,5 +247,80 @@ func (h *PaymentHandler) GetActiveSubscriptionPlans(ctx context.Context, req *pa
 
 	return &paymentpbv1.GetActiveSubscriptionPlansResponse{
 		Plans: subscriptionPlans,
+	}, nil
+}
+
+func (h *PaymentHandler) GetActiveSubscriptionByUserID(ctx context.Context, req *paymentpbv1.GetActiveSubscriptionByUserIDRequest) (*paymentpbv1.GetActiveSubscriptionByUserIDResponse, error) {
+	userID, err := contextutils.GetUserID(ctx)
+	if err != nil {
+		log.Printf("Failed to get user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+	}
+
+	subscription, err := h.subscriptionUsecase.GetActiveSubscriptionByUserID(ctx, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, appErrors.ErrActiveSubscriptionNotFound):
+			return nil, status.Errorf(codes.NotFound, "No active subscription found")
+		default:
+			log.Printf("Failed to get active subscription for user %s: %v", userID, err)
+			return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+		}
+	}
+
+	startDatePb := timestamppb.New(subscription.StartDate)
+	endDatePb := timestamppb.New(subscription.EndDate)
+	createdAtPb := timestamppb.New(subscription.CreatedAt)
+	updatedAtPb := timestamppb.New(subscription.UpdatedAt)
+
+	return &paymentpbv1.GetActiveSubscriptionByUserIDResponse{
+		SubscriptionId: subscription.ID,
+		PlanId:         subscription.PlanID,
+		StartDate:      startDatePb,
+		EndDate:        endDatePb,
+		Status:         subscription.Status,
+		CreatedAt:      createdAtPb,
+		UpdatedAt:      updatedAtPb,
+	}, nil
+}
+
+func (h *PaymentHandler) GetPaymentHistory(ctx context.Context, req *paymentpbv1.GetPaymentHistoryRequest) (*paymentpbv1.GetPaymentHistoryResponse, error) {
+	userID, err := contextutils.GetUserID(ctx)
+	if err != nil {
+		log.Printf("Failed to get user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+	}
+
+	userIDUUID, err := uuid.Parse(userID)
+	if err != nil {
+		log.Printf("Failed to parse user ID: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+	}
+
+	paymentHistory, err := h.paymentUsecase.GetPaymentHistory(ctx, userIDUUID)
+	if err != nil {
+		log.Printf("Failed to get payment history for user %s: %v", userID, err)
+		return nil, status.Errorf(codes.Internal, "Something went wrong, please try again")
+	}
+
+	var paymentHistoryItems []*paymentpbv1.PaymentHistoryItem
+	for _, payment := range paymentHistory {
+		createdAtPb := timestamppb.New(payment.CreatedAt)
+
+		paymentHistoryItem := &paymentpbv1.PaymentHistoryItem{
+			Id:              payment.ID,
+			PlanId:          payment.PlanID,
+			RazorpayOrderId: payment.RazorpayOrderID,
+			Amount:          payment.Amount,
+			Currency:        payment.Currency,
+			Status:          payment.Status,
+			PaymentMethod:   payment.PaymentMethod,
+			CreatedAt:       createdAtPb,
+		}
+		paymentHistoryItems = append(paymentHistoryItems, paymentHistoryItem)
+	}
+
+	return &paymentpbv1.GetPaymentHistoryResponse{
+		PaymentHistory: paymentHistoryItems,
 	}, nil
 }

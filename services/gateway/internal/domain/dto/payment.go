@@ -105,3 +105,24 @@ type SubscriptionPlan struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+type ActiveSubscription struct {
+	SubscriptionID int64     `json:"subscription_id"`
+	PlanID         string    `json:"plan_id"`
+	StartDate      time.Time `json:"start_date"`
+	EndDate        time.Time `json:"end_date"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type GetPaymentHistoryResponse struct {
+	ID              int64     `json:"id"`
+	PlanID          string    `json:"plan_id"`
+	RazorpayOrderID string    `json:"razorpay_order_id"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	Status          string    `json:"status"`
+	PaymentMethod   string    `json:"payment_method"`
+	CreatedAt       time.Time `json:"created_at"`
+}

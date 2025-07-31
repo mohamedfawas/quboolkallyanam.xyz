@@ -14,8 +14,8 @@ import (
 	// Client imports
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 	authGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/auth/v1"
-	paymentGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/payment/v1"
 	chatGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/chat"
+	paymentGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/payment/v1"
 	userGRPC "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client/grpc/user"
 
 	// Usecase imports
@@ -27,15 +27,17 @@ import (
 
 	// Handler imports
 	authHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/auth"
-	paymentHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/payment"
 	chatHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/chat"
+	paymentHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/payment"
 	userHandler "github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/delivery/http/v1/user"
+	"go.uber.org/zap"
 )
 
 type Server struct {
 	config     *config.Config
 	httpServer *http.Server
 	jwtManager *jwt.JWTManager
+	logger     *zap.Logger
 
 	// Interface-based clients (for dependency injection)
 	authClient    client.AuthClient
@@ -46,8 +48,8 @@ type Server struct {
 	// Usecases (interface-based)
 	authUsecase    usecase.AuthUsecase
 	paymentUsecase usecase.PaymentUsecase
-	chatUsecase   usecase.ChatUsecase
-	userUsecase   usecase.UserUsecase
+	chatUsecase    usecase.ChatUsecase
+	userUsecase    usecase.UserUsecase
 
 	// Handlers
 	authHandler    *authHandler.AuthHandler
@@ -56,13 +58,14 @@ type Server struct {
 	userHandler    *userHandler.UserHandler
 }
 
-func NewHTTPServer(config *config.Config) (*Server, error) {
+func NewHTTPServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 	if config.Environment == constants.EnvProduction {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	server := &Server{
 		config: config,
+		logger: rootLogger,
 	}
 
 	server.jwtManager = jwt.NewJWTManager(jwt.JWTConfig{
@@ -143,7 +146,6 @@ func (s *Server) initClients() error {
 	}
 	s.chatClient = chatGRPCClient
 
-
 	// Initialize User gRPC Client
 	userGRPCClient, err := userGRPC.NewUserGRPCClient(
 		ctx,
@@ -156,8 +158,6 @@ func (s *Server) initClients() error {
 	}
 	s.userClient = userGRPCClient
 
-	// TODO: Add other clients as you implement them
-
 	return nil
 }
 
@@ -166,11 +166,6 @@ func (s *Server) initUsecases() error {
 	s.paymentUsecase = paymentUsecase.NewPaymentUsecase(s.paymentClient, s.config)
 	s.chatUsecase = chatUsecase.NewChatUsecase(s.chatClient)
 	s.userUsecase = userUsecase.NewUserUsecase(s.userClient)
-	// TODO: Add other usecases as you implement them
-	// s.adminUsecase = adminUsecase.NewAdminUsecase(s.adminClient)
-	// s.userUsecase = userUsecase.NewUserUsecase(s.userClient)
-	// s.chatUsecase = chatUsecase.NewChatUsecase(s.chatClient)
-	// s.paymentUsecase = paymentUsecase.NewPaymentUsecase(s.paymentClient)
 
 	return nil
 }
@@ -178,13 +173,8 @@ func (s *Server) initUsecases() error {
 func (s *Server) initHandlers() error {
 	s.authHandler = authHandler.NewAuthHandler(s.authUsecase, *s.config)
 	s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase)
-	s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase)
-	s.userHandler = userHandler.NewUserHandler(s.userUsecase)
-	// TODO: Add other handlers as you implement them
-	// s.adminHandler = adminHandler.NewAdminHandler(s.adminUsecase, *s.config)
-	// s.userHandler = userHandler.NewUserHandler(s.userUsecase, *s.config)
-	// s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase, *s.config)
-	// s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase, *s.config)
+	s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase, s.logger, s.jwtManager)
+	s.userHandler = userHandler.NewUserHandler(s.userUsecase, s.logger)
 
 	return nil
 }

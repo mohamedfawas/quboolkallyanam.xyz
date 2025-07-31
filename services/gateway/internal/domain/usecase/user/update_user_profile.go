@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )

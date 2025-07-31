@@ -19,10 +19,8 @@ message CreateConversationRequest {
 
 message CreateConversationResponse {
     string conversation_id = 1;
-    repeated string participant_ids = 2;
+    repeated string participant_names = 2;
     google.protobuf.Timestamp created_at = 3;
-    google.protobuf.Timestamp updated_at = 4;
-    google.protobuf.Timestamp last_message_at = 5;
 }
 
 message SendMessageRequest {

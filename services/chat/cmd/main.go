@@ -6,45 +6,53 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/server"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 func main() {
 
-	configPath := "./config/config.yaml"
-	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
-		configPath = envPath
+	cfgPath := os.Getenv("CONFIG_PATH")
+	if cfgPath == "" {
+		cfgPath = "./config/config.yaml"
+	}
+	cfg, err := config.LoadConfig(cfgPath)
+	if err != nil {
+		log.Fatalf("[CHAT] Failed to load config: %v", err)
 	}
 
-	cfg, err := config.LoadConfig(configPath)
+	initialLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
-		log.Println("Failed to load config: ", err)
+		log.Fatalf("[CHAT] Failed to init logger: %v", err)
 	}
-	log.Println("Chat Service Config loaded")
+	defer initialLogger.Sync()
 
-	srv, err := server.NewServer(cfg)
+	rootLogger := initialLogger.With(zap.String(constants.Service, constants.ServiceChat))
+
+	srv, err := server.NewServer(cfg, rootLogger)
 	if err != nil {
-		log.Println("Failed to create server: ", err)
+		rootLogger.Fatal("Failed to create server", zap.Error(err))
 	}
-	log.Println("Chat Service Server created")
 
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != grpc.ErrServerStopped {
-				log.Println("Failed to start server: ", err)
+				rootLogger.Fatal("Failed to start server", zap.Error(err))
 			}
 		}
 	}()
-	log.Println("Chat Service Server started")
+	rootLogger.Info("Chat Service Server started on ", zap.Int(constants.Port, cfg.GRPC.Port))
 
 	quit := make(chan os.Signal, 1)
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	rootLogger.Info("Shutting down server...")
 	srv.Stop()
-	log.Println("Server stopped")
+	rootLogger.Info("Server stopped")
 }

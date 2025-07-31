@@ -14,6 +14,8 @@ service PaymentService {
     rpc CreateOrUpdateSubscriptionPlan(CreateOrUpdateSubscriptionPlanRequest) returns (CreateOrUpdateSubscriptionPlanResponse);
     rpc GetSubscriptionPlan(GetSubscriptionPlanRequest) returns (GetSubscriptionPlanResponse);
     rpc GetActiveSubscriptionPlans(GetActiveSubscriptionPlansRequest) returns (GetActiveSubscriptionPlansResponse);
+    rpc GetActiveSubscriptionByUserID(GetActiveSubscriptionByUserIDRequest) returns (GetActiveSubscriptionByUserIDResponse);
+    rpc GetPaymentHistory(GetPaymentHistoryRequest) returns (GetPaymentHistoryResponse);
 }
 
 message CreatePaymentOrderRequest {
@@ -92,4 +94,38 @@ message SubscriptionPlan {
     bool is_active = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;
+}
+
+message GetActiveSubscriptionByUserIDRequest {
+    // No fields needed as user ID will be extracted from context
+}
+
+
+message GetActiveSubscriptionByUserIDResponse {
+    int64 subscription_id = 1;
+    string plan_id = 2;
+    google.protobuf.Timestamp start_date = 3;
+    google.protobuf.Timestamp end_date = 4;
+    string status = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+
+message GetPaymentHistoryRequest {
+    // No fields needed as user ID will be extracted from context
+}
+
+message GetPaymentHistoryResponse {
+    repeated PaymentHistoryItem payment_history = 1;
+}
+
+message PaymentHistoryItem {
+    int64 id = 1;
+    string plan_id = 2;
+    string razorpay_order_id = 3;
+    double amount = 4;
+    string currency = 5;
+    string status = 6;
+    string payment_method = 7;
+    google.protobuf.Timestamp created_at = 8;
 }
