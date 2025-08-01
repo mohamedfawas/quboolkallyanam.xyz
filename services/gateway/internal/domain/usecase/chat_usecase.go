@@ -10,5 +10,5 @@ type ChatUsecase interface {
 	CreateConversation(ctx context.Context, req dto.CreateConversationRequest) (*dto.CreateConversationResponse, error)
 	SendMessage(ctx context.Context, req dto.SendMessageRequest) (*dto.SendMessageResponse, error)
 	GetConversation(ctx context.Context, req dto.GetConversationRequest) (*dto.GetConversationResponse, error)
-	GetUserConversations(ctx context.Context, req dto.GetUserConversationsRequest) (*dto.GetUserConversationsResponse, error)
+	GetMessagesByConversationId(ctx context.Context, req dto.GetMessagesByConversationIdRequest) (*dto.PublicGetMessagesByConversationIdResponse, error)
 }

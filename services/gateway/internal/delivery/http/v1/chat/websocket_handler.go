@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"go.uber.org/zap"
@@ -116,7 +118,15 @@ func (h *ChatHandler) authenticateWebSocket(c *gin.Context) (string, error) {
 	return userID, nil
 }
 
-// HandleWebSocket is the main entry point when a client hits the WebSocket endpoint
+// @Summary Handle WebSocket connection
+// @Description Handles WebSocket connection for chat
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Success 200 {string} string "WebSocket connection established"
+// @Failure 401 {string} string "Unauthorized"
+// @Router /chat/ws [get]
+// @Security BearerAuth
 func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 	requestID, exists := c.Get(constants.ContextKeyRequestID)
 	if !exists {
@@ -162,7 +172,12 @@ func (h *ChatHandler) handleWebSocketMessages(ctx context.Context, userID string
 		var wsMessage dto.WebSocketMessage
 		// ReadJSON blocks until a message arrives or an error happens
 		if err := conn.ReadJSON(&wsMessage); err != nil {
-			logger.Error("Error reading WebSocket message", zap.Error(err))
+			// Check if it's a normal closure
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				logger.Info("WebSocket closed normally", zap.Error(err))
+			} else {
+				logger.Error("Error reading WebSocket message", zap.Error(err))
+			}
 			break
 		}
 
@@ -212,6 +227,10 @@ func (h *ChatHandler) handleChatMessage(ctx context.Context, senderID string, ws
 
 	response, err := h.chatUsecase.SendMessage(ctx, sendMessageReq)
 	if err != nil {
+		if !apperrors.IsAppError(err) {
+			logger.Error("Failed to send message", zap.Error(err))
+			return errors.New("INTERNAL_SERVER_ERROR")
+		}
 		return err
 	}
 
@@ -224,9 +243,10 @@ func (h *ChatHandler) sendToOtherParticipant(ctx context.Context, response *dto.
 		Type:           "message",
 		ConversationID: response.ConversationID,
 		MessageID:      response.MessageID,
-		SenderID:       response.SenderID,
-		Content:        response.Content,
-		SentAt:         response.SentAt,
+		// SenderID:       response.SenderID,
+		SenderName: response.SenderName,
+		Content:    response.Content,
+		SentAt:     response.SentAt,
 	}
 
 	// Get conversation to find the other participant

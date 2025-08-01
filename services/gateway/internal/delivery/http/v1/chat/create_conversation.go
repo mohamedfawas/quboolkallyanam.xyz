@@ -1,12 +1,11 @@
 package chat
 
 import (
-	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"go.uber.org/zap"
 )
@@ -21,15 +20,20 @@ import (
 // @Failure 400 {object} apiresponse.Response "Bad request"
 // @Failure 401 {object} apiresponse.Response "Unauthorized"
 // @Failure 500 {object} apiresponse.Response "Internal server error"
+// @Failure 404 {object} apiresponse.Response "User not found"
 // @Security BearerAuth
 // @Router /api/v1/chat/conversation [post]
 func (h *ChatHandler) CreateConversation(c *gin.Context) {
-	requestID, exists := c.Get(constants.ContextKeyRequestID)
-	if !exists {
-		h.logger.Error("failed to get request ID from context")
-		apiresponse.Error(c, fmt.Errorf("request ID context missing"), nil)
+	authCtx, err := contextutils.ExtractAuthContext(c)
+	if err != nil {
+		apiresponse.Error(c, err, nil)
 		return
 	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, authCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
+	)
 
 	var req dto.CreateConversationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -37,22 +41,7 @@ func (h *ChatHandler) CreateConversation(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get(constants.ContextKeyUserID)
-	if !exists {
-		h.logger.Error("failed to get user ID from context")
-		apiresponse.Error(c, apperrors.ErrUserContextMissing, nil)
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), constants.ContextKeyUserID, userID)
-	ctx = context.WithValue(ctx, constants.ContextKeyRequestID, requestID)
-
-	log := h.logger.With(
-		zap.String(constants.ContextKeyRequestID, requestID.(string)),
-		zap.String(constants.ContextKeyUserID, userID.(string)),
-	)
-
-	response, err := h.chatUsecase.CreateConversation(ctx, req)
+	response, err := h.chatUsecase.CreateConversation(authCtx.Ctx, req)
 	if err != nil {
 		if !apperrors.IsAppError(err) {
 			log.Error("failed to create conversation", zap.Error(err))

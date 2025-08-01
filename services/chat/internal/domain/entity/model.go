@@ -42,3 +42,40 @@ type CreateConversationResponse struct {
 	Participants   []string       `json:"participants"`
 	CreatedAt      time.Time      `json:"created_at"`
 }
+
+type SendMessageResponse struct {
+	MessageID      MessageID      `json:"message_id"`
+	ConversationID ConversationID `json:"conversation_id"`
+	SenderID       UserID         `json:"sender_id"`
+	SenderName     string         `json:"sender_name"`
+	Content        string         `json:"content"`
+	SentAt         time.Time      `json:"sent_at"`
+}
+
+type GetConversationResponse struct {
+	ConversationID ConversationID `json:"conversation_id"`
+	ParticipantIDs []string       `json:"participant_ids"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	LastMessageAt  *time.Time     `json:"last_message_at,omitempty"`
+}
+
+type MessageInfo struct {
+	MessageID  string    `json:"message_id"`
+	SenderID   string    `json:"sender_id"`
+	SenderName string    `json:"sender_name"`
+	Content    string    `json:"content"`
+	SentAt     time.Time `json:"sent_at"`
+}
+
+type GetMessagesByConversationIDResponse struct {
+	Messages   []MessageInfo  `json:"messages"`
+	Pagination PaginationInfo `json:"pagination"`
+}
+
+type PaginationInfo struct {
+	TotalCount int64 `json:"total_count"`
+	Limit      int32 `json:"limit"`
+	Offset     int32 `json:"offset"`
+	HasMore    bool  `json:"has_more"`
+}

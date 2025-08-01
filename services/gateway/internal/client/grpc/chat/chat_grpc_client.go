@@ -71,7 +71,6 @@ func (c *chatGRPCClient) CreateConversation(ctx context.Context, req dto.CreateC
 }
 
 func (c *chatGRPCClient) SendMessage(ctx context.Context, req dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
-
 	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
 	if !ok {
 		return nil, fmt.Errorf("user ID context missing")
@@ -93,15 +92,6 @@ func (c *chatGRPCClient) SendMessage(ctx context.Context, req dto.SendMessageReq
 }
 
 func (c *chatGRPCClient) GetConversation(ctx context.Context, req dto.GetConversationRequest) (*dto.GetConversationResponse, error) {
-	grpcReq := MapGetConversationRequest(req)
-	grpcResp, err := c.client.GetConversation(ctx, grpcReq)
-	if err != nil {
-		return nil, err
-	}
-	return MapGetConversationResponse(grpcResp), nil
-}
-
-func (c *chatGRPCClient) GetUserConversations(ctx context.Context, req dto.GetUserConversationsRequest) (*dto.GetUserConversationsResponse, error) {
 	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
 	if !ok {
 		return nil, fmt.Errorf("user ID context missing")
@@ -114,10 +104,32 @@ func (c *chatGRPCClient) GetUserConversations(ctx context.Context, req dto.GetUs
 	}
 	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
-	grpcReq := MapGetUserConversationsRequest(req)
-	grpcResp, err := c.client.GetUserConversations(ctx, grpcReq)
+	grpcReq := MapGetConversationRequest(req)
+	grpcResp, err := c.client.GetConversation(ctx, grpcReq)
 	if err != nil {
 		return nil, err
 	}
-	return MapGetUserConversationsResponse(grpcResp), nil
+	return MapGetConversationResponse(grpcResp), nil
+}
+
+
+func (c *chatGRPCClient) GetMessagesByConversationId(ctx context.Context, req dto.GetMessagesByConversationIdRequest) (*dto.GetMessagesByConversationIdResponse, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, fmt.Errorf("user ID context missing")
+	}
+	ctx = contextutils.SetUserContext(ctx, userID)
+
+	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
+	if !ok {
+		return nil, fmt.Errorf("request ID context missing")
+	}
+	ctx = contextutils.SetRequestIDContext(ctx, requestID)
+
+	grpcReq := MapGetMessagesByConversationIdRequest(req)
+	grpcResp, err := c.client.GetMessagesByConversationId(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetMessagesByConversationIdResponse(grpcResp), nil
 }

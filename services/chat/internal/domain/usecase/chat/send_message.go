@@ -3,17 +3,16 @@ package chat
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/entity"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (c *chatUsecase) SendMessage(ctx context.Context, conversationIDStr, senderID, content string) (*entity.Message, error) {
+func (c *chatUsecase) SendMessage(ctx context.Context, conversationIDStr, senderID, content string) (*entity.SendMessageResponse, error) {
 	conversationObjID, err := primitive.ObjectIDFromHex(conversationIDStr)
 	if err != nil {
-		log.Printf("failed to parse conversation ID: %v", err)
 		return nil, fmt.Errorf("invalid conversation ID: %w", err)
 	}
 
@@ -27,10 +26,26 @@ func (c *chatUsecase) SendMessage(ctx context.Context, conversationIDStr, sender
 	}
 
 	if err := c.messageRepository.CreateMessage(ctx, message); err != nil {
-		log.Printf("failed to create message: %v", err)
 		return nil, fmt.Errorf("failed to create message: %w", err)
 	}
 
-	log.Printf("Message created successfully: %s", message.ID.Hex())
-	return message, nil
+	userProjection, err := c.userProjectionRepository.GetUserProjectionByUUID(ctx, senderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user projection: %w", err)
+	}
+
+	if userProjection == nil {
+		return nil, appError.ErrUserNotFound
+	}
+
+	sendMessageResponse := &entity.SendMessageResponse{
+		MessageID:      message.ID,
+		ConversationID: message.ConversationID,
+		SenderID:       message.SenderID,
+		SenderName:     userProjection.FullName,
+		Content:        message.Content,
+		SentAt:         message.SentAt,
+	}
+
+	return sendMessageResponse, nil
 }

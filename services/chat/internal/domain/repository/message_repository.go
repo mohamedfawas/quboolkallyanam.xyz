@@ -8,4 +8,5 @@ import (
 
 type MessageRepository interface {
 	CreateMessage(ctx context.Context, message *entity.Message) error
+	GetMessagesByConversationID(ctx context.Context, conversationID string, limit, offset int32) ([]*entity.Message, int64, error)
 }

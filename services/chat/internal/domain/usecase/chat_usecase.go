@@ -3,8 +3,6 @@ package usecase
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pagination"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/entity"
 )
 
@@ -15,11 +13,11 @@ type ChatUsecase interface {
 	SendMessage(ctx context.Context,
 		conversationID,
 		senderID,
-		content string) (*entity.Message, error)
+		content string) (*entity.SendMessageResponse, error)
 	GetConversationByID(ctx context.Context,
-		conversationID string) (*entity.Conversation, error)
-	GetUserConversations(ctx context.Context,
-		userID uuid.UUID,
-		limit,
-		offset int) ([]*entity.Conversation, *pagination.PaginationData, error)
+		conversationID string) (*entity.GetConversationResponse, error)
+	GetMessagesByConversationID(ctx context.Context,
+		conversationID string,
+		userID string,
+		limit, offset int32) (*entity.GetMessagesByConversationIDResponse, error)
 }

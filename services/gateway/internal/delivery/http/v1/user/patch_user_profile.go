@@ -1,12 +1,11 @@
 package user
 
 import (
-	"context"
-
 	"github.com/gin-gonic/gin"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"go.uber.org/zap"
 )
@@ -24,7 +23,16 @@ import (
 // @Router /api/v1/user/profile [patch]
 
 func (h *UserHandler) PatchUserProfile(c *gin.Context) {
-	requestID, _ := c.Get(constants.ContextKeyRequestID)
+	authCtx, err := contextutils.ExtractAuthContext(c)
+	if err != nil {
+		apiresponse.Error(c, err, nil)
+		return
+	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, authCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
+	)
 
 	var req dto.UserProfilePatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -32,31 +40,16 @@ func (h *UserHandler) PatchUserProfile(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get(constants.ContextKeyUserID)
-	if !exists {
-		apiresponse.Error(c, apperrors.ErrUserContextMissing, nil)
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), constants.ContextKeyUserID, userID)
-
-	err := h.userUsecase.UpdateUserProfile(ctx, req)
+	err = h.userUsecase.UpdateUserProfile(authCtx.Ctx, req)
 	if err != nil {
-		// Log only internal server errors
 		if !apperrors.IsAppError(err) {
-			h.logger.Error("Failed to update user profile",
-				zap.String(constants.RequestID, requestID.(string)),
-				zap.String(constants.UserIDS, userID.(string)),
-				zap.Error(err))
+			log.Error("Failed to update user profile", zap.Error(err))
 		}
-
 		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	h.logger.Info("User profile updated successfully",
-		zap.String(constants.RequestID, requestID.(string)),
-		zap.String(constants.UserIDS, userID.(string)))
+	log.Info("User profile updated successfully")
 
 	apiresponse.Success(c, "User profile updated successfully", nil)
 }

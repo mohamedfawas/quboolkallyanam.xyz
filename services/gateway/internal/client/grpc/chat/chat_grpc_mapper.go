@@ -34,6 +34,7 @@ func MapSendMessageResponse(resp *chatpbv1.SendMessageResponse) *dto.SendMessage
 		MessageID:      resp.MessageId,
 		ConversationID: resp.ConversationId,
 		SenderID:       resp.SenderId,
+		SenderName:     resp.SenderName,
 		Content:        resp.Content,
 		SentAt:         resp.SentAt.AsTime(),
 	}
@@ -55,35 +56,29 @@ func MapGetConversationResponse(resp *chatpbv1.GetConversationResponse) *dto.Get
 	}
 }
 
-// /////////////////////////// Get User Conversations //////////////////////////////
-func MapGetUserConversationsRequest(req dto.GetUserConversationsRequest) *chatpbv1.GetUserConversationsRequest {
-	return &chatpbv1.GetUserConversationsRequest{
-		Limit:  req.Limit,
-		Offset: req.Offset,
+// /////////////////////////// Get Messages By Conversation ID //////////////////////////////
+func MapGetMessagesByConversationIdRequest(req dto.GetMessagesByConversationIdRequest) *chatpbv1.GetMessagesByConversationIdRequest {
+	return &chatpbv1.GetMessagesByConversationIdRequest{
+		ConversationId: req.ConversationID,
+		Limit:          req.Limit,
+		Offset:         req.Offset,
 	}
 }
 
-func MapGetUserConversationsResponse(resp *chatpbv1.GetUserConversationsResponse) *dto.GetUserConversationsResponse {
-	conversations := make([]dto.ConversationInfo, len(resp.Conversations))
-	for i, conv := range resp.Conversations {
-		conversationInfo := dto.ConversationInfo{
-			ConversationID: conv.ConversationId,
-			ParticipantIDs: conv.ParticipantIds,
-			CreatedAt:      conv.CreatedAt.AsTime(),
-			UpdatedAt:      conv.UpdatedAt.AsTime(),
-		}
-
-		// Handle optional last_message_at field
-		if conv.LastMessageAt != nil {
-			lastMessageAt := conv.LastMessageAt.AsTime()
-			conversationInfo.LastMessageAt = &lastMessageAt
-		}
-
-		conversations[i] = conversationInfo
+func MapGetMessagesByConversationIdResponse(resp *chatpbv1.GetMessagesByConversationIdResponse) *dto.GetMessagesByConversationIdResponse {
+	messages := make([]dto.MessageInfo, 0, len(resp.Messages))
+	for _, msg := range resp.Messages {
+		messages = append(messages, dto.MessageInfo{
+			MessageID:  msg.MessageId,
+			SenderID:   msg.SenderId,
+			SenderName: msg.SenderName,
+			Content:    msg.Content,
+			SentAt:     msg.SentAt.AsTime(),
+		})
 	}
 
-	return &dto.GetUserConversationsResponse{
-		Conversations: conversations,
+	return &dto.GetMessagesByConversationIdResponse{
+		Messages: messages,
 		Pagination: pagination.PaginationData{
 			TotalCount: resp.Pagination.TotalCount,
 			Limit:      int(resp.Pagination.Limit),

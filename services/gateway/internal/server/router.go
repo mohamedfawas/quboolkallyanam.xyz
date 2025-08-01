@@ -149,10 +149,10 @@ func (s *Server) registerChatRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RolePremiumUser),
 			s.chatHandler.CreateConversation)
-		chat.GET("/conversations",
+		chat.GET("/conversation/:conversation_id/messages",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RolePremiumUser),
-			s.chatHandler.GetUserConversations)
+			s.chatHandler.GetMessagesByConversationId)
 		chat.GET("/ws", s.chatHandler.HandleWebSocket)
 	}
 }

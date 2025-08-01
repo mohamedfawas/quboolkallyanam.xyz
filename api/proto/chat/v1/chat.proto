@@ -10,7 +10,7 @@ service ChatService {
     rpc CreateConversation(CreateConversationRequest) returns (CreateConversationResponse);
     rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
     rpc GetConversation(GetConversationRequest) returns (GetConversationResponse);
-    rpc GetUserConversations(GetUserConversationsRequest) returns (GetUserConversationsResponse);
+    rpc GetMessagesByConversationId(GetMessagesByConversationIdRequest) returns (GetMessagesByConversationIdResponse);
 }
 
 message CreateConversationRequest {
@@ -32,8 +32,9 @@ message SendMessageResponse {
     string message_id = 1;
     string conversation_id = 2;
     string sender_id = 3;
-    string content = 4;
-    google.protobuf.Timestamp sent_at = 5;
+    string sender_name = 4;
+    string content = 5;
+    google.protobuf.Timestamp sent_at = 6;
 }
 
 
@@ -48,22 +49,22 @@ message GetConversationResponse {
     google.protobuf.Timestamp updated_at = 4;
 }
 
-
-message GetUserConversationsRequest {
-    int32 limit = 1;
-    int32 offset = 2;
-}
-
-message ConversationInfo {
+message GetMessagesByConversationIdRequest {
     string conversation_id = 1;
-    repeated string participant_ids = 2;
-    google.protobuf.Timestamp created_at = 3;
-    google.protobuf.Timestamp updated_at = 4;
-    google.protobuf.Timestamp last_message_at = 5;
+    int32 limit = 2;
+    int32 offset = 3;
 }
 
-message GetUserConversationsResponse {
-    repeated ConversationInfo conversations = 1;
+message MessageInfo {
+    string message_id = 1;
+    string sender_id = 2;
+    string sender_name = 3;
+    string content = 4;
+    google.protobuf.Timestamp sent_at = 5;
+}
+
+message GetMessagesByConversationIdResponse {
+    repeated MessageInfo messages = 1;
     PaginationInfo pagination = 2;
 }
 

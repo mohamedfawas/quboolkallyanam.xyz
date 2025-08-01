@@ -2,11 +2,7 @@ package v1
 
 import (
 	"context"
-	"log"
 
-	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
@@ -41,13 +37,13 @@ func (h *ChatHandler) CreateConversation(
 	if err != nil {
 		h.logger.Error("Failed to get request ID From Context",
 			zap.Error(err))
-		return nil, status.Errorf(codes.Internal, constants.InteralServerErrorMessage)
+		return nil, err
 	}
 
 	userID, err := contextutils.GetUserID(ctx)
 	if err != nil {
 		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
-		return nil, status.Errorf(codes.Internal, constants.InteralServerErrorMessage)
+		return nil, err
 	}
 
 	log := h.logger.With(
@@ -74,99 +70,147 @@ func (h *ChatHandler) CreateConversation(
 	}, nil
 }
 
-func (h *ChatHandler) SendMessage(ctx context.Context, req *chatpbv1.SendMessageRequest) (*chatpbv1.SendMessageResponse, error) {
+func (h *ChatHandler) SendMessage(
+	ctx context.Context,
+	req *chatpbv1.SendMessageRequest) (*chatpbv1.SendMessageResponse, error) {
+
+	requestID, err := contextutils.GetRequestID(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get request ID From Context",
+			zap.Error(err))
+		return nil, err
+	}
+
 	userID, err := contextutils.GetUserID(ctx)
 	if err != nil {
-		log.Printf("Failed to get user ID: %v", err)
-		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
+		return nil, err
 	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, requestID),
+		zap.String(constants.ContextKeyUserID, userID),
+	)
 
 	message, err := h.chatUsecase.SendMessage(ctx, req.ConversationId, userID, req.Content)
 	if err != nil {
-		log.Printf("Failed to send message: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to send message: %v", err)
+		if !appErrors.IsAppError(err) {
+			log.Error("Failed to send message",
+				zap.Error(err))
+		}
+		return nil, err
 	}
 
+	log.Info("Message sent successfully",
+		zap.String("message_id", message.MessageID.Hex()))
+
 	return &chatpbv1.SendMessageResponse{
-		MessageId:      message.ID.Hex(),
+		MessageId:      message.MessageID.Hex(),
 		ConversationId: message.ConversationID.Hex(),
 		SenderId:       string(message.SenderID),
+		SenderName:     message.SenderName,
 		Content:        message.Content,
 		SentAt:         timestamppb.New(message.SentAt),
 	}, nil
 }
 
 func (h *ChatHandler) GetConversation(ctx context.Context, req *chatpbv1.GetConversationRequest) (*chatpbv1.GetConversationResponse, error) {
+	requestID, err := contextutils.GetRequestID(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get request ID From Context",
+			zap.Error(err))
+		return nil, err
+	}
+
+	userID, err := contextutils.GetUserID(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
+		return nil, err
+	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, requestID),
+		zap.String(constants.ContextKeyUserID, userID),
+	)
+
 	conversation, err := h.chatUsecase.GetConversationByID(ctx, req.ConversationId)
 	if err != nil {
-		log.Printf("Failed to get conversation: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to get conversation: %v", err)
+		if !appErrors.IsAppError(err) {
+			log.Error("Failed to get conversation",
+				zap.Error(err))
+		}
+		return nil, err
 	}
 
-	participantIDs := make([]string, len(conversation.ParticipantIDs))
-	for i, id := range conversation.ParticipantIDs {
-		participantIDs[i] = string(id)
-	}
+	log.Info("Conversation retrieved successfully",
+		zap.String("conversation_id", conversation.ConversationID.Hex()))
 
 	return &chatpbv1.GetConversationResponse{
-		ConversationId: conversation.ID.Hex(),
-		ParticipantIds: participantIDs,
+		ConversationId: conversation.ConversationID.Hex(),
+		ParticipantIds: conversation.ParticipantIDs,
 		CreatedAt:      timestamppb.New(conversation.CreatedAt),
 		UpdatedAt:      timestamppb.New(conversation.UpdatedAt),
 	}, nil
 }
 
-func (h *ChatHandler) GetUserConversations(ctx context.Context, req *chatpbv1.GetUserConversationsRequest) (*chatpbv1.GetUserConversationsResponse, error) {
+func (h *ChatHandler) GetMessagesByConversationId(
+	ctx context.Context,
+	req *chatpbv1.GetMessagesByConversationIdRequest) (*chatpbv1.GetMessagesByConversationIdResponse, error) {
+
+	requestID, err := contextutils.GetRequestID(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get request ID From Context",
+			zap.Error(err))
+		return nil, err
+	}
+
 	userID, err := contextutils.GetUserID(ctx)
 	if err != nil {
-		log.Printf("Failed to get user ID: %v", err)
-		return nil, status.Errorf(codes.InvalidArgument, "user ID not found: %v", err)
+		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
+		return nil, err
 	}
 
-	userUUID, err := uuid.Parse(userID)
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, requestID),
+		zap.String(constants.ContextKeyUserID, userID),
+	)
+
+	response, err := h.chatUsecase.GetMessagesByConversationID(ctx, req.ConversationId, userID, req.Limit, req.Offset)
 	if err != nil {
-		log.Printf("Failed to parse user ID as UUID: %v", err)
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user ID format: %v", err)
-	}
-
-	conversations, paginationData, err := h.chatUsecase.GetUserConversations(ctx, userUUID, int(req.Limit), int(req.Offset))
-	if err != nil {
-		log.Printf("Failed to get user conversations: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to get user conversations: %v", err)
-	}
-
-	// Convert domain entities to proto messages
-	conversationInfos := make([]*chatpbv1.ConversationInfo, len(conversations))
-	for i, conv := range conversations {
-		participantIDs := make([]string, len(conv.ParticipantIDs))
-		for j, id := range conv.ParticipantIDs {
-			participantIDs[j] = string(id)
+		if !appErrors.IsAppError(err) {
+			log.Error("Failed to get messages by conversation ID",
+				zap.Error(err),
+				zap.String("conversation_id", req.ConversationId))
 		}
-
-		conversationInfo := &chatpbv1.ConversationInfo{
-			ConversationId: conv.ID.Hex(),
-			ParticipantIds: participantIDs,
-			CreatedAt:      timestamppb.New(conv.CreatedAt),
-			UpdatedAt:      timestamppb.New(conv.UpdatedAt),
-		}
-
-		// Handle optional last_message_at field
-		if conv.LastMessageAt != nil {
-			conversationInfo.LastMessageAt = timestamppb.New(*conv.LastMessageAt)
-		}
-
-		conversationInfos[i] = conversationInfo
+		return nil, err
 	}
 
-	paginationInfo := &chatpbv1.PaginationInfo{
-		TotalCount: paginationData.TotalCount,
-		Limit:      int32(paginationData.Limit),
-		Offset:     int32(paginationData.Offset),
-		HasMore:    paginationData.HasMore,
+	protoMessages := make([]*chatpbv1.MessageInfo, 0, len(response.Messages))
+	for _, msg := range response.Messages {
+		protoMsg := &chatpbv1.MessageInfo{
+			MessageId:  msg.MessageID,
+			SenderId:   msg.SenderID,
+			SenderName: msg.SenderName,
+			Content:    msg.Content,
+			SentAt:     timestamppb.New(msg.SentAt),
+		}
+		protoMessages = append(protoMessages, protoMsg)
 	}
 
-	return &chatpbv1.GetUserConversationsResponse{
-		Conversations: conversationInfos,
-		Pagination:    paginationInfo,
+	protoPagination := &chatpbv1.PaginationInfo{
+		TotalCount: response.Pagination.TotalCount,
+		Limit:      response.Pagination.Limit,
+		Offset:     response.Pagination.Offset,
+		HasMore:    response.Pagination.HasMore,
+	}
+
+	log.Info("Messages retrieved successfully",
+		zap.String("conversation_id", req.ConversationId),
+		zap.Int("message_count", len(protoMessages)),
+		zap.Int64("total_count", response.Pagination.TotalCount))
+
+	return &chatpbv1.GetMessagesByConversationIdResponse{
+		Messages:   protoMessages,
+		Pagination: protoPagination,
 	}, nil
 }
