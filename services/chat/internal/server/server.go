@@ -33,9 +33,9 @@ type Server struct {
 	logger          *zap.Logger
 }
 
-func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
-	ctx := context.Background()
+func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 
+	///////////////////////// POSTGRES INITIALIZATION /////////////////////////
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
 		Port:     config.Postgres.Port,
@@ -45,11 +45,17 @@ func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 		SSLMode:  config.Postgres.SSLMode,
 		TimeZone: config.Postgres.TimeZone,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
+	rootLogger.Info("Connected to PostgreSQL ",
+		zap.String("host", config.Postgres.Host),
+		zap.Int("port", config.Postgres.Port),
+		zap.String("ssl_mode", config.Postgres.SSLMode),
+		zap.String("time_zone", config.Postgres.TimeZone),
+	)
 
+	///////////////////////// MONGODB INITIALIZATION /////////////////////////
 	mongoClient, err := mongodb.NewClient(ctx, mongodb.Config{
 		URI:      config.MongoDB.URI,
 		Database: config.MongoDB.Database,
@@ -59,8 +65,9 @@ func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 		pgClient.Close()
 		return nil, fmt.Errorf("mongodb connect: %w", err)
 	}
+	rootLogger.Info("Connected to MongoDB ")
 
-	// Initialize messaging client based on environment
+	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
@@ -69,6 +76,7 @@ func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 			mongoClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
+		rootLogger.Info("Connected to PubSub ")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -79,32 +87,42 @@ func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 			mongoClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
+		rootLogger.Info("Connected to RabbitMQ ")
 	}
 
+	///////////////////////// GRPC SERVER INITIALIZATION /////////////////////////
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
 	)
+	rootLogger.Info("gRPC server created")
 
-	// Initialize repositories
+	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProjectionRepo := postgresAdapters.NewUserProjectionRepository(pgClient)
+	rootLogger.Info("User Projection Repository Initialized")
 	conversationRepo := mongodbAdapters.NewConversationRepository(mongoClient)
+	rootLogger.Info("Conversation Repository Initialized")
 	messageRepo := mongodbAdapters.NewMessageRepository(mongoClient)
+	rootLogger.Info("Message Repository Initialized")
 
-	// Initialize use cases
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProjectionUC := userProjectionUsecaseImpl.NewUserProjectionUsecase(userProjectionRepo)
+	rootLogger.Info("User Projection Use Case Initialized")
 	chatUC := chatUsecaseImpl.NewChatUsecase(conversationRepo, messageRepo, userProjectionRepo)
+	rootLogger.Info("Chat Use Case Initialized")
 
-	// Initialize event handler
+	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	userEventHandler := eventHandlers.NewUserEventListener(messagingClient, userProjectionUC, rootLogger)
+	rootLogger.Info("User Event Handler Initialized")
 
-	// Initialize handlers
+	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	chatHandler := v1.NewChatHandler(chatUC, rootLogger)
-
 	chatpbv1.RegisterChatServiceServer(grpcServer, chatHandler)
+	rootLogger.Info("gRPC Handler Initialized")
 
+	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {
-		if err := userEventHandler.StartListening(context.Background()); err != nil {
-			// log is already done by the event handler
+		if err := userEventHandler.StartListening(ctx); err != nil {
+			rootLogger.Error("Failed to start user event listener", zap.Error(err))
 		}
 	}()
 
@@ -139,7 +157,6 @@ func (s *Server) Stop() {
 		}
 	}
 
-	// Close NoSQL client
 	if s.mongoClient != nil {
 		if err := s.mongoClient.Close(); err != nil {
 			s.logger.Error("failed to close mongo client", zap.Error(err))
@@ -151,6 +168,4 @@ func (s *Server) Stop() {
 			s.logger.Error("failed to close postgres client", zap.Error(err))
 		}
 	}
-
-	s.logger.Info("stopped gracefully")
 }

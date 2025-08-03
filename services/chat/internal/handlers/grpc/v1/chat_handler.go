@@ -33,25 +33,17 @@ func (h *ChatHandler) CreateConversation(
 	ctx context.Context,
 	req *chatpbv1.CreateConversationRequest) (*chatpbv1.CreateConversationResponse, error) {
 
-	requestID, err := contextutils.GetRequestID(ctx)
+	contextData, err := contextutils.ExtractGrpcContextData(ctx)
 	if err != nil {
-		h.logger.Error("Failed to get request ID From Context",
-			zap.Error(err))
+		h.logger.Error("Failed to extract context data", zap.Error(err))
 		return nil, err
 	}
-
-	userID, err := contextutils.GetUserID(ctx)
-	if err != nil {
-		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
-		return nil, err
-	}
-
 	log := h.logger.With(
-		zap.String(constants.ContextKeyRequestID, requestID),
-		zap.String(constants.ContextKeyUserID, userID),
+		zap.String(constants.ContextKeyRequestID, contextData.RequestID),
+		zap.String(constants.ContextKeyUserID, contextData.UserID),
 	)
 
-	conversation, err := h.chatUsecase.CreateConversation(ctx, userID, req.PartnerProfileId)
+	conversation, err := h.chatUsecase.CreateConversation(ctx, contextData.UserID, req.PartnerProfileId)
 	if err != nil {
 		if !appErrors.IsAppError(err) {
 			log.Error("Failed to create conversation",
@@ -74,25 +66,18 @@ func (h *ChatHandler) SendMessage(
 	ctx context.Context,
 	req *chatpbv1.SendMessageRequest) (*chatpbv1.SendMessageResponse, error) {
 
-	requestID, err := contextutils.GetRequestID(ctx)
+	contextData, err := contextutils.ExtractGrpcContextData(ctx)
 	if err != nil {
-		h.logger.Error("Failed to get request ID From Context",
-			zap.Error(err))
-		return nil, err
-	}
-
-	userID, err := contextutils.GetUserID(ctx)
-	if err != nil {
-		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
+		h.logger.Error("Failed to extract context data", zap.Error(err))
 		return nil, err
 	}
 
 	log := h.logger.With(
-		zap.String(constants.ContextKeyRequestID, requestID),
-		zap.String(constants.ContextKeyUserID, userID),
+		zap.String(constants.ContextKeyRequestID, contextData.RequestID),
+		zap.String(constants.ContextKeyUserID, contextData.UserID),
 	)
 
-	message, err := h.chatUsecase.SendMessage(ctx, req.ConversationId, userID, req.Content)
+	message, err := h.chatUsecase.SendMessage(ctx, req.ConversationId, contextData.UserID, req.Content)
 	if err != nil {
 		if !appErrors.IsAppError(err) {
 			log.Error("Failed to send message",
@@ -115,22 +100,15 @@ func (h *ChatHandler) SendMessage(
 }
 
 func (h *ChatHandler) GetConversation(ctx context.Context, req *chatpbv1.GetConversationRequest) (*chatpbv1.GetConversationResponse, error) {
-	requestID, err := contextutils.GetRequestID(ctx)
+	contextData, err := contextutils.ExtractGrpcContextData(ctx)
 	if err != nil {
-		h.logger.Error("Failed to get request ID From Context",
-			zap.Error(err))
-		return nil, err
-	}
-
-	userID, err := contextutils.GetUserID(ctx)
-	if err != nil {
-		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
+		h.logger.Error("Failed to extract context data", zap.Error(err))
 		return nil, err
 	}
 
 	log := h.logger.With(
-		zap.String(constants.ContextKeyRequestID, requestID),
-		zap.String(constants.ContextKeyUserID, userID),
+		zap.String(constants.ContextKeyRequestID, contextData.RequestID),
+		zap.String(constants.ContextKeyUserID, contextData.UserID),
 	)
 
 	conversation, err := h.chatUsecase.GetConversationByID(ctx, req.ConversationId)
@@ -157,25 +135,18 @@ func (h *ChatHandler) GetMessagesByConversationId(
 	ctx context.Context,
 	req *chatpbv1.GetMessagesByConversationIdRequest) (*chatpbv1.GetMessagesByConversationIdResponse, error) {
 
-	requestID, err := contextutils.GetRequestID(ctx)
+	contextData, err := contextutils.ExtractGrpcContextData(ctx)
 	if err != nil {
-		h.logger.Error("Failed to get request ID From Context",
-			zap.Error(err))
+		h.logger.Error("Failed to extract context data", zap.Error(err))
 		return nil, err
 	}
-
-	userID, err := contextutils.GetUserID(ctx)
-	if err != nil {
-		h.logger.Error("Failed to get user ID From Context", zap.Error(err))
-		return nil, err
-	}
-
+	
 	log := h.logger.With(
-		zap.String(constants.ContextKeyRequestID, requestID),
-		zap.String(constants.ContextKeyUserID, userID),
+		zap.String(constants.ContextKeyRequestID, contextData.RequestID),
+		zap.String(constants.ContextKeyUserID, contextData.UserID),
 	)
 
-	response, err := h.chatUsecase.GetMessagesByConversationID(ctx, req.ConversationId, userID, req.Limit, req.Offset)
+	response, err := h.chatUsecase.GetMessagesByConversationID(ctx, req.ConversationId, contextData.UserID, req.Limit, req.Offset)
 	if err != nil {
 		if !appErrors.IsAppError(err) {
 			log.Error("Failed to get messages by conversation ID",

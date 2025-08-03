@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
@@ -29,6 +28,7 @@ import (
 	// Handler imports
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/handlers/grpc/v1"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -38,9 +38,11 @@ type Server struct {
 	pgClient        *postgres.Client
 	messagingClient messageBroker.Client
 	razorpayService *razorpay.Service
+	logger          *zap.Logger
 }
 
-func NewServer(config *config.Config) (*Server, error) {
+func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
+	///////////////////////// POSTGRES INITIALIZATION /////////////////////////
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
 		Port:     config.Postgres.Port,
@@ -50,12 +52,17 @@ func NewServer(config *config.Config) (*Server, error) {
 		SSLMode:  config.Postgres.SSLMode,
 		TimeZone: config.Postgres.TimeZone,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
-	}
-	log.Println("Payment Service Connected to PostgreSQL")
+	}	
+	rootLogger.Info("Connected to PostgreSQL ",
+		zap.String("host", config.Postgres.Host),
+		zap.Int("port", config.Postgres.Port),
+		zap.String("ssl_mode", config.Postgres.SSLMode),
+		zap.String("time_zone", config.Postgres.TimeZone),
+	)
 
+	///////////////////////// MESSAGING INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
 		ctx := context.Background()
@@ -65,7 +72,7 @@ func NewServer(config *config.Config) (*Server, error) {
 			pgClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		log.Println("Payment Service Connected to PubSub")
+		rootLogger.Info("Connected to PubSub ")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -76,26 +83,34 @@ func NewServer(config *config.Config) (*Server, error) {
 			pgClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		log.Println("Payment Service Connected to RabbitMQ")
+		rootLogger.Info("Connected to RabbitMQ ")
 	}
 
+	///////////////////////// GRPC SERVER INITIALIZATION /////////////////////////
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		interceptors.UnaryErrorInterceptor(),
 	))
+	rootLogger.Info("gRPC server created")
 
-	// Initialize Razorpay service
+	///////////////////////// RAZORPAY SERVICE INITIALIZATION /////////////////////////
 	razorpayService := razorpay.NewService(config.Razorpay.KeyID, config.Razorpay.KeySecret)
-	log.Println("Payment Service Connected to Razorpay")
+	rootLogger.Info("Razorpay service created")
 
-	// Initialize repositories
+	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	paymentsRepo := postgresAdapters.NewPaymentsRepository(pgClient)
+	rootLogger.Info("Payments repository created")
 	subscriptionPlansRepo := postgresAdapters.NewSubscriptionPlansRepository(pgClient)
+	rootLogger.Info("Subscription plans repository created")
 	subscriptionsRepo := postgresAdapters.NewSubscriptionsRepository(pgClient)
+	rootLogger.Info("Subscriptions repository created")
 	txManager := postgresAdapters.NewTxManager(pgClient)
+	rootLogger.Info("Tx manager created")
 
+	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapters.NewEventPublisher(messagingClient)
+	rootLogger.Info("Event publisher created")
 
-	// Initialize use cases
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	paymentUC := paymentUsecase.NewPaymentUsecase(
 		paymentsRepo,
 		subscriptionPlansRepo,
@@ -104,13 +119,15 @@ func NewServer(config *config.Config) (*Server, error) {
 		razorpayService,
 		eventPublisher,
 	)
+	rootLogger.Info("Payment use case created")
 	subscriptionUC := subscriptionUsecase.NewSubscriptionUsecase(subscriptionPlansRepo, subscriptionsRepo)
+	rootLogger.Info("Subscription use case created")
 
-	// Initialize and register gRPC handler
+	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC, subscriptionUC)
 	paymentpbv1.RegisterPaymentServiceServer(grpcServer, paymentHandler)
-
-	log.Println("Payment Service gRPC handlers registered")
+	rootLogger.Info("Payment Service gRPC handlers registered")
+	
 
 	server := &Server{
 		config:          config,
@@ -118,6 +135,7 @@ func NewServer(config *config.Config) (*Server, error) {
 		pgClient:        pgClient,
 		messagingClient: messagingClient,
 		razorpayService: razorpayService,
+		logger:          rootLogger,
 	}
 
 	return server, nil
@@ -129,8 +147,6 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	log.Printf("Payment Service gRPC server starting on port %d", s.config.GRPC.Port)
-
 	return s.grpcServer.Serve(listener)
 }
 
@@ -140,15 +156,13 @@ func (s *Server) Stop() {
 	// Close messaging client first
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
-			log.Printf("failed to close messaging client: %v", err)
+			s.logger.Error("failed to close messaging client", zap.Error(err))
 		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			log.Printf("failed to close postgres client: %v", err)
+			s.logger.Error("failed to close postgres client", zap.Error(err))
 		}
 	}
-
-	log.Println("Payment Service stopped")
 }

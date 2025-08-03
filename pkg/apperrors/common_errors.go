@@ -43,4 +43,11 @@ var (
 		GRPCStatusCode: codes.NotFound,
 		PublicMsg:      "Partner profile with the given ID doesn't exist.",
 	}
+	ErrInvalidOperationType = &AppError{
+		Err:            errors.New("invalid operation type"),
+		Code:           "INVALID_OPERATION_TYPE",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Invalid operation type.",
+	}
 )

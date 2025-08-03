@@ -2,36 +2,31 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
-	"gorm.io/gorm"
 )
 
 func (u *adminUsecase) AdminLogin(ctx context.Context, email, password string) (*entity.TokenPair, error) {
 	admin, err := u.adminRepository.GetAdminByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, appErrors.ErrAdminNotFound
-		}
 		return nil, fmt.Errorf("failed to get admin details using email: %w", err)
 	}
 
 	if admin == nil {
-		return nil, appErrors.ErrAdminNotFound
+		return nil, apperrors.ErrAdminNotFound
 	}
 
 	if !admin.IsActive {
-		return nil, appErrors.ErrAdminAccountDisabled
+		return nil, apperrors.ErrAdminAccountDisabled
 	}
 
 	if !hash.VerifyPassword(admin.PasswordHash, password) {
-		return nil, appErrors.ErrInvalidPassword
+		return nil, apperrors.ErrAdminInvalidCredentials
 	}
 
 	accessToken, err := u.jwtManager.GenerateAccessToken(admin.ID.String(), constants.RoleAdmin)

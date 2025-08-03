@@ -14,7 +14,7 @@ var (
 		Code:           "USER_PROFILE_NOT_FOUND",
 		HTTPStatusCode: http.StatusNotFound,
 		GRPCStatusCode: codes.NotFound,
-		PublicMsg:      "User profile not found."}
+		PublicMsg:      "User profile not found. Please try to create your profile first."}
 	ErrInvalidFullName = &AppError{
 		Err:            errors.New("invalid full name"),
 		Code:           "INVALID_FULL_NAME",
@@ -69,4 +69,49 @@ var (
 		HTTPStatusCode: http.StatusBadRequest,
 		GRPCStatusCode: codes.InvalidArgument,
 		PublicMsg:      "Height should be between 130 and 220 cm"}
+	ErrInvalidAge = &AppError{
+		Err:            errors.New("invalid age"),
+		Code:           "INVALID_AGE",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Age should be between 18 and 100 years"}
+	ErrInvalidHeightRange = &AppError{
+		Err:            errors.New("invalid height range"),
+		Code:           "INVALID_HEIGHT_RANGE",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Height should be between 130 and 220 cm and max height should be greater than min height"}
+	ErrInvalidAgeRange = &AppError{
+		Err:            errors.New("invalid age range"),
+		Code:           "INVALID_AGE_RANGE",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Age should be between 18 and 100 years and max age should be greater than min age"}
+)
+
+// Partner Preferences errors
+var (
+	ErrPartnerPreferencesNotFound = &AppError{
+		Err:            errors.New("partner preferences not found"),
+		Code:           "PARTNER_PREFERENCES_NOT_FOUND",
+		HTTPStatusCode: http.StatusNotFound,
+		GRPCStatusCode: codes.NotFound,
+		PublicMsg:      "Partner preferences not found. Please try to create your partner preferences first."}
+	ErrPartnerPreferencesAlreadyExists = &AppError{
+		Err:            errors.New("partner preferences already exists"),
+		Code:           "PARTNER_PREFERENCES_ALREADY_EXISTS",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.AlreadyExists,
+		PublicMsg:      "Partner preferences already exists. Please try to update your partner preferences instead."}
+)
+
+
+// Match Making errors
+var (
+	ErrInvalidMatchAction = &AppError{
+		Err:            errors.New("invalid match action"),
+		Code:           "INVALID_MATCH_ACTION",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "The selected match action is not recognized. Please try again."}
 )

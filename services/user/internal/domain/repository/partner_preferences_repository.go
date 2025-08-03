@@ -8,6 +8,6 @@ import (
 
 type PartnerPreferencesRepository interface {
 	CreatePartnerPreferences(ctx context.Context, preferences *entity.PartnerPreference) error
-	GetPartnerPreferencesByUserProfileID(ctx context.Context, userProfileID uint) (*entity.PartnerPreference, error)
-	PatchPartnerPreferences(ctx context.Context, userProfileID uint, patch map[string]interface{}) error
+	GetPartnerPreferencesByUserProfileID(ctx context.Context, userProfileID int64) (*entity.PartnerPreference, error)
+	PatchPartnerPreferences(ctx context.Context, userProfileID int64, patch map[string]interface{}) error
 }

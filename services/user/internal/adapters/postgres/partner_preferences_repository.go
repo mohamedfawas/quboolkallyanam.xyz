@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/repository"
 	"gorm.io/gorm"
@@ -19,11 +18,17 @@ func NewPartnerPreferencesRepository(db *postgres.Client) repository.PartnerPref
 	return &partnerPreferencesRepository{db: db}
 }
 
-func (r *partnerPreferencesRepository) CreatePartnerPreferences(ctx context.Context, preferences *entity.PartnerPreference) error {
+func (r *partnerPreferencesRepository) CreatePartnerPreferences(
+	ctx context.Context,
+	preferences *entity.PartnerPreference) error {
+	
 	return r.db.GormDB.WithContext(ctx).Create(preferences).Error
 }
 
-func (r *partnerPreferencesRepository) GetPartnerPreferencesByUserProfileID(ctx context.Context, userProfileID uint) (*entity.PartnerPreference, error) {
+func (r *partnerPreferencesRepository) GetPartnerPreferencesByUserProfileID(
+	ctx context.Context, 
+	userProfileID int64) (*entity.PartnerPreference, error) {
+
 	var preferences entity.PartnerPreference
 	err := r.db.GormDB.WithContext(ctx).
 		Where("user_profile_id = ?", userProfileID).
@@ -31,7 +36,7 @@ func (r *partnerPreferencesRepository) GetPartnerPreferencesByUserProfileID(ctx 
 	
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, appError.ErrPartnerPreferencesNotFound
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -40,7 +45,11 @@ func (r *partnerPreferencesRepository) GetPartnerPreferencesByUserProfileID(ctx 
 }
 
 
-func (r *partnerPreferencesRepository) PatchPartnerPreferences(ctx context.Context, userProfileID uint, patch map[string]interface{}) error {
+func (r *partnerPreferencesRepository) PatchPartnerPreferences(
+	ctx context.Context, 
+	userProfileID int64, 
+	patch map[string]interface{}) error {
+		
 	result := r.db.GormDB.WithContext(ctx).
 		Model(&entity.PartnerPreference{}).
 		Where("user_profile_id = ?", userProfileID).
@@ -48,10 +57,6 @@ func (r *partnerPreferencesRepository) PatchPartnerPreferences(ctx context.Conte
 	
 	if result.Error != nil {
 		return result.Error
-	}
-	
-	if result.RowsAffected == 0 {
-		return appError.ErrPartnerPreferencesNotFound
 	}
 	
 	return nil

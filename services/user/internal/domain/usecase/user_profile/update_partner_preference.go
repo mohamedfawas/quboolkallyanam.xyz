@@ -2,13 +2,13 @@ package userprofile
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"time"
 
 	"github.com/google/uuid"
+	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 )
 
@@ -23,17 +23,13 @@ func (u *userProfileUsecase) UpdateUserPartnerPreferences(
 		if err == appError.ErrUserProfileNotFound {
 			return appError.ErrUserProfileNotFound
 		}
-		log.Printf("failed to get user profile: %v", err)
 		return fmt.Errorf("failed to get user profile: %w", err)
 	}
 
 	existingPartnerPreferences, err := u.partnerPreferencesRepository.GetPartnerPreferencesByUserProfileID(ctx,
-		uint(existingProfile.ID))
+		existingProfile.ID)
 	if err != nil {
-		if err != appError.ErrPartnerPreferencesNotFound {
-			log.Printf("failed to get partner preferences: %v", err)
-			return fmt.Errorf("failed to get partner preferences: %w", err)
-		}
+		return fmt.Errorf("failed to get partner preferences: %w", err)
 	}
 
 	if operationType == constants.CreateOperationType {
@@ -43,11 +39,12 @@ func (u *userProfileUsecase) UpdateUserPartnerPreferences(
 		return u.createPartnerPreferences(ctx, existingProfile.ID, req)
 	}
 
-	if err == appError.ErrPartnerPreferencesNotFound {
+	// operation type update, but no record exists
+	if existingPartnerPreferences == nil {
 		return appError.ErrPartnerPreferencesNotFound
 	}
 
-	return u.patchPartnerPreferences(ctx, uint(existingProfile.ID), req)
+	return u.patchPartnerPreferences(ctx, existingProfile.ID, existingPartnerPreferences, req)
 }
 
 func (u *userProfileUsecase) createPartnerPreferences(
@@ -57,167 +54,174 @@ func (u *userProfileUsecase) createPartnerPreferences(
 
 	preferences := &entity.PartnerPreference{
 		UserProfileID:              userProfileID,
-		AcceptPhysicallyChallenged: true, // default value
+		AcceptPhysicallyChallenged: *req.AcceptPhysicallyChallenged,
 	}
 
-	if req.MinAgeYears != nil {
-		preferences.MinAgeYears = req.MinAgeYears
-	}
-	if req.MaxAgeYears != nil {
-		preferences.MaxAgeYears = req.MaxAgeYears
-	}
-	if req.MinHeightCM != nil {
-		preferences.MinHeightCm = req.MinHeightCM
-	}
-	if req.MaxHeightCM != nil {
-		preferences.MaxHeightCm = req.MaxHeightCM
-	}
-	if req.AcceptPhysicallyChallenged != nil {
-		preferences.AcceptPhysicallyChallenged = *req.AcceptPhysicallyChallenged
+	if validation.IsValidAgeRange(int(*req.MinAgeYears), int(*req.MaxAgeYears)) {
+		preferences.MinAgeYears = uint16(*req.MinAgeYears)
+		preferences.MaxAgeYears = uint16(*req.MaxAgeYears)
+	} else {
+		return appError.ErrInvalidAgeRange
 	}
 
-	if req.PreferredCommunities != nil {
-		preferences.PreferredCommunities = convertToCommunityEnums(*req.PreferredCommunities)
+	if validation.IsValidHeightRange(int(*req.MinHeightCM), int(*req.MaxHeightCM)) {
+		preferences.MinHeightCm = uint16(*req.MinHeightCM)
+		preferences.MaxHeightCm = uint16(*req.MaxHeightCM)
+	} else {
+		return appError.ErrInvalidHeightRange
 	}
-	if req.PreferredMaritalStatus != nil {
-		preferences.PreferredMaritalStatus = convertToMaritalStatusEnums(*req.PreferredMaritalStatus)
+
+	communities, err := validation.ParsePreferredCommunities(*req.PreferredCommunities)
+	if err != nil {
+		return appError.ErrInvalidCommunity
 	}
-	if req.PreferredProfessions != nil {
-		preferences.PreferredProfessions = convertToProfessionEnums(*req.PreferredProfessions)
+	preferences.PreferredCommunities = communities
+
+	maritalStatuses, err := validation.ParsePreferredMaritalStatuses(*req.PreferredMaritalStatus)
+	if err != nil {
+		return appError.ErrInvalidMaritalStatus
 	}
-	if req.PreferredProfessionTypes != nil {
-		preferences.PreferredProfessionTypes = convertToProfessionTypeEnums(*req.PreferredProfessionTypes)
+	preferences.PreferredMaritalStatus = maritalStatuses
+
+	professions, err := validation.ParsePreferredProfessions(*req.PreferredProfessions)
+	if err != nil {
+		return appError.ErrInvalidProfession
 	}
-	if req.PreferredEducationLevels != nil {
-		preferences.PreferredEducationLevels = convertToEducationLevelEnums(*req.PreferredEducationLevels)
+	preferences.PreferredProfessions = professions
+
+	professionTypes, err := validation.ParsePreferredProfessionTypes(*req.PreferredProfessionTypes)
+	if err != nil {
+		return appError.ErrInvalidProfessionType
 	}
-	if req.PreferredHomeDistricts != nil {
-		preferences.PreferredHomeDistricts = convertToHomeDistrictEnums(*req.PreferredHomeDistricts)
+	preferences.PreferredProfessionTypes = professionTypes
+
+	educationLevels, err := validation.ParsePreferredEducationLevels(*req.PreferredEducationLevels)
+	if err != nil {
+		return appError.ErrInvalidEducationLevel
 	}
+	preferences.PreferredEducationLevels = educationLevels
+
+	homeDistricts, err := validation.ParsePreferredHomeDistricts(*req.PreferredHomeDistricts)
+	if err != nil {
+		return appError.ErrInvalidHomeDistrict
+	}
+	preferences.PreferredHomeDistricts = homeDistricts
+
+	now := time.Now().UTC()
+	preferences.CreatedAt = now
+	preferences.UpdatedAt = now
 
 	return u.partnerPreferencesRepository.CreatePartnerPreferences(ctx, preferences)
 }
 
 func (u *userProfileUsecase) patchPartnerPreferences(
 	ctx context.Context,
-	userProfileID uint,
+	userProfileID int64,
+	existingPartnerPreferences *entity.PartnerPreference,
 	req entity.UpdateUserPartnerPreferencesRequest) error {
 
 	patch := make(map[string]interface{})
 
-	if req.MinAgeYears != nil {
-		patch["min_age_years"] = *req.MinAgeYears
+	// Handle age range updates
+	if req.MinAgeYears != nil && req.MaxAgeYears != nil {
+		if validation.IsValidAgeRange(int(*req.MinAgeYears), int(*req.MaxAgeYears)) {
+			patch["min_age_years"] = uint16(*req.MinAgeYears)
+			patch["max_age_years"] = uint16(*req.MaxAgeYears)
+		} else {
+			return appError.ErrInvalidAgeRange
+		}
+	} else if req.MinAgeYears != nil {
+		if validation.IsValidAge(int(*req.MinAgeYears)) && int(*req.MinAgeYears) <= int(existingPartnerPreferences.MaxAgeYears) {
+			patch["min_age_years"] = uint16(*req.MinAgeYears)
+		} else {
+			return appError.ErrInvalidAgeRange
+		}
+	} else if req.MaxAgeYears != nil {
+		if validation.IsValidAge(int(*req.MaxAgeYears)) && int(*req.MaxAgeYears) >= int(existingPartnerPreferences.MinAgeYears) {
+			patch["max_age_years"] = uint16(*req.MaxAgeYears)
+		} else {
+			return appError.ErrInvalidAgeRange
+		}
 	}
-	if req.MaxAgeYears != nil {
-		patch["max_age_years"] = *req.MaxAgeYears
+
+	// Handle height range updates
+	if req.MinHeightCM != nil && req.MaxHeightCM != nil {
+		if validation.IsValidHeightRange(int(*req.MinHeightCM), int(*req.MaxHeightCM)) {
+			patch["min_height_cm"] = uint16(*req.MinHeightCM)
+			patch["max_height_cm"] = uint16(*req.MaxHeightCM)
+		} else {
+			return appError.ErrInvalidHeightRange
+		}
+	} else if req.MinHeightCM != nil {
+		if validation.IsValidHeight(int(*req.MinHeightCM)) && int(*req.MinHeightCM) <= int(existingPartnerPreferences.MaxHeightCm) {
+			patch["min_height_cm"] = uint16(*req.MinHeightCM)
+		} else {
+			return appError.ErrInvalidHeightRange
+		}
+	} else if req.MaxHeightCM != nil {
+		if validation.IsValidHeight(int(*req.MaxHeightCM)) && int(*req.MaxHeightCM) >= int(existingPartnerPreferences.MinHeightCm) {
+			patch["max_height_cm"] = uint16(*req.MaxHeightCM)
+		} else {
+			return appError.ErrInvalidHeightRange
+		}
 	}
-	if req.MinHeightCM != nil {
-		patch["min_height_cm"] = *req.MinHeightCM
-	}
-	if req.MaxHeightCM != nil {
-		patch["max_height_cm"] = *req.MaxHeightCM
-	}
+
+	// Handle physically challenged preference
 	if req.AcceptPhysicallyChallenged != nil {
 		patch["accept_physically_challenged"] = *req.AcceptPhysicallyChallenged
 	}
 
-	if req.PreferredCommunities != nil {
-		// Convert enum array to JSON string for proper JSONB storage
-		communities := convertToCommunityEnums(*req.PreferredCommunities)
-		jsonData, err := json.Marshal(communities)
+	if len(*req.PreferredCommunities) > 0 {
+		communities, err := validation.ParsePreferredCommunities(*req.PreferredCommunities)
 		if err != nil {
-			return fmt.Errorf("failed to marshal preferred communities: %w", err)
+			return appError.ErrInvalidCommunity
 		}
-		patch["preferred_communities"] = string(jsonData)
+		patch["preferred_communities"] = communities
 	}
-	if req.PreferredMaritalStatus != nil {
-		maritalStatus := convertToMaritalStatusEnums(*req.PreferredMaritalStatus)
-		jsonData, err := json.Marshal(maritalStatus)
+
+	if len(*req.PreferredMaritalStatus) > 0 {
+		maritalStatuses, err := validation.ParsePreferredMaritalStatuses(*req.PreferredMaritalStatus)
 		if err != nil {
-			return fmt.Errorf("failed to marshal preferred marital status: %w", err)
+			return appError.ErrInvalidMaritalStatus
 		}
-		patch["preferred_marital_status"] = string(jsonData)
+		patch["preferred_marital_status"] = maritalStatuses
 	}
-	if req.PreferredProfessions != nil {
-		professions := convertToProfessionEnums(*req.PreferredProfessions)
-		jsonData, err := json.Marshal(professions)
+
+	if len(*req.PreferredProfessions) > 0 {
+		professions, err := validation.ParsePreferredProfessions(*req.PreferredProfessions)
 		if err != nil {
-			return fmt.Errorf("failed to marshal preferred professions: %w", err)
+			return appError.ErrInvalidProfession
 		}
-		patch["preferred_professions"] = string(jsonData)
+		patch["preferred_professions"] = professions
 	}
-	if req.PreferredProfessionTypes != nil {
-		professionTypes := convertToProfessionTypeEnums(*req.PreferredProfessionTypes)
-		jsonData, err := json.Marshal(professionTypes)
+
+	if len(*req.PreferredProfessionTypes) > 0 {
+		professionTypes, err := validation.ParsePreferredProfessionTypes(*req.PreferredProfessionTypes)
 		if err != nil {
-			return fmt.Errorf("failed to marshal preferred profession types: %w", err)
+			return appError.ErrInvalidProfessionType
 		}
-		patch["preferred_profession_types"] = string(jsonData)
+		patch["preferred_profession_types"] = professionTypes
 	}
-	if req.PreferredEducationLevels != nil {
-		educationLevels := convertToEducationLevelEnums(*req.PreferredEducationLevels)
-		jsonData, err := json.Marshal(educationLevels)
+
+	if len(*req.PreferredEducationLevels) > 0 {
+		educationLevels, err := validation.ParsePreferredEducationLevels(*req.PreferredEducationLevels)
 		if err != nil {
-			return fmt.Errorf("failed to marshal preferred education levels: %w", err)
+			return appError.ErrInvalidEducationLevel
 		}
-		patch["preferred_education_levels"] = string(jsonData)
+		patch["preferred_education_levels"] = educationLevels
 	}
-	if req.PreferredHomeDistricts != nil {
-		homeDistricts := convertToHomeDistrictEnums(*req.PreferredHomeDistricts)
-		jsonData, err := json.Marshal(homeDistricts)
+
+	if len(*req.PreferredHomeDistricts) > 0 {
+		homeDistricts, err := validation.ParsePreferredHomeDistricts(*req.PreferredHomeDistricts)
 		if err != nil {
-			return fmt.Errorf("failed to marshal preferred home districts: %w", err)
+			return appError.ErrInvalidHomeDistrict
 		}
-		patch["preferred_home_districts"] = string(jsonData)
+		patch["preferred_home_districts"] = homeDistricts
+	}
+
+	if len(patch) > 0 {
+		patch["updated_at"] = time.Now().UTC()
 	}
 
 	return u.partnerPreferencesRepository.PatchPartnerPreferences(ctx, userProfileID, patch)
-}
-
-func convertToCommunityEnums(strs []string) []entity.CommunityEnum {
-	enums := make([]entity.CommunityEnum, len(strs))
-	for i, str := range strs {
-		enums[i] = entity.CommunityEnum(str)
-	}
-	return enums
-}
-
-func convertToMaritalStatusEnums(strs []string) []entity.MaritalStatusEnum {
-	enums := make([]entity.MaritalStatusEnum, len(strs))
-	for i, str := range strs {
-		enums[i] = entity.MaritalStatusEnum(str)
-	}
-	return enums
-}
-
-func convertToProfessionEnums(strs []string) []entity.ProfessionEnum {
-	enums := make([]entity.ProfessionEnum, len(strs))
-	for i, str := range strs {
-		enums[i] = entity.ProfessionEnum(str)
-	}
-	return enums
-}
-
-func convertToProfessionTypeEnums(strs []string) []entity.ProfessionTypeEnum {
-	enums := make([]entity.ProfessionTypeEnum, len(strs))
-	for i, str := range strs {
-		enums[i] = entity.ProfessionTypeEnum(str)
-	}
-	return enums
-}
-
-func convertToEducationLevelEnums(strs []string) []entity.EducationLevelEnum {
-	enums := make([]entity.EducationLevelEnum, len(strs))
-	for i, str := range strs {
-		enums[i] = entity.EducationLevelEnum(str)
-	}
-	return enums
-}
-
-func convertToHomeDistrictEnums(strs []string) []entity.HomeDistrictEnum {
-	enums := make([]entity.HomeDistrictEnum, len(strs))
-	for i, str := range strs {
-		enums[i] = entity.HomeDistrictEnum(str)
-	}
-	return enums
 }

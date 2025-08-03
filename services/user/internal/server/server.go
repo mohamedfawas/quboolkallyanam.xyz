@@ -18,7 +18,7 @@ import (
 	userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/user_profile"
 	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/grpc/v1"
-
+	interceptors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -31,8 +31,8 @@ type Server struct {
 	logger          *zap.Logger
 }
 
-func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
-
+func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
+	///////////////////////// POSTGRES INITIALIZATION /////////////////////////
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
 		Port:     config.Postgres.Port,
@@ -45,16 +45,23 @@ func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
+	rootLogger.Info("Connected to PostgreSQL ",
+		zap.String("host", config.Postgres.Host),
+		zap.Int("port", config.Postgres.Port),
+		zap.String("ssl_mode", config.Postgres.SSLMode),
+		zap.String("time_zone", config.Postgres.TimeZone),
+	)
 
+	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////	
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
-		ctx := context.Background()
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
+		rootLogger.Info("Connected to PubSub ")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -65,31 +72,47 @@ func NewServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 			pgClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
+		rootLogger.Info("Connected to RabbitMQ ")
 	}
 
-	grpcServer := grpc.NewServer()
+	///////////////////////// GRPC SERVER INITIALIZATION /////////////////////////
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
+	)
 
-	// Initialize repositories
+	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
+	rootLogger.Info("User Profile Repository Initialized")
 	partnerPreferencesRepo := postgresAdapters.NewPartnerPreferencesRepository(pgClient)
+	rootLogger.Info("Partner Preferences Repository Initialized")
 	profileMatchRepo := postgresAdapters.NewProfileMatchRepository(pgClient)
+	rootLogger.Info("Profile Match Repository Initialized")
 	mutualMatchRepo := postgresAdapters.NewMutualMatchRepository(pgClient)
+	rootLogger.Info("Mutual Match Repository Initialized")
 	transactionManager := postgres.NewTransactionManager(pgClient)
-	// Initialize event publisher
+	rootLogger.Info("Transaction Manager Initialized")
+
+	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
+	rootLogger.Info("Event Publisher Initialized")
 
-	// Initialize use cases
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, partnerPreferencesRepo, eventPublisher)
+	rootLogger.Info("User Profile Use Case Initialized")
 	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager)
+	rootLogger.Info("Match Making Use Case Initialized")
 
-	// Initialize and register gRPC handler
-	userHandler := grpcHandlerv1.NewUserHandler(userProfileUC, matchMakingUC)
-	userpbv1.RegisterUserServiceServer(grpcServer, userHandler)
 
-	// Initialize event handler
+	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC, rootLogger)
+	rootLogger.Info("Auth Event Handler Initialized")
 
-	// Start event listener
+	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
+	userHandler := grpcHandlerv1.NewUserHandler(userProfileUC, matchMakingUC, rootLogger)
+	userpbv1.RegisterUserServiceServer(grpcServer, userHandler)
+	rootLogger.Info("gRPC Handler Initialized")
+
+	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {
 		if err := authEventHandler.StartListening(context.Background()); err != nil {
 			rootLogger.Error("failed to start auth event listener", zap.Error(err))
@@ -118,6 +141,7 @@ func (s *Server) Start() error {
 func (s *Server) Stop() {
 	s.grpcServer.GracefulStop()
 
+	// Close messaging client first
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
 			s.logger.Error("failed to close messaging client", zap.Error(err))

@@ -48,3 +48,44 @@ func extractFromIncomingContext(ctx context.Context, key string) (string, error)
 
 	return values[0], nil
 }
+
+
+type GrpcContextData struct {
+	RequestID string
+	UserID    string
+}
+
+
+func ExtractGrpcContextData(ctx context.Context) (*GrpcContextData, error) {
+	requestID, err := GetRequestID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get request ID from context: %w", err)
+	}
+
+	userID, err := GetUserID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user ID from context: %w", err)
+	}
+
+	return &GrpcContextData{
+		RequestID: requestID,
+		UserID:    userID,
+	}, nil
+}
+
+func PrepareGrpcContext(ctx context.Context) (context.Context, error) {
+	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
+	if !ok {
+		return nil, fmt.Errorf("user ID context missing")
+	}
+
+	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
+	if !ok {
+		return nil, fmt.Errorf("request ID context missing")
+	}
+
+	ctx = SetUserContext(ctx, userID)
+	ctx = SetRequestIDContext(ctx, requestID)
+
+	return ctx, nil
+}

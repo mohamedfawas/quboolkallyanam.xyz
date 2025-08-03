@@ -19,10 +19,11 @@ import (
 // @Success 200 {object} apiresponse.Response "User profile updated successfully"
 // @Failure 400 {object} apiresponse.Response "Bad request"
 // @Failure 401 {object} apiresponse.Response "Unauthorized"
+// @Failure 404 {object} apiresponse.Response "User profile not found"
+// @Failure 422 {object} apiresponse.Response "Validation error"
 // @Failure 500 {object} apiresponse.Response "Internal server error"
 // @Security BearerAuth
 // @Router /api/v1/user/profile [put]
-
 func (h *UserHandler) PutUserProfile(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -42,17 +43,17 @@ func (h *UserHandler) PutUserProfile(c *gin.Context) {
 	}
 
 	request := dto.UserProfilePatchRequest{
-		IsBride:               req.IsBride,
-		FullName:              req.FullName,
-		DateOfBirth:           req.DateOfBirth,
-		HeightCm:              req.HeightCm,
-		PhysicallyChallenged:  req.PhysicallyChallenged,
-		Community:             req.Community,
-		MaritalStatus:         req.MaritalStatus,
-		Profession:            req.Profession,
-		ProfessionType:        req.ProfessionType,
-		HighestEducationLevel: req.HighestEducationLevel,
-		HomeDistrict:          req.HomeDistrict,
+		IsBride:               &req.IsBride,
+		FullName:              &req.FullName,
+		DateOfBirth:           &req.DateOfBirth,
+		HeightCm:              &req.HeightCm,
+		PhysicallyChallenged:  &req.PhysicallyChallenged,
+		Community:             &req.Community,
+		MaritalStatus:         &req.MaritalStatus,
+		Profession:            &req.Profession,
+		ProfessionType:        &req.ProfessionType,
+		HighestEducationLevel: &req.HighestEducationLevel,
+		HomeDistrict:          &req.HomeDistrict,
 	}
 
 	err = h.userUsecase.UpdateUserProfile(authCtx.Ctx, request)
@@ -60,7 +61,6 @@ func (h *UserHandler) PutUserProfile(c *gin.Context) {
 		if !apperrors.IsAppError(err) {
 			log.Error("Failed to update user profile", zap.Error(err))
 		}
-
 		apiresponse.Error(c, err, nil)
 		return
 	}

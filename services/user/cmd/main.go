@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
@@ -25,33 +25,33 @@ func main() {
 	if err != nil {
 		log.Fatalf("[USER] Failed to load config: %v", err)
 	}
-
-	rootLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
+	initialLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
 		log.Fatalf("[USER] Failed to init logger: %v", err)
 	}
-	defer rootLogger.Sync()
+	defer initialLogger.Sync()
+	rootLogger := initialLogger.With(zap.String(constants.Service, constants.ServiceUser))
 
-	srv, err := server.NewServer(cfg, rootLogger)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	srv, err := server.NewServer(ctx, cfg, rootLogger)
 	if err != nil {
-		rootLogger.Fatal("[USER] Failed to create server", zap.Error(err))
+		rootLogger.Fatal("Failed to create server", zap.Error(err))
 	}
 
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != grpc.ErrServerStopped {
-				rootLogger.Fatal("[USER] Failed to start server", zap.Error(err))
+				rootLogger.Error("Server exited with error", zap.Error(err))
+				stop() // stops listening for signals, and exits the program
 			}
 		}
 	}()
-	rootLogger.Info("[USER] User Service Server started", zap.String("port", strconv.Itoa(cfg.GRPC.Port)))
+	rootLogger.Info("gRPC server started", zap.Int("port", cfg.GRPC.Port))
+	<-ctx.Done() // pausing the main goroutine until a shutdown signal is received
 
-	quit := make(chan os.Signal, 1)
-
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	rootLogger.Info("[USER] Shutting down server...")
+	rootLogger.Info("Shutting down server...")
 	srv.Stop()
-	rootLogger.Info("[USER] Server stopped")
+	rootLogger.Info("Server stopped")
 }

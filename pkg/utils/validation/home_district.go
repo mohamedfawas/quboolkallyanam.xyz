@@ -1,35 +1,64 @@
 package validation
 
+import "fmt"
+
+type HomeDistrict string
+
 const (
-	ConstantHomeDistrictThiruvananthapuram = "thiruvananthapuram"
-	ConstantHomeDistrictKollam             = "kollam"
-	ConstantHomeDistrictPathanamthitta     = "pathanamthitta"
-	ConstantHomeDistrictAlappuzha          = "alappuzha"
-	ConstantHomeDistrictKottayam           = "kottayam"
-	ConstantHomeDistrictErnakulam          = "ernakulam"
-	ConstantHomeDistrictThrissur           = "thrissur"
-	ConstantHomeDistrictPalakkad           = "palakkad"
-	ConstantHomeDistrictMalappuram         = "malappuram"
-	ConstantHomeDistrictKozhikode          = "kozhikode"
-	ConstantHomeDistrictWayanad            = "wayanad"
-	ConstantHomeDistrictKannur             = "kannur"
-	ConstantHomeDistrictKasaragod          = "kasaragod"
-	ConstantHomeDistrictIdukki             = "idukki"
-	ConstantHomeDistrictNotMentioned       = "not_mentioned"
+	Thiruvananthapuram HomeDistrict = "thiruvananthapuram"
+	Kollam             HomeDistrict = "kollam"
+	Pathanamthitta     HomeDistrict = "pathanamthitta"
+	Alappuzha          HomeDistrict = "alappuzha"
+	Kottayam           HomeDistrict = "kottayam"
+	Ernakulam          HomeDistrict = "ernakulam"
+	Thrissur           HomeDistrict = "thrissur"
+	Palakkad           HomeDistrict = "palakkad"
+	Malappuram         HomeDistrict = "malappuram"
+	Kozhikode          HomeDistrict = "kozhikode"
+	Wayanad            HomeDistrict = "wayanad"
+	Kannur             HomeDistrict = "kannur"
+	Kasaragod          HomeDistrict = "kasaragod"
+	Idukki             HomeDistrict = "idukki"
+	HomeDistrictAny    HomeDistrict = "any"
 )
 
-func IsValidHomeDistrict(homeDistrict string) bool {
-	switch homeDistrict {
-	case ConstantHomeDistrictThiruvananthapuram, ConstantHomeDistrictKollam,
-		ConstantHomeDistrictPathanamthitta, ConstantHomeDistrictAlappuzha,
-		ConstantHomeDistrictKottayam, ConstantHomeDistrictErnakulam,
-		ConstantHomeDistrictThrissur, ConstantHomeDistrictPalakkad,
-		ConstantHomeDistrictMalappuram, ConstantHomeDistrictKozhikode,
-		ConstantHomeDistrictWayanad, ConstantHomeDistrictKannur,
-		ConstantHomeDistrictKasaragod, ConstantHomeDistrictIdukki,
-		ConstantHomeDistrictNotMentioned:
-		return true
-	default:
-		return false
+var validHomeDistricts = func() map[HomeDistrict]struct{} {
+	vals := []HomeDistrict{
+		Thiruvananthapuram, Kollam, Pathanamthitta, Alappuzha,
+		Kottayam, Ernakulam, Thrissur, Palakkad,
+		Malappuram, Kozhikode, Wayanad, Kannur,
+		Kasaragod, Idukki, HomeDistrictAny,
 	}
+	m := make(map[HomeDistrict]struct{}, len(vals))
+	for _, d := range vals {
+		m[d] = struct{}{}
+	}
+	return m
+}()
+
+func (d HomeDistrict) IsValid() bool {
+	_, ok := validHomeDistricts[d]
+	return ok
+}
+
+func IsValidHomeDistrict(homeDistrict string) bool {
+	return HomeDistrict(homeDistrict).IsValid()
+}
+
+func ParsePreferredHomeDistricts(input []string) ([]HomeDistrict, error) {
+	for _, s := range input {
+		if s == string(HomeDistrictAny) {
+			return []HomeDistrict{HomeDistrictAny}, nil
+		}
+	}
+
+	var out []HomeDistrict
+	for _, s := range input {
+		d := HomeDistrict(s)
+		if !d.IsValid() {
+			return nil, fmt.Errorf("invalid home district: %q", s)
+		}
+		out = append(out, d)
+	}
+	return out, nil
 }

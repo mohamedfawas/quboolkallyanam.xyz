@@ -3,24 +3,25 @@ package matchmaking
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/ageutil"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pagination"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 )
 
 func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 	userID uuid.UUID,
 	action string,
-	limit, offset int) ([]*entity.UserProfileResponse, *entity.PaginationData, error) {
+	limit, offset int) ([]*entity.UserProfileResponse, *pagination.PaginationData, error) {
 
 	if limit <= 0 {
-		limit = 10
+		limit = constants.DefaultPaginationLimit
 	}
-	if limit > 50 {
-		limit = 50
+	if limit > constants.MaxPaginationLimit {
+		limit = constants.MaxPaginationLimit
 	}
 	if offset < 0 {
 		offset = 0
@@ -37,17 +38,15 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 	case constants.MatchMakingOptionPassed:
 		resultUUIDS, err = u.profileMatchRepository.GetPassedUserIDs(ctx, userID)
 	default:
-		log.Printf("invalid match action: %s", action)
 		return nil, nil, fmt.Errorf("invalid match action: %s", action)
 	}
 
 	if err != nil {
-		log.Printf("failed to get profiles by match action: %v", err)
 		return nil, nil, err
 	}
 
 	if len(resultUUIDS) == 0 {
-		return []*entity.UserProfileResponse{}, &entity.PaginationData{
+		return []*entity.UserProfileResponse{}, &pagination.PaginationData{
 			TotalCount: 0,
 			Limit:      limit,
 			Offset:     offset,
@@ -70,7 +69,7 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 	}
 
 	if len(paginatedUUIDs) == 0 {
-		return []*entity.UserProfileResponse{}, &entity.PaginationData{
+		return []*entity.UserProfileResponse{}, &pagination.PaginationData{
 			TotalCount: int64(totalCount),
 			Limit:      limit,
 			Offset:     offset,
@@ -82,7 +81,6 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 	for _, userUUID := range paginatedUUIDs {
 		profile, err := u.userProfileRepository.GetProfileByUserID(ctx, userUUID)
 		if err != nil {
-			log.Printf("failed to get profile for user %s: %v", userUUID, err)
 			continue // Skip missing profiles instead of failing entirely
 		}
 		if profile != nil {
@@ -92,24 +90,20 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 
 	userProfileResponses := make([]*entity.UserProfileResponse, len(profiles))
 	for i, profile := range profiles {
-		var age int
-		if profile.DateOfBirth != nil {
-			age = calculateAge(profile.DateOfBirth)
-		}
-
+		age := ageutil.CalculateAge(profile.DateOfBirth)
 		userProfileResponses[i] = &entity.UserProfileResponse{
 			ID:                profile.ID,
-			FullName:          getStringValue(profile.FullName),
-			ProfilePictureURL: profile.ProfilePictureURL,
-			Age:               age,
-			HeightCm:          getIntValue(profile.HeightCm),
-			MaritalStatus:     getEnumString(profile.MaritalStatus),
-			Profession:        getEnumString(profile.Profession),
-			HomeDistrict:      getEnumString(profile.HomeDistrict),
+			FullName:          profile.FullName,
+			ProfilePictureURL: &profile.ProfilePictureURL,
+			Age:               uint32(age),
+			HeightCm:          uint32(profile.HeightCm),
+			MaritalStatus:     string(profile.MaritalStatus),
+			Profession:        string(profile.Profession),
+			HomeDistrict:      string(profile.HomeDistrict),
 		}
 	}
 
-	return userProfileResponses, &entity.PaginationData{
+	return userProfileResponses, &pagination.PaginationData{
 		TotalCount: int64(totalCount),
 		Limit:      limit,
 		Offset:     offset,
@@ -117,57 +111,4 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 	}, nil
 }
 
-func getStringValue(ptr *string) string {
-	if ptr == nil {
-		return ""
-	}
-	return *ptr
-}
 
-func getIntValue(ptr *int) int {
-	if ptr == nil {
-		return 0
-	}
-	return *ptr
-}
-
-func getEnumString(enum interface{}) string {
-    if enum == nil {
-        return ""
-    }
-    
-    switch v := enum.(type) {
-    case *entity.MaritalStatusEnum:
-        if v == nil {
-            return ""
-        }
-        return string(*v)
-    case *entity.ProfessionEnum:
-        if v == nil {
-            return ""
-        }
-        return string(*v)
-    case *entity.HomeDistrictEnum:
-        if v == nil {
-            return ""
-        }
-        return string(*v)
-    case *entity.CommunityEnum:
-        if v == nil {
-            return ""
-        }
-        return string(*v)
-    case *entity.ProfessionTypeEnum:
-        if v == nil {
-            return ""
-        }
-        return string(*v)
-    case *entity.EducationLevelEnum:
-        if v == nil {
-            return ""
-        }
-        return string(*v)
-    default:
-        return ""
-    }
-}

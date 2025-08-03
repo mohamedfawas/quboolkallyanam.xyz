@@ -15,6 +15,7 @@ const (
 	ServiceAdmin    = "admin"
 	ServicePayment  = "payment"
 	ServiceChat     = "chat"
+	ServiceNotification = "notification"
 	Env             = "env"
 	HeaderRequestID = "X-Request-ID"
 	Unknown         = "unknown"
@@ -78,4 +79,10 @@ const (
 	// Conversation display limits
 	DefaultConversationDisplayLimit = 10
 	MaxConversationDisplayLimit     = 50
+
+	DefaultPaginationLimit = 10
+	MaxPaginationLimit = 50
+
+	// Image file
+	ImageFileMaxSize = 5 * 1024 * 1024
 )

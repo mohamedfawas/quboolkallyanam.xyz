@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
@@ -50,43 +49,81 @@ func NewUserGRPCClient(
 	}, nil
 }
 
+///////// USER PROFILE MANAGEMENT //////////
 func (c *userGRPCClient) UpdateUserProfile(ctx context.Context, req dto.UserProfilePatchRequest) error {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return err
 	}
 
-	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapUpdateUserProfileRequest(req)
-	_, err := c.client.UpdateUserProfile(ctx, grpcReq)
+	_, err = c.client.UpdateUserProfile(ctx, grpcReq)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *userGRPCClient) UpdateUserPartnerPreferences(ctx context.Context, operationType string, req dto.PartnerPreferencePatchRequest) error {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return fmt.Errorf("user ID not found in context")
+func (c *userGRPCClient) GetProfilePhotoUploadURL(ctx context.Context, req dto.GetProfilePhotoUploadURLRequest) (*dto.GetProfilePhotoUploadURLResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	ctx = contextutils.SetUserContext(ctx, userID)
+	grpcReq := MapGetProfilePhotoUploadURLRequest(req)
+	resp, err := c.client.GetProfilePhotoUploadURL(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetProfilePhotoUploadURLResponse(resp), nil
+}
+
+
+func (c *userGRPCClient) ConfirmProfilePhotoUpload(ctx context.Context, req dto.ConfirmProfilePhotoUploadRequest) (*dto.ConfirmProfilePhotoUploadResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapConfirmProfilePhotoUploadRequest(req)
+	resp, err := c.client.ConfirmProfilePhotoUpload(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapConfirmProfilePhotoUploadResponse(resp), nil
+}
+
+
+//////////////// PARTNER PREFERENCES MANAGEMENT //////////////////
+func (c *userGRPCClient) UpdateUserPartnerPreferences(
+	ctx context.Context, 
+	operationType string, 
+	req dto.UpdatePartnerPreferenceRequest) error {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return err
+	}
+
 	grpcReq := MapUpdateUserPartnerPreferencesRequest(operationType, req)
-	_, err := c.client.UpdateUserPartnerPreferences(ctx, grpcReq)
+	_, err = c.client.UpdateUserPartnerPreferences(ctx, grpcReq)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+/////////////////// MATCH MAKING ///////////////////
 func (c *userGRPCClient) RecordMatchAction(ctx context.Context, req dto.RecordMatchActionRequest) (*dto.RecordMatchActionResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapRecordMatchActionRequest(req)
 	resp, err := c.client.RecordMatchAction(ctx, grpcReq)
 	if err != nil {
@@ -96,12 +133,12 @@ func (c *userGRPCClient) RecordMatchAction(ctx context.Context, req dto.RecordMa
 }
 
 func (c *userGRPCClient) GetMatchRecommendations(ctx context.Context, req dto.GetMatchRecommendationsRequest) (*dto.GetMatchRecommendationsResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapGetMatchRecommendationsRequest(req)
 	resp, err := c.client.GetMatchRecommendations(ctx, grpcReq)
 	if err != nil {
@@ -111,12 +148,12 @@ func (c *userGRPCClient) GetMatchRecommendations(ctx context.Context, req dto.Ge
 }
 
 func (c *userGRPCClient) GetProfilesByMatchAction(ctx context.Context, req dto.GetProfilesByMatchActionRequest) (*dto.GetProfilesByMatchActionResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapGetProfilesByMatchActionRequest(req)
 	resp, err := c.client.GetProfilesByMatchAction(ctx, grpcReq)
 	if err != nil {

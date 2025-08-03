@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,9 +28,8 @@ func (r *profileMatchRepository) GetExistingMatch(ctx context.Context, userID uu
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return &entity.ProfileMatch{}, nil
 		}
-		log.Printf("failed to get existing match: %v", err)
 		return nil, err
 	}
 
@@ -102,9 +100,8 @@ func (r *profileMatchRepository) GetMatchedProfileIDs(ctx context.Context, userI
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return []uuid.UUID{}, nil
 		}
-		log.Printf("failed to get matched profile IDs: %v", err)
 		return nil, err
 	}
 
@@ -121,9 +118,8 @@ func (r *profileMatchRepository) GetLikedUserIDs(ctx context.Context, userID uui
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return []uuid.UUID{}, nil
 		}
-		log.Printf("failed to get liked user IDs: %v", err)
 		return nil, err
 	}
 
@@ -140,9 +136,8 @@ func (r *profileMatchRepository) GetPassedUserIDs(ctx context.Context, userID uu
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return []uuid.UUID{}, nil
 		}
-		log.Printf("failed to get passed user IDs: %v", err)
 		return nil, err
 	}
 

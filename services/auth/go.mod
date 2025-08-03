@@ -9,9 +9,10 @@ go 1.23.4
 require (
 	github.com/google/uuid v1.6.0
 	github.com/mohamedfawas/quboolkallyanam.xyz/api v0.0.0-00010101000000-000000000000
-	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250731085440-946591715af3
+	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250801014627-a02399e68d31
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/spf13/viper v1.20.1
+	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	gorm.io/gorm v1.30.0

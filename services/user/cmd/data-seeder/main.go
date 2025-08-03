@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 	"gorm.io/gorm"
@@ -30,7 +31,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("�� Starting bulk data insertion for %d user profiles...\n", targetRecords)
+	fmt.Printf("🚀 Starting bulk data insertion for %d user profiles...\n", targetRecords)
 
 	// Initialize database connection
 	db, err := setupDatabase()
@@ -134,26 +135,34 @@ func generateRandomUserProfile(batchNumber, recordIndex int) entity.UserProfile 
 	// Initialize random seed with current time and unique identifiers
 	r := rand.New(rand.NewSource(time.Now().UnixNano() + int64(batchNumber*1000+recordIndex)))
 
+	// Determine if this is a bride or groom
+	isBride := r.Float32() < 0.5
+
 	// Generate random date of birth (age between 18-50)
 	minAge, maxAge := 18, 50
 	ageYears := r.Intn(maxAge-minAge+1) + minAge
 	dob := time.Now().AddDate(-ageYears, -r.Intn(12), -r.Intn(365))
 
 	// Generate random height (150-185 cm)
-	height := r.Intn(36) + 150 // 150-185 cm
+	height := uint16(r.Intn(36) + 150) // 150-185 cm
 
 	// Generate UNIQUE phone number using batch and record index
 	phone := fmt.Sprintf("91%03d%07d", batchNumber, recordIndex*10000+r.Intn(10000))
 
+	// Generate gender-appropriate Muslim name
+	fullName := generateMuslimName(r, isBride)
+
 	// Generate UNIQUE email using UUID for absolute uniqueness
 	userUUID := uuid.New()
-	emailPrefix := strings.ToLower(generateRandomName(r))
-	emailPrefix = strings.ReplaceAll(emailPrefix, " ", ".")
+	emailPrefix := strings.ToLower(strings.ReplaceAll(fullName, " ", "."))
 	email := fmt.Sprintf("%s.%s@testdata.com", emailPrefix, userUUID.String()[:8])
 
-	// Random profile picture URL
-	profilePicURL := fmt.Sprintf("https://randomuser.me/api/portraits/%s/%d.jpg",
-		randomChoice(r, []string{"men", "women"}), r.Intn(99))
+	// Random profile picture URL (gender appropriate)
+	gender := "men"
+	if isBride {
+		gender = "women"
+	}
+	profilePicURL := fmt.Sprintf("https://randomuser.me/api/portraits/%s/%d.jpg", gender, r.Intn(99))
 
 	// Generate random enum values
 	community := getRandomCommunity(r)
@@ -163,137 +172,150 @@ func generateRandomUserProfile(batchNumber, recordIndex int) entity.UserProfile 
 	educationLevel := getRandomEducationLevel(r)
 	homeDistrict := getRandomHomeDistrict(r)
 
-	// Create string variables for pointer fields
-	fullName := generateRandomName(r)
-	emailStr := email
-	phoneStr := phone
-	profilePicURLStr := profilePicURL
-
 	return entity.UserProfile{
 		UserID:                userUUID,
-		IsBride:               r.Float32() < 0.5, // 50% chance
-		FullName:              &fullName,
-		Email:                 &emailStr,
-		Phone:                 &phoneStr,
-		DateOfBirth:           &dob,
-		HeightCm:              &height,
+		IsBride:               isBride,
+		FullName:              fullName,
+		Email:                 email,
+		Phone:                 phone,
+		DateOfBirth:           dob,
+		HeightCm:              height,
 		PhysicallyChallenged:  r.Float32() < 0.05, // 5% chance
-		Community:             &community,
-		MaritalStatus:         &maritalStatus,
-		Profession:            &profession,
-		ProfessionType:        &professionType,
-		HighestEducationLevel: &educationLevel,
-		HomeDistrict:          &homeDistrict,
-		ProfilePictureURL:     &profilePicURLStr,
+		Community:             community,
+		MaritalStatus:         maritalStatus,
+		Profession:            profession,
+		ProfessionType:        professionType,
+		HighestEducationLevel: educationLevel,
+		HomeDistrict:          homeDistrict,
+		ProfilePictureURL:     profilePicURL,
 		LastLogin:             time.Now().Add(-time.Duration(r.Intn(30*24)) * time.Hour),
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),
-		IsDeleted:             false,
 	}
 }
 
-// Random data generators using your entity enums:
+// Random data generators using validation package enums
 
-func getRandomCommunity(r *rand.Rand) entity.CommunityEnum {
-	communities := []entity.CommunityEnum{
-		entity.CommunitySunni,
-		entity.CommunityMujahid,
-		entity.CommunityTabligh,
-		entity.CommunityJamateIslami,
-		entity.CommunityShia,
-		entity.CommunityMuslim,
-		entity.CommunityNotMentioned,
+func getRandomCommunity(r *rand.Rand) validation.Community {
+	communities := []validation.Community{
+		validation.Sunni,
+		validation.Mujahid,
+		validation.Tabligh,
+		validation.JamateIslami,
+		validation.Shia,
+		validation.Muslim,
 	}
 	return communities[r.Intn(len(communities))]
 }
 
-func getRandomMaritalStatus(r *rand.Rand) entity.MaritalStatusEnum {
-	statuses := []entity.MaritalStatusEnum{
-		entity.MaritalStatusNeverMarried,
-		entity.MaritalStatusDivorced,
-		entity.MaritalStatusNikkahDivorce,
-		entity.MaritalStatusWidowed,
-		entity.MaritalStatusNotMentioned,
+func getRandomMaritalStatus(r *rand.Rand) validation.MaritalStatus {
+	statuses := []validation.MaritalStatus{
+		validation.NeverMarried,
+		validation.Divorced,
+		validation.NikkahDivorce,
+		validation.Widowed,
 	}
 	return statuses[r.Intn(len(statuses))]
 }
 
-func getRandomProfession(r *rand.Rand) entity.ProfessionEnum {
-	professions := []entity.ProfessionEnum{
-		entity.ProfessionStudent,
-		entity.ProfessionDoctor,
-		entity.ProfessionEngineer,
-		entity.ProfessionFarmer,
-		entity.ProfessionTeacher,
-		entity.ProfessionNotMentioned,
+func getRandomProfession(r *rand.Rand) validation.Profession {
+	professions := []validation.Profession{
+		validation.Student,
+		validation.Doctor,
+		validation.Engineer,
+		validation.Farmer,
+		validation.Teacher,
 	}
 	return professions[r.Intn(len(professions))]
 }
 
-func getRandomProfessionType(r *rand.Rand) entity.ProfessionTypeEnum {
-	types := []entity.ProfessionTypeEnum{
-		entity.ProfessionTypeFullTime,
-		entity.ProfessionTypePartTime,
-		entity.ProfessionTypeFreelance,
-		entity.ProfessionTypeSelfEmployed,
-		entity.ProfessionTypeNotWorking,
-		entity.ProfessionTypeNotMentioned,
+func getRandomProfessionType(r *rand.Rand) validation.ProfessionType {
+	types := []validation.ProfessionType{
+		validation.ProfessionTypeFullTime,
+		validation.ProfessionTypePartTime,
+		validation.ProfessionTypeFreelance,
+		validation.ProfessionTypeSelfEmployed,
+		validation.ProfessionTypeNotWorking,
 	}
 	return types[r.Intn(len(types))]
 }
 
-func getRandomEducationLevel(r *rand.Rand) entity.EducationLevelEnum {
-	levels := []entity.EducationLevelEnum{
-		entity.EducationLevelLessThanHighSchool,
-		entity.EducationLevelHighSchool,
-		entity.EducationLevelHigherSecondary,
-		entity.EducationLevelUnderGraduation,
-		entity.EducationLevelPostGraduation,
-		entity.EducationLevelNotMentioned,
+func getRandomEducationLevel(r *rand.Rand) validation.EducationLevel {
+	levels := []validation.EducationLevel{
+		validation.LessThanHighSchool,
+		validation.HighSchool,
+		validation.HigherSecondary,
+		validation.UnderGraduation,
+		validation.PostGraduation,
 	}
 	return levels[r.Intn(len(levels))]
 }
 
-func getRandomHomeDistrict(r *rand.Rand) entity.HomeDistrictEnum {
-	districts := []entity.HomeDistrictEnum{
-		entity.HomeDistrictThiruvananthapuram,
-		entity.HomeDistrictKollam,
-		entity.HomeDistrictPathanamthitta,
-		entity.HomeDistrictAlappuzha,
-		entity.HomeDistrictKottayam,
-		entity.HomeDistrictErnakulam,
-		entity.HomeDistrictThrissur,
-		entity.HomeDistrictPalakkad,
-		entity.HomeDistrictMalappuram,
-		entity.HomeDistrictKozhikode,
-		entity.HomeDistrictWayanad,
-		entity.HomeDistrictKannur,
-		entity.HomeDistrictKasaragod,
-		entity.HomeDistrictIdukki,
-		entity.HomeDistrictNotMentioned,
+func getRandomHomeDistrict(r *rand.Rand) validation.HomeDistrict {
+	districts := []validation.HomeDistrict{
+		validation.Thiruvananthapuram,
+		validation.Kollam,
+		validation.Pathanamthitta,
+		validation.Alappuzha,
+		validation.Kottayam,
+		validation.Ernakulam,
+		validation.Thrissur,
+		validation.Palakkad,
+		validation.Malappuram,
+		validation.Kozhikode,
+		validation.Wayanad,
+		validation.Kannur,
+		validation.Kasaragod,
+		validation.Idukki,
 	}
 	return districts[r.Intn(len(districts))]
 }
 
-func randomChoice(r *rand.Rand, choices []string) string {
-	return choices[r.Intn(len(choices))]
+// Generate gender-appropriate Muslim names
+func generateMuslimName(r *rand.Rand, isBride bool) string {
+	if isBride {
+		return generateMuslimFemaleName(r)
+	}
+	return generateMuslimMaleName(r)
 }
 
-func generateRandomName(r *rand.Rand) string {
+func generateMuslimMaleName(r *rand.Rand) string {
 	firstNames := []string{
 		"Mohammed", "Abdul", "Ahmed", "Ali", "Hassan", "Hussein", "Ibrahim", "Ismail",
-		"Khalid", "Omar", "Rashid", "Said", "Tariq", "Yusuf", "Zayn", "Amjad",
-		"Fatima", "Aisha", "Khadija", "Mariam", "Zainab", "Ruqayya", "Safiya",
-		"Hafsa", "Umm", "Asma", "Farah", "Layla", "Nadia", "Rania", "Sara",
-		"Abdullah", "Rahman", "Hamza", "Umar", "Bilal", "Salman", "Anas", "Zaid",
-		"Aminah", "Hafiza", "Samira", "Yasmin", "Rahma", "Sana", "Hiba", "Dua",
+		"Khalid", "Omar", "Rashid", "Tariq", "Yusuf", "Zayn", "Amjad", "Bilal",
+		"Abdullah", "Abdul Rahman", "Hamza", "Umar", "Salman", "Anas", "Zaid", "Faisal",
+		"Imran", "Mustafa", "Hasan", "Hussain", "Zakaria", "Sufyan", "Marwan", "Waleed",
+		"Nadir", "Saeed", "Majid", "Fahad", "Adnan", "Salam", "Jalal", "Nazar",
+		"Yasir", "Waseem", "Kareem", "Hakeem", "Rahim", "Rauf", "Latif", "Shafiq",
 	}
 
 	lastNames := []string{
 		"Khan", "Ahmed", "Ali", "Rahman", "Hassan", "Hussein", "Ibrahim", "Malik",
-		"Sheikh", "Syed", "Qureshi", "Ansari", "Hashmi", "Abbasi", "Rizvi",
-		"Nair", "Menon", "Pillai", "Kumar", "Varma", "Sharma", "Patel",
-		"Chowdhury", "Rahman", "Hasan", "Hossain", "Islam", "Uddin", "Alam",
+		"Sheikh", "Syed", "Qureshi", "Ansari", "Hashmi", "Abbasi", "Rizvi", "Farooqui",
+		"Nair", "Menon", "Kutty", "Moideen", "Haji", "Koya", "Rawther", "Thangal",
+		"Chowdhury", "Hasan", "Hossain", "Islam", "Uddin", "Alam", "Sharif", "Karim",
+	}
+
+	return fmt.Sprintf("%s %s",
+		firstNames[r.Intn(len(firstNames))],
+		lastNames[r.Intn(len(lastNames))])
+}
+
+func generateMuslimFemaleName(r *rand.Rand) string {
+	firstNames := []string{
+		"Fatima", "Aisha", "Khadija", "Mariam", "Zainab", "Ruqayya", "Safiya", "Hafsa",
+		"Asma", "Farah", "Layla", "Nadia", "Rania", "Sara", "Aminah", "Hafiza",
+		"Samira", "Yasmin", "Rahma", "Sana", "Hiba", "Dua", "Amina", "Zahra",
+		"Halima", "Sumayya", "Khawla", "Lubna", "Salma", "Hanan", "Iman", "Najla",
+		"Reem", "Lina", "Maya", "Nour", "Rana", "Dina", "Hala", "Laith",
+		"Sahar", "Widad", "Zara", "Hind", "Laila", "Malak", "Nada", "Razan",
+	}
+
+	lastNames := []string{
+		"Khan", "Ahmed", "Ali", "Rahman", "Hassan", "Hussein", "Ibrahim", "Malik",
+		"Sheikh", "Syed", "Qureshi", "Ansari", "Hashmi", "Abbasi", "Rizvi", "Farooqui",
+		"Nair", "Menon", "Kutty", "Moideen", "Haji", "Koya", "Rawther", "Thangal",
+		"Chowdhury", "Hasan", "Hossain", "Islam", "Uddin", "Alam", "Begum", "Khatun",
 	}
 
 	return fmt.Sprintf("%s %s",

@@ -13,6 +13,7 @@ package main
 // @BasePath /api/v1
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -33,18 +34,19 @@ func main() {
 	}
 	cfg, err := config.LoadConfig(cfgPath)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		log.Fatalf("[GATEWAY] Failed to load config: %v", err)
 	}
-
-	initLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
+	initialLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
-		log.Fatalf("Failed to init logger: %v", err)
+		log.Fatalf("[GATEWAY] Failed to init logger: %v", err)
 	}
-	defer initLogger.Sync()
+	defer initialLogger.Sync()
+	rootLogger := initialLogger.With(zap.String(constants.Service, constants.ServiceGateway))
 
-	rootLogger := initLogger.With(zap.String(constants.Service, constants.ServiceGateway))
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	srv, err := server.NewHTTPServer(cfg, rootLogger)
+	srv, err := server.NewHTTPServer(ctx, cfg, rootLogger)
 	if err != nil {
 		rootLogger.Fatal("Failed to create server", zap.Error(err))
 	}
@@ -52,20 +54,16 @@ func main() {
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != http.ErrServerClosed {
-				rootLogger.Fatal("Failed to start HTTP server", zap.Error(err))
+				rootLogger.Error("Failed to start HTTP server", zap.Error(err))
+				stop() // stops listening for signals, and exits the program
 			}
 		}
 	}()
-	rootLogger.Info("HTTP server started successfully", zap.String("port", cfg.HTTP.Port))
+	rootLogger.Info("HTTP server started", zap.String("port", cfg.HTTP.Port))
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	<-ctx.Done() // pausing the main goroutine until a shutdown signal is received
 
-	rootLogger.Info("Shutting down server")
-	if err := srv.Stop(); err != nil {
-		rootLogger.Error("Error during server shutdown", zap.Error(err))
-	} else {
-		rootLogger.Info("Server shutdown completed")
-	}
+	rootLogger.Info("Shutting down server...")
+	srv.Stop()
+	rootLogger.Info("Server stopped")
 }

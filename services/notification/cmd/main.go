@@ -7,44 +7,50 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/notification/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/notification/internal/server"
+
+	"go.uber.org/zap"
 )
 
 func main() {
-	configPath := "./config/config.yaml"
-	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
-		configPath = envPath
+	cfgPath := os.Getenv("CONFIG_PATH")
+	if cfgPath == "" {
+		cfgPath = "./config/config.yaml"
 	}
-
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := config.LoadConfig(cfgPath)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		log.Fatalf("[NOTIFICATION] Failed to load config: %v", err)
 	}
-
-	// Create cancellable context for graceful shutdown
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	srv, err := server.NewServer(ctx, cfg)
+	initialLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
+		log.Fatalf("[NOTIFICATION] Failed to init logger: %v", err)
+	}
+	defer initialLogger.Sync()
+	rootLogger := initialLogger.With(zap.String(constants.Service, constants.ServiceNotification))
+
+	// Create a context that will be cancelled on SIGINT or SIGTERM
+	// Example: if the process receives Ctrl+C, ctx.Done() will unblock
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	srv, err := server.NewServer(ctx, cfg, rootLogger)
+	if err != nil {
+		rootLogger.Fatal("Failed to create server", zap.Error(err))
 	}
 
 	go func() {
 		if err := srv.Start(); err != nil {
-			log.Fatalf("Failed to start server: %v", err)
+			rootLogger.Error("Failed to start notification service", zap.Error(err))
 		}
 	}()
-	log.Println("Notification Service Server started")
+	rootLogger.Info("notification service started")
 
-	<-quit
-	cancel()
+	<-ctx.Done() // pausing the main goroutine until a shutdown signal is received
 
-	log.Println("Shutting down server...")
+	rootLogger.Info("Shutting down server...")
 	srv.Stop()
-	log.Println("Server stopped")
+	rootLogger.Info("Server stopped")
 }

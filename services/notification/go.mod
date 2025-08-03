@@ -7,6 +7,7 @@ go 1.23.4
 require (
 	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250716112615-b9bfb711bbeb
 	github.com/spf13/viper v1.20.1
+	go.uber.org/zap v1.27.0
 )
 
 require (

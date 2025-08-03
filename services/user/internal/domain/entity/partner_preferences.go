@@ -2,25 +2,28 @@ package entity
 
 import (
 	"time"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 )
 
 type PartnerPreference struct {
 	ID            int64 `json:"id" gorm:"primaryKey"`
-	UserProfileID int64 `json:"user_profile_id" gorm:"not null;uniqueIndex;constraint:OnDelete:CASCADE"`
+	UserProfileID int64 `json:"user_profile_id" gorm:"not null;uniqueIndex"`
 
-	MinAgeYears *int `json:"min_age_years" gorm:"check:min_age_years BETWEEN 18 AND 100"`
-	MaxAgeYears *int `json:"max_age_years" gorm:"check:max_age_years BETWEEN 18 AND 100"`
-	MinHeightCm *int `json:"min_height_cm" gorm:"check:min_height_cm BETWEEN 130 AND 220"`
-	MaxHeightCm *int `json:"max_height_cm" gorm:"check:max_height_cm BETWEEN 130 AND 220"`
+	// uint16 better maps to smallint than uint8
+	MinAgeYears uint16 `json:"min_age_years" gorm:"type:smallint;not null;default:18"`
+	MaxAgeYears uint16 `json:"max_age_years" gorm:"type:smallint;not null;default:100"`
+	MinHeightCm uint16 `json:"min_height_cm" gorm:"type:smallint;not null;default:130"`
+	MaxHeightCm uint16 `json:"max_height_cm" gorm:"type:smallint;not null;default:220"`
 
 	AcceptPhysicallyChallenged bool `json:"accept_physically_challenged" gorm:"not null;default:true"`
 
-	PreferredCommunities     []CommunityEnum      `json:"preferred_communities" gorm:"type:jsonb;serializer:json;default:'[]'"`
-	PreferredMaritalStatus   []MaritalStatusEnum  `json:"preferred_marital_status" gorm:"type:jsonb;serializer:json;default:'[]'"`
-	PreferredProfessions     []ProfessionEnum     `json:"preferred_professions" gorm:"type:jsonb;serializer:json;default:'[]'"`
-	PreferredProfessionTypes []ProfessionTypeEnum `json:"preferred_profession_types" gorm:"type:jsonb;serializer:json;default:'[]'"`
-	PreferredEducationLevels []EducationLevelEnum `json:"preferred_education_levels" gorm:"type:jsonb;serializer:json;default:'[]'"`
-	PreferredHomeDistricts   []HomeDistrictEnum   `json:"preferred_home_districts" gorm:"type:jsonb;serializer:json;default:'[]'"`
+	PreferredCommunities     []validation.Community      `json:"preferred_communities" gorm:"type:text[];not null;default:'{\"any\"}'"`
+	PreferredMaritalStatus   []validation.MaritalStatus  `json:"preferred_marital_status" gorm:"type:text[];not null;default:'{\"any\"}'"`
+	PreferredProfessions     []validation.Profession     `json:"preferred_professions" gorm:"type:text[];not null;default:'{\"any\"}'"`
+	PreferredProfessionTypes []validation.ProfessionType `json:"preferred_profession_types" gorm:"type:text[];not null;default:'{\"any\"}'"`
+	PreferredEducationLevels []validation.EducationLevel `json:"preferred_education_levels" gorm:"type:text[];not null;default:'{\"any\"}'"`
+	PreferredHomeDistricts   []validation.HomeDistrict   `json:"preferred_home_districts" gorm:"type:text[];not null;default:'{\"any\"}'"`
 
 	CreatedAt time.Time `json:"created_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
@@ -34,10 +37,10 @@ func (PartnerPreference) TableName() string {
 }
 
 type UpdateUserPartnerPreferencesRequest struct {
-	MinAgeYears                *int      `json:"min_age_years,omitempty"`
-	MaxAgeYears                *int      `json:"max_age_years,omitempty"`
-	MinHeightCM                *int      `json:"min_height_cm,omitempty"`
-	MaxHeightCM                *int      `json:"max_height_cm,omitempty"`
+	MinAgeYears                *uint32   `json:"min_age_years,omitempty"`
+	MaxAgeYears                *uint32   `json:"max_age_years,omitempty"`
+	MinHeightCM                *uint32   `json:"min_height_cm,omitempty"`
+	MaxHeightCM                *uint32   `json:"max_height_cm,omitempty"`
 	AcceptPhysicallyChallenged *bool     `json:"accept_physically_challenged,omitempty"`
 	PreferredCommunities       *[]string `json:"preferred_communities,omitempty"`
 	PreferredMaritalStatus     *[]string `json:"preferred_marital_status,omitempty"`
@@ -45,4 +48,10 @@ type UpdateUserPartnerPreferencesRequest struct {
 	PreferredProfessionTypes   *[]string `json:"preferred_profession_types,omitempty"`
 	PreferredEducationLevels   *[]string `json:"preferred_education_levels,omitempty"`
 	PreferredHomeDistricts     *[]string `json:"preferred_home_districts,omitempty"`
+	AcceptAllCommunities       *bool     `json:"accept_all_communities,omitempty"`
+	AcceptAllMaritalStatus     *bool     `json:"accept_all_marital_status,omitempty"`
+	AcceptAllProfessions       *bool     `json:"accept_all_professions,omitempty"`
+	AcceptAllProfessionTypes   *bool     `json:"accept_all_profession_types,omitempty"`
+	AcceptAllEducationLevels   *bool     `json:"accept_all_education_levels,omitempty"`
+	AcceptAllHomeDistricts     *bool     `json:"accept_all_home_districts,omitempty"`
 }

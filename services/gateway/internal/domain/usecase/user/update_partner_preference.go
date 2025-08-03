@@ -3,8 +3,9 @@ package user
 import (
 	"context"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pointerutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
@@ -14,93 +15,104 @@ func (u *userUsecase) UpdateUserPartnerPreferences(
 	operationType string,
 	req dto.PartnerPreferencePatchRequest) error {
 
+	updatePartnerPreferenceRequest := dto.UpdatePartnerPreferenceRequest{}
+
 	if operationType != constants.CreateOperationType && operationType != constants.UpdateOperationType {
-		return appError.ErrInvalidOperationType
+		return apperrors.ErrInvalidOperationType
 	}
 
 	if req.MinAgeYears != nil {
-		if !validation.IsValidAge(req.MinAgeYears) {
-			return appError.ErrInvalidAgeRange
+		if !validation.IsValidAge(pointerutil.GetIntValue(req.MinAgeYears)) {
+			return apperrors.ErrInvalidAgeRange
 		}
+		updatePartnerPreferenceRequest.MinAgeYears = req.MinAgeYears
 	}
 
 	if req.MaxAgeYears != nil {
-		if !validation.IsValidAge(req.MaxAgeYears) {
-			return appError.ErrInvalidAgeRange
+		if !validation.IsValidAge(pointerutil.GetIntValue(req.MaxAgeYears)) {
+			return apperrors.ErrInvalidAgeRange
 		}
+		updatePartnerPreferenceRequest.MaxAgeYears = req.MaxAgeYears
 	}
 
 	if req.MinAgeYears != nil && req.MaxAgeYears != nil {
-		if !validation.IsValidAgeRange(req.MinAgeYears, req.MaxAgeYears) {
-			return appError.ErrInvalidAgeRange
+		if !validation.IsValidAgeRange(pointerutil.GetIntValue(req.MinAgeYears), pointerutil.GetIntValue(req.MaxAgeYears)) {
+			return apperrors.ErrInvalidAgeRange
 		}
+		updatePartnerPreferenceRequest.MinAgeYears = req.MinAgeYears
+		updatePartnerPreferenceRequest.MaxAgeYears = req.MaxAgeYears
 	}
 
 	if req.MinHeightCM != nil {
-		if !validation.IsValidHeight(req.MinHeightCM) {
-			return appError.ErrInvalidHeightRange
+		if !validation.IsValidHeight(pointerutil.GetIntValue(req.MinHeightCM)) {
+			return apperrors.ErrInvalidHeightRange
 		}
+		updatePartnerPreferenceRequest.MinHeightCM = req.MinHeightCM
 	}
 
 	if req.MaxHeightCM != nil {
-		if !validation.IsValidHeight(req.MaxHeightCM) {
-			return appError.ErrInvalidHeightRange
+		if !validation.IsValidHeight(pointerutil.GetIntValue(req.MaxHeightCM)) {
+			return apperrors.ErrInvalidHeightRange
 		}
+		updatePartnerPreferenceRequest.MaxHeightCM = req.MaxHeightCM
 	}
 
 	if req.MinHeightCM != nil && req.MaxHeightCM != nil {
-		if !validation.IsValidHeightRange(req.MinHeightCM, req.MaxHeightCM) {
-			return appError.ErrInvalidHeightRange
+		if !validation.IsValidHeightRange(pointerutil.GetIntValue(req.MinHeightCM), pointerutil.GetIntValue(req.MaxHeightCM)) {
+			return apperrors.ErrInvalidHeightRange
 		}
+		updatePartnerPreferenceRequest.MinHeightCM = req.MinHeightCM
+		updatePartnerPreferenceRequest.MaxHeightCM = req.MaxHeightCM
+
 	}
 
 	if req.PreferredCommunities != nil {
-		for _, community := range *req.PreferredCommunities {
-			if !validation.IsValidCommunity(community) {
-				return appError.ErrInvalidCommunity
-			}
+		communities, err := validation.ParsePreferredCommunities(*req.PreferredCommunities)
+		if err != nil {
+			return apperrors.ErrInvalidCommunity
 		}
+		updatePartnerPreferenceRequest.PreferredCommunities = &communities
 	}
 
 	if req.PreferredEducationLevels != nil {
-		for _, educationLevel := range *req.PreferredEducationLevels {
-			if !validation.IsValidEducationLevel(educationLevel) {
-				return appError.ErrInvalidEducationLevel
-			}
+		educationLevels, err := validation.ParsePreferredEducationLevels(*req.PreferredEducationLevels)
+		if err != nil {
+			return apperrors.ErrInvalidEducationLevel
 		}
+		updatePartnerPreferenceRequest.PreferredEducationLevels = &educationLevels
 	}
 
 	if req.PreferredHomeDistricts != nil {
-		for _, homeDistrict := range *req.PreferredHomeDistricts {
-			if !validation.IsValidHomeDistrict(homeDistrict) {
-				return appError.ErrInvalidHomeDistrict
-			}
+		homeDistricts, err := validation.ParsePreferredHomeDistricts(*req.PreferredHomeDistricts)
+		if err != nil {
+			return apperrors.ErrInvalidHomeDistrict
 		}
+		updatePartnerPreferenceRequest.PreferredHomeDistricts = &homeDistricts
 	}
 
 	if req.PreferredMaritalStatus != nil {
-		for _, maritalStatus := range *req.PreferredMaritalStatus {
-			if !validation.IsValidMaritalStatus(maritalStatus) {
-				return appError.ErrInvalidMaritalStatus
-			}
+		maritalStatuses, err := validation.ParsePreferredMaritalStatuses(*req.PreferredMaritalStatus)
+		if err != nil {
+			return apperrors.ErrInvalidMaritalStatus
 		}
+		updatePartnerPreferenceRequest.PreferredMaritalStatus = &maritalStatuses
 	}
 
 	if req.PreferredProfessions != nil {
-		for _, profession := range *req.PreferredProfessions {
-			if !validation.IsValidProfession(profession) {
-				return appError.ErrInvalidProfession
-			}
+		professions, err := validation.ParsePreferredProfessions(*req.PreferredProfessions)
+		if err != nil {
+			return apperrors.ErrInvalidProfession
 		}
+		updatePartnerPreferenceRequest.PreferredProfessions = &professions
 	}
 
 	if req.PreferredProfessionTypes != nil {
-		for _, professionType := range *req.PreferredProfessionTypes {
-			if !validation.IsValidProfessionType(professionType) {
-				return appError.ErrInvalidProfessionType
-			}
+		professionTypes, err := validation.ParsePreferredProfessionTypes(*req.PreferredProfessionTypes)
+		if err != nil {
+			return apperrors.ErrInvalidProfessionType
 		}
+		updatePartnerPreferenceRequest.PreferredProfessionTypes = &professionTypes
 	}
 
-	return u.userClient.UpdateUserPartnerPreferences(ctx, operationType, req)
+	return u.userClient.UpdateUserPartnerPreferences(ctx, operationType, updatePartnerPreferenceRequest)
 }

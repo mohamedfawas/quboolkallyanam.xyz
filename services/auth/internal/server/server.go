@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/redis"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
@@ -32,6 +32,7 @@ import (
 	// Handler imports
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/handlers/grpc/v1"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -42,9 +43,11 @@ type Server struct {
 	redisClient     *redis.Client
 	messagingClient messageBroker.Client
 	jwtManager      jwt.JWTManager
+	logger          *zap.Logger
 }
 
-func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
+func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
+	///////////////////////// POSTGRES INITIALIZATION /////////////////////////
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
 		Port:     config.Postgres.Port,
@@ -54,12 +57,17 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 		SSLMode:  config.Postgres.SSLMode,
 		TimeZone: config.Postgres.TimeZone,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres client: %w", err)
 	}
-	log.Println("Auth Service Connected to PostgreSQL ")
+	rootLogger.Info("Connected to PostgreSQL ",
+		zap.String("host", config.Postgres.Host),
+		zap.Int("port", config.Postgres.Port),
+		zap.String("ssl_mode", config.Postgres.SSLMode),
+		zap.String("time_zone", config.Postgres.TimeZone),
+	)
 
+	///////////////////////// REDIS INITIALIZATION /////////////////////////
 	redisClient, err := redis.NewClient(redis.Config{
 		Host:     config.Redis.Host,
 		Port:     config.Redis.Port,
@@ -71,11 +79,14 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 		pgClient.Close()
 		return nil, fmt.Errorf("failed to create redis client: %w", err)
 	}
-	log.Println("Auth Service Connected to Redis")
+	rootLogger.Info("Connected to Redis ",
+		zap.Int("port", config.Redis.Port),
+		zap.Int("db", config.Redis.DB),
+	)
 
+	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
-	if config.Environment == "production" {
-		ctx := context.Background()
+	if config.Environment == constants.EnvProduction {
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
 		if err != nil {
 			// Clean up existing connections before returning error
@@ -83,7 +94,7 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 			redisClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		log.Println("Auth Service Connected to PubSub")
+		rootLogger.Info("Connected to PubSub ")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -95,65 +106,86 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 			redisClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		log.Println("Auth Service Connected to RabbitMQ")
+		rootLogger.Info("Connected to RabbitMQ ")
 	}
 
+	///////////////////////// GRPC SERVER INITIALIZATION /////////////////////////
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		interceptors.UnaryErrorInterceptor(),
 	))
+	rootLogger.Info("gRPC server created")
 
-	// Initialize repositories
+	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userRepo := postgresAdapters.NewUserRepository(pgClient)
+	rootLogger.Info("User Repository Initialized")
 	adminRepo := postgresAdapters.NewAdminRepository(pgClient)
+	rootLogger.Info("Admin Repository Initialized")
 	pendingRegistrationRepo := postgresAdapters.NewPendingRegistrationRepository(pgClient)
+	rootLogger.Info("Pending Registration Repository Initialized")
 	tokenRepo := redisAdapters.NewTokenRepository(redisClient)
+	rootLogger.Info("Token Repository Initialized")
 	otpRepo := redisAdapters.NewOTPRepository(redisClient)
+	rootLogger.Info("OTP Repository Initialized")
 
-	// Initialize JWT manager
+	///////////////////////// JWT MANAGER INITIALIZATION /////////////////////////
 	jwtManager := jwt.NewJWTManager(jwt.JWTConfig{
 		SecretKey:          config.Auth.JWT.SecretKey,
 		AccessTokenMinutes: config.Auth.JWT.AccessTokenMinutes,
 		RefreshTokenDays:   config.Auth.JWT.RefreshTokenDays,
 		Issuer:             config.Auth.JWT.Issuer,
 	})
+	rootLogger.Info("JWT Manager Initialized")
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create smtp client: %w", err)
-	}
-
+	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
+	rootLogger.Info("Event Publisher Initialized")
 
-	// Initialize use cases
-	userUC := userUsecase.NewUserUseCase(userRepo,
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
+	userUC := userUsecase.NewUserUseCase(
+		userRepo,
 		*jwtManager,
 		tokenRepo,
 		config,
 		messagingClient,
 		eventPublisher,
 	)
-	adminUC := adminUsecase.NewAdminUsecase(adminRepo, tokenRepo, *jwtManager, config)
+	rootLogger.Info("User Use Case Initialized")
+
+	adminUC := adminUsecase.NewAdminUsecase(
+		adminRepo,
+		tokenRepo,
+		*jwtManager,
+		config,
+	)
+	rootLogger.Info("Admin Use Case Initialized")
+
 	pendingRegistrationUC := pendingRegistrationUsecase.NewPendingRegistrationUsecase(
 		pendingRegistrationRepo,
 		userRepo,
 		otpRepo,
 		eventPublisher,
 	)
+	rootLogger.Info("Pending Registration Use Case Initialized")
 
-	paymentEventHandler := eventHandlers.NewPaymentEventHandler(messagingClient, userUC)
+	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
+	paymentEventHandler := eventHandlers.NewPaymentEventHandler(messagingClient, userUC, rootLogger)
+	rootLogger.Info("Payment Event Handler Initialized")
 
-	// Initialize and register gRPC handler
+	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	authHandler := grpcHandlerv1.NewAuthHandler(userUC, adminUC, pendingRegistrationUC, config)
 	authpbv1.RegisterAuthServiceServer(grpcServer, authHandler)
+	rootLogger.Info("gRPC Handler Initialized")
 
-	log.Println("Auth Service gRPC handlers registered")
-
+	///////////////////////// DEFAULT ADMIN INITIALIZATION /////////////////////////
 	if err := adminUC.InitializeDefaultAdmin(ctx, config.Admin.DefaultAdminEmail, config.Admin.DefaultAdminPassword); err != nil {
-		log.Println("Failed to initialize default admin", "error", err)
+		rootLogger.Error("Failed to initialize default admin", zap.Error(err))
 	}
+	rootLogger.Info("Default Admin Initialized")
 
+	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {
 		if err := paymentEventHandler.StartListening(ctx); err != nil {
-			log.Printf("Failed to start payment event handler: %v", err)
+			rootLogger.Error("Failed to start payment event handler", zap.Error(err))
 		}
 	}()
 
@@ -164,6 +196,7 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 		redisClient:     redisClient,
 		messagingClient: messagingClient,
 		jwtManager:      *jwtManager,
+		logger:          rootLogger,
 	}
 
 	return server, nil
@@ -175,8 +208,6 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	log.Println("Auth Service gRPC server starting", "port", s.config.GRPC.Port)
-
 	return s.grpcServer.Serve(listener)
 }
 
@@ -186,19 +217,19 @@ func (s *Server) Stop() {
 	// Close messaging client first
 	if s.messagingClient != nil {
 		if err := s.messagingClient.Close(); err != nil {
-			log.Println("failed to close messaging client", "error", err)
+			s.logger.Error("failed to close messaging client", zap.Error(err))
 		}
 	}
 
 	if s.pgClient != nil {
 		if err := s.pgClient.Close(); err != nil {
-			log.Println("failed to close postgres client: %w", err)
+			s.logger.Error("failed to close postgres client", zap.Error(err))
 		}
 	}
 
 	if s.redisClient != nil {
 		if err := s.redisClient.Close(); err != nil {
-			log.Println("failed to close redis client: %w", err)
+			s.logger.Error("failed to close redis client", zap.Error(err))
 		}
 	}
 }

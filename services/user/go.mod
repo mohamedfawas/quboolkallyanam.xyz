@@ -9,7 +9,7 @@ go 1.23.4
 require (
 	github.com/google/uuid v1.6.0
 	github.com/mohamedfawas/quboolkallyanam.xyz/api v0.0.0-00010101000000-000000000000
-	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250731085440-946591715af3
+	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250801014627-a02399e68d31
 	github.com/spf13/viper v1.20.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.73.0
@@ -65,6 +65,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
+	go.mongodb.org/mongo-driver v1.17.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // indirect

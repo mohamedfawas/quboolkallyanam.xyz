@@ -1,22 +1,61 @@
 package validation
 
+import "fmt"
+
+type Community string
+
 const (
-	ConstantCommunitySunni        = "sunni"
-	ConstantCommunityMujahid      = "mujahid"
-	ConstantCommunityTabligh      = "tabligh"
-	ConstantCommunityJamateIslami = "jamate_islami"
-	ConstantCommunityShia         = "shia"
-	ConstantCommunityMuslim       = "muslim"
-	ConstantCommunityNotMentioned = "not_mentioned"
+	Sunni        Community = "sunni"
+	Mujahid      Community = "mujahid"
+	Tabligh      Community = "tabligh"
+	JamateIslami Community = "jamate_islami"
+	Shia         Community = "shia"
+	Muslim       Community = "muslim"
+	CommunityAny Community = "any"
 )
 
-func IsValidCommunity(community string) bool {
-	switch community {
-	case ConstantCommunitySunni, ConstantCommunityMujahid, ConstantCommunityTabligh,
-		ConstantCommunityJamateIslami, ConstantCommunityShia,
-		ConstantCommunityMuslim, ConstantCommunityNotMentioned:
-		return true
-	default:
-		return false
+var validSet = func() map[Community]struct{} {
+	vals := []Community{
+		Sunni,
+		Mujahid,
+		Tabligh,
+		JamateIslami,
+		Shia,
+		Muslim,
+		CommunityAny,
 	}
+	m := make(map[Community]struct{}, len(vals))
+	for _, c := range vals {
+		m[c] = struct{}{}
+	}
+	return m
+}()
+
+func (c Community) IsValid() bool {
+	_, ok := validSet[c]
+	return ok
+}
+
+func IsValidCommunity(community string) bool {
+	return Community(community).IsValid()
+}
+
+func ParsePreferredCommunities(input []string) ([]Community, error) {
+    // If "any" was requested, ignore everything else and just return [CommunityAny].
+    for _, s := range input {
+        if s == string(CommunityAny) {
+            return []Community{CommunityAny}, nil
+        }
+    }
+
+    // Otherwise validate and collect every community.
+    var out []Community
+    for _, s := range input {
+        c := Community(s)
+        if !c.IsValid() {
+            return nil, fmt.Errorf("invalid community: %q", s)
+        }
+        out = append(out, c)
+    }
+    return out, nil
 }

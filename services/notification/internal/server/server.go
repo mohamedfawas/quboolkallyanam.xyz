@@ -21,6 +21,8 @@ import (
 
 	// Handler imports
 	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/notification/internal/handlers/event"
+
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -28,13 +30,17 @@ type Server struct {
 	messagingClient messageBroker.Client
 	smtpClient      *smtp.Client
 	eventHandler    *eventHandlers.EventHandler
-	ctx             context.Context
-	cancel          context.CancelFunc
+	ctx             context.Context    // internal server context
+	cancel          context.CancelFunc // to cancel internal context
+	logger          *zap.Logger
 }
 
-func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
+func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
+	// Derive a cancellable child context from the parent
+	// Example: if main() calls cancel(), serverCtx.Done() will be closed
 	serverCtx, cancel := context.WithCancel(ctx)
 
+	///////////////////////// SMTP INITIALIZATION /////////////////////////
 	smtpClient, err := smtp.NewClient(smtp.Config{
 		SMTPHost:     config.Email.SMTPHost,
 		SMTPPort:     config.Email.SMTPPort,
@@ -47,16 +53,18 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 		cancel()
 		return nil, fmt.Errorf("failed to create smtp client: %w", err)
 	}
-	log.Println("Notification Service Connected to SMTP")
+	rootLogger.Info("Connected to SMTP ")
 
+	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
-		messagingClient, err = pubsub.NewClient(serverCtx, config.PubSub.ProjectID)
+		// Use PubSub with parent ctx, so cancellation propagates
+		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
 		if err != nil {
 			cancel()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
-		log.Println("Notification Service Connected to PubSub")
+		rootLogger.Info("Connected to PubSub ")
 	} else {
 		messagingClient, err = rabbitmq.NewClient(rabbitmq.Config{
 			DSN:          config.RabbitMQ.DSN,
@@ -66,18 +74,19 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 			cancel()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
-		log.Println("Notification Service Connected to RabbitMQ")
+		rootLogger.Info("Connected to RabbitMQ ")
 	}
 
-	// Initialize adapters
+	///////////////////////// ADAPTERS INITIALIZATION /////////////////////////
 	emailAdapter := smtpAdapter.NewEmailAdapter(smtpClient)
 
-	// Initialize use cases
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	notificationUsecase := usecase.NewNotificationUsecase(emailAdapter)
 
-	// Initialize event handler
+	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	eventHandler := eventHandlers.NewEventHandler(messagingClient, notificationUsecase)
 
+	//////////////////////// SERVER INITIALIZATION /////////////////////////
 	server := &Server{
 		config:          config,
 		messagingClient: messagingClient,
@@ -85,28 +94,31 @@ func NewServer(ctx context.Context, config *config.Config) (*Server, error) {
 		eventHandler:    eventHandler,
 		ctx:             serverCtx,
 		cancel:          cancel,
+		logger:          rootLogger,
 	}
 
 	return server, nil
 }
 
 func (s *Server) Start() error {
-	log.Println("Notification Service starting event listeners...")
+	s.logger.Info("Starting event listeners...")
 
 	if err := s.eventHandler.StartListening(s.ctx); err != nil {
 		return fmt.Errorf("failed to start event listeners: %w", err)
 	}
 
-	log.Println("Notification Service event listeners started successfully")
+	s.logger.Info("Event listeners started successfully")
 
-	// Block until context is cancelled
+	// Wait until serverCtx is cancelled (via Stop())
 	<-s.ctx.Done()
-	return nil
+	return s.ctx.Err() // Return the cancellation reason
 }
 
 func (s *Server) Stop() {
-	log.Println("Stopping Notification Service...")
+	s.logger.Info("Stopping Notification Service...")
 
+	// Cancel the internal context
+	// Example: if main() calls Stop(), serverCtx.Done() will be closed
 	s.cancel()
 
 	if s.messagingClient != nil {

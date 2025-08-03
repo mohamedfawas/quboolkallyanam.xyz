@@ -1,49 +1,57 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
+	
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/logger"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/server"
 	"google.golang.org/grpc"
+	"go.uber.org/zap"
 )
 
 func main() {
-	// logger.InitLogger()
-	// defer logger.Sync()
-
-	configPath := "./config/config.yaml"
-	if envPath := os.Getenv("CONFIG_PATH"); envPath != "" {
-		configPath = envPath
+	cfgPath := os.Getenv("CONFIG_PATH")
+	if cfgPath == "" {
+		cfgPath = "./config/config.yaml"
 	}
-
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := config.LoadConfig(cfgPath)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		log.Fatalf("[PAYMENT] Failed to load config: %v", err)
 	}
-
-	srv, err := server.NewServer(cfg)
+	initialLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
+		log.Fatalf("[PAYMENT] Failed to init logger: %v", err)
+	}
+	defer initialLogger.Sync()
+	rootLogger := initialLogger.With(zap.String(constants.Service, constants.ServicePayment))
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	srv, err := server.NewServer(ctx, cfg, rootLogger)
+	if err != nil {
+		rootLogger.Fatal("Failed to create server", zap.Error(err))
 	}
 
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != grpc.ErrServerStopped {
-				log.Fatalf("Failed to start server: %v", err)
+				rootLogger.Error("Server exited with error", zap.Error(err))
+				stop() // stops listening for signals, and exits the program
 			}
 		}
 	}()
+	rootLogger.Info("gRPC server started", zap.Int("port", cfg.GRPC.Port))
 
-	quit := make(chan os.Signal, 1)
+	<-ctx.Done() // pausing the main goroutine until a shutdown signal is received
 
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
+	rootLogger.Info("Shutting down server...")
 	srv.Stop()
-	log.Println("Server stopped")
+	rootLogger.Info("Server stopped")
 }

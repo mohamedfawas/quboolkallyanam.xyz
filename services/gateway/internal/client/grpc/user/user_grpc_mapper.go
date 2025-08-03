@@ -4,6 +4,7 @@ import (
 	"time"
 
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pointerutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -13,45 +14,45 @@ import (
 func MapUpdateUserProfileRequest(req dto.UserProfilePatchRequest) *userpbv1.UpdateUserProfileRequest {
 	grpcReq := &userpbv1.UpdateUserProfileRequest{}
 
-	grpcReq.IsBride = &wrapperspb.BoolValue{Value: req.IsBride}
-	grpcReq.PhysicallyChallenged = &wrapperspb.BoolValue{Value: req.PhysicallyChallenged}
+	grpcReq.IsBride = &wrapperspb.BoolValue{Value: pointerutil.GetBoolValue(req.IsBride)}
+	grpcReq.PhysicallyChallenged = &wrapperspb.BoolValue{Value: pointerutil.GetBoolValue(req.PhysicallyChallenged)}
 
 	if req.FullName != nil {
-		grpcReq.FullName = &wrapperspb.StringValue{Value: *req.FullName}
+		grpcReq.FullName = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.FullName)}
 	}
 
 	if req.DateOfBirth != nil {
 		// Convert date from "2006-01-02" format to RFC3339 format
-		date, err := time.Parse("2006-01-02", *req.DateOfBirth)
+		date, err := time.Parse("2006-01-02", pointerutil.GetStringValue(req.DateOfBirth))
 		if err == nil {
 			rfc3339Date := date.Format(time.RFC3339)
 			grpcReq.DateOfBirth = &wrapperspb.StringValue{Value: rfc3339Date}
 		} else {
 			// If parsing fails, pass the original value (let the user service handle the error)
-			grpcReq.DateOfBirth = &wrapperspb.StringValue{Value: *req.DateOfBirth}
+			grpcReq.DateOfBirth = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.DateOfBirth)}
 		}
 	}
 	if req.Community != nil {
-		grpcReq.Community = &wrapperspb.StringValue{Value: *req.Community}
+		grpcReq.Community = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.Community)}
 	}
 	if req.MaritalStatus != nil {
-		grpcReq.MaritalStatus = &wrapperspb.StringValue{Value: *req.MaritalStatus}
+		grpcReq.MaritalStatus = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.MaritalStatus)}
 	}
 	if req.Profession != nil {
-		grpcReq.Profession = &wrapperspb.StringValue{Value: *req.Profession}
+		grpcReq.Profession = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.Profession)}
 	}
 	if req.ProfessionType != nil {
-		grpcReq.ProfessionType = &wrapperspb.StringValue{Value: *req.ProfessionType}
+		grpcReq.ProfessionType = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.ProfessionType)}
 	}
 	if req.HighestEducationLevel != nil {
-		grpcReq.HighestEducationLevel = &wrapperspb.StringValue{Value: *req.HighestEducationLevel}
+		grpcReq.HighestEducationLevel = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.HighestEducationLevel)}
 	}
 	if req.HomeDistrict != nil {
-		grpcReq.HomeDistrict = &wrapperspb.StringValue{Value: *req.HomeDistrict}
+		grpcReq.HomeDistrict = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.HomeDistrict)}
 	}
 
 	if req.HeightCm != nil {
-		grpcReq.HeightCm = &wrapperspb.Int32Value{Value: int32(*req.HeightCm)}
+		grpcReq.HeightCm = &wrapperspb.UInt32Value{Value: uint32(pointerutil.GetIntValue(req.HeightCm))}
 	}
 
 	return grpcReq
@@ -63,27 +64,59 @@ func MapUpdateUserProfileResponse(resp *userpbv1.UpdateUserProfileResponse) *dto
 	}
 }
 
+////////////////////////////// Get Profile Photo Upload URL //////////////////////////////
+
+func MapGetProfilePhotoUploadURLRequest(req dto.GetProfilePhotoUploadURLRequest) *userpbv1.GetProfilePhotoUploadURLRequest {
+	return &userpbv1.GetProfilePhotoUploadURLRequest{
+		ContentType: &wrapperspb.StringValue{Value: req.ContentType},
+	}
+}
+
+func MapGetProfilePhotoUploadURLResponse(resp *userpbv1.GetProfilePhotoUploadURLResponse) *dto.GetProfilePhotoUploadURLResponse {
+	return &dto.GetProfilePhotoUploadURLResponse{
+		UploadURL: resp.UploadUrl.GetValue(),
+		ObjectKey: resp.ObjectKey.GetValue(),
+		ExpiresInSeconds: int32(resp.ExpiresInSeconds.GetValue()),
+	}
+}
+
+////////////////////////////// Confirm Profile Photo Upload //////////////////////////////
+
+func MapConfirmProfilePhotoUploadRequest(req dto.ConfirmProfilePhotoUploadRequest) *userpbv1.ConfirmProfilePhotoUploadRequest {
+	return &userpbv1.ConfirmProfilePhotoUploadRequest{
+		ObjectKey: &wrapperspb.StringValue{Value: req.ObjectKey},
+		FileSize: &wrapperspb.UInt64Value{Value: req.FileSize},
+	}
+}
+
+func MapConfirmProfilePhotoUploadResponse(resp *userpbv1.ConfirmProfilePhotoUploadResponse) *dto.ConfirmProfilePhotoUploadResponse {
+	return &dto.ConfirmProfilePhotoUploadResponse{
+		Success: resp.Success.GetValue(),
+		ProfilePictureURL: resp.ProfilePictureUrl.GetValue(),
+	}
+}
+
 ////////////////////////////// Update User Partner Preferences //////////////////////////////
 
-func MapUpdateUserPartnerPreferencesRequest(operationType string, req dto.PartnerPreferencePatchRequest) *userpbv1.UpdateUserPartnerPreferencesRequest {
+func MapUpdateUserPartnerPreferencesRequest(operationType string, req dto.UpdatePartnerPreferenceRequest) *userpbv1.UpdateUserPartnerPreferencesRequest {
 	grpcReq := &userpbv1.UpdateUserPartnerPreferencesRequest{
 		OperationType: &wrapperspb.StringValue{Value: operationType},
 	}
 
 	if req.MinAgeYears != nil {
-		grpcReq.MinAgeYears = &wrapperspb.Int32Value{Value: int32(*req.MinAgeYears)}
+		grpcReq.MinAgeYears = &wrapperspb.UInt32Value{Value: uint32(*req.MinAgeYears)}
 	}
 
 	if req.MaxAgeYears != nil {
-		grpcReq.MaxAgeYears = &wrapperspb.Int32Value{Value: int32(*req.MaxAgeYears)}
+		grpcReq.MaxAgeYears = &wrapperspb.UInt32Value{Value: uint32(*req.MaxAgeYears)}
 	}
 
 	if req.MinHeightCM != nil {
-		grpcReq.MinHeightCm = &wrapperspb.Int32Value{Value: int32(*req.MinHeightCM)}
+		grpcReq.MinHeightCm = &wrapperspb.UInt32Value{Value: uint32(*req.MinHeightCM)}
 	}
 
 	if req.MaxHeightCM != nil {
-		grpcReq.MaxHeightCm = &wrapperspb.Int32Value{Value: int32(*req.MaxHeightCM)}
+		grpcReq.MaxHeightCm = &wrapperspb.UInt32Value{Value: uint32(*req.MaxHeightCM)}
 	}
 
 	if req.AcceptPhysicallyChallenged != nil {
@@ -91,27 +124,51 @@ func MapUpdateUserPartnerPreferencesRequest(operationType string, req dto.Partne
 	}
 
 	if req.PreferredCommunities != nil {
-		grpcReq.PreferredCommunities = *req.PreferredCommunities
+		communities := make([]string, len(*req.PreferredCommunities))
+		for i, community := range *req.PreferredCommunities {
+			communities[i] = string(community)
+		}
+		grpcReq.PreferredCommunities = communities
 	}
 
 	if req.PreferredMaritalStatus != nil {
-		grpcReq.PreferredMaritalStatus = *req.PreferredMaritalStatus
+		maritalStatuses := make([]string, len(*req.PreferredMaritalStatus))
+		for i, status := range *req.PreferredMaritalStatus {
+			maritalStatuses[i] = string(status)
+		}
+		grpcReq.PreferredMaritalStatus = maritalStatuses
 	}
 
 	if req.PreferredProfessions != nil {
-		grpcReq.PreferredProfessions = *req.PreferredProfessions
+		professions := make([]string, len(*req.PreferredProfessions))
+		for i, profession := range *req.PreferredProfessions {
+			professions[i] = string(profession)
+		}
+		grpcReq.PreferredProfessions = professions
 	}
 
 	if req.PreferredProfessionTypes != nil {
-		grpcReq.PreferredProfessionTypes = *req.PreferredProfessionTypes
+		professionTypes := make([]string, len(*req.PreferredProfessionTypes))
+		for i, professionType := range *req.PreferredProfessionTypes {
+			professionTypes[i] = string(professionType)
+		}
+		grpcReq.PreferredProfessionTypes = professionTypes
 	}
 
 	if req.PreferredEducationLevels != nil {
-		grpcReq.PreferredEducationLevels = *req.PreferredEducationLevels
+		educationLevels := make([]string, len(*req.PreferredEducationLevels))
+		for i, level := range *req.PreferredEducationLevels {
+			educationLevels[i] = string(level)
+		}
+		grpcReq.PreferredEducationLevels = educationLevels
 	}
 
 	if req.PreferredHomeDistricts != nil {
-		grpcReq.PreferredHomeDistricts = *req.PreferredHomeDistricts
+		homeDistricts := make([]string, len(*req.PreferredHomeDistricts))
+		for i, district := range *req.PreferredHomeDistricts {
+			homeDistricts[i] = string(district)
+		}
+		grpcReq.PreferredHomeDistricts = homeDistricts
 	}
 
 	return grpcReq

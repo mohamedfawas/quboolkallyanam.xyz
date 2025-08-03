@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
@@ -14,8 +13,7 @@ type UserProfileRepository interface {
 	ProfileExists(ctx context.Context,
 		userID uuid.UUID) (bool, error)
 	UpdateLastLogin(ctx context.Context,
-		userID uuid.UUID,
-		lastLogin time.Time) error
+		userID uuid.UUID) error
 	GetProfileByUserID(ctx context.Context,
 		userID uuid.UUID) (*entity.UserProfile, error)
 	UpdateUserProfile(ctx context.Context,
@@ -26,5 +24,7 @@ type UserProfileRepository interface {
 		userID uuid.UUID,
 		excludedIDs []uuid.UUID,
 		preferences *entity.PartnerPreference,
-		isUserBride bool) ([]*entity.UserProfile, error)
+		limit int,
+		offset int,
+		isUserBride bool) ([]*entity.UserProfile, int64, error)
 }

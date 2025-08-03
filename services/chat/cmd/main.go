@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -24,16 +25,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("[CHAT] Failed to load config: %v", err)
 	}
-
 	initialLogger, err := logger.Init(cfg.Environment != constants.EnvProduction) // false for production, true for development
 	if err != nil {
 		log.Fatalf("[CHAT] Failed to init logger: %v", err)
 	}
 	defer initialLogger.Sync()
-
 	rootLogger := initialLogger.With(zap.String(constants.Service, constants.ServiceChat))
 
-	srv, err := server.NewServer(cfg, rootLogger)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	srv, err := server.NewServer(ctx, cfg, rootLogger)
 	if err != nil {
 		rootLogger.Fatal("Failed to create server", zap.Error(err))
 	}
@@ -41,16 +43,14 @@ func main() {
 	go func() {
 		if err := srv.Start(); err != nil {
 			if err != grpc.ErrServerStopped {
-				rootLogger.Fatal("Failed to start server", zap.Error(err))
+				rootLogger.Error("Server exited with error", zap.Error(err))
+				stop() // stops listening for signals, and exits the program
 			}
 		}
 	}()
-	rootLogger.Info("Chat Service Server started on ", zap.Int(constants.Port, cfg.GRPC.Port))
+	rootLogger.Info("gRPC server started", zap.Int("port", cfg.GRPC.Port))
 
-	quit := make(chan os.Signal, 1)
-
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	<-ctx.Done() // pausing the main goroutine until a shutdown signal is received
 
 	rootLogger.Info("Shutting down server...")
 	srv.Stop()

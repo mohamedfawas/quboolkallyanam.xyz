@@ -58,7 +58,7 @@ type Server struct {
 	userHandler    *userHandler.UserHandler
 }
 
-func NewHTTPServer(config *config.Config, rootLogger *zap.Logger) (*Server, error) {
+func NewHTTPServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
 	if config.Environment == constants.EnvProduction {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -75,18 +75,25 @@ func NewHTTPServer(config *config.Config, rootLogger *zap.Logger) (*Server, erro
 		Issuer:             config.Auth.JWT.Issuer,
 	})
 
+	///////////////////////// CLIENTS INITIALIZATION /////////////////////////
 	if err := server.initClients(); err != nil {
 		return nil, fmt.Errorf("failed to initialize clients: %w", err)
 	}
+	rootLogger.Info("Clients initialized")
 
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	if err := server.initUsecases(); err != nil {
 		return nil, fmt.Errorf("failed to initialize usecases: %w", err)
 	}
+	rootLogger.Info("Usecases initialized")
 
+	///////////////////////// HANDLERS INITIALIZATION /////////////////////////
 	if err := server.initHandlers(); err != nil {
 		return nil, fmt.Errorf("failed to initialize handlers: %w", err)
 	}
+	rootLogger.Info("Handlers initialized")
 
+	///////////////////////// ROUTES INITIALIZATION /////////////////////////
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.LoadHTMLGlob("internal/web/templates/*")
@@ -100,8 +107,8 @@ func NewHTTPServer(config *config.Config, rootLogger *zap.Logger) (*Server, erro
 		WriteTimeout: time.Duration(config.HTTP.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(config.HTTP.IdleTimeout) * time.Second,
 	}
-
 	server.httpServer = httpServer
+	rootLogger.Info("HTTP server created")
 
 	return server, nil
 }

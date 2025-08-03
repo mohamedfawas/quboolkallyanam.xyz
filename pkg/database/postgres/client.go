@@ -36,7 +36,7 @@ func NewClient(cfg Config) (*Client, error) {
 	)
 
 	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info), // Or Silent/Error in prod
+		Logger: logger.Default.LogMode(logger.Error), // Logs only errors
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)

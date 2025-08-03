@@ -8,8 +8,18 @@ import "google/protobuf/wrappers.proto";
 option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1;userpbv1";
 
 service UserService {
+
+    // User profile management
     rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
+
+    // User profile photo management
+    rpc GetProfilePhotoUploadURL(GetProfilePhotoUploadURLRequest) returns (GetProfilePhotoUploadURLResponse);
+    rpc ConfirmProfilePhotoUpload(ConfirmProfilePhotoUploadRequest) returns (ConfirmProfilePhotoUploadResponse);
+
+    // Partner preferences management
     rpc UpdateUserPartnerPreferences(UpdateUserPartnerPreferencesRequest) returns (UpdateUserPartnerPreferencesResponse);
+    
+    // Match making
     rpc RecordMatchAction(RecordMatchActionRequest) returns (RecordMatchActionResponse);
     rpc GetMatchRecommendations(GetMatchRecommendationsRequest) returns (GetMatchRecommendationsResponse);
     rpc GetProfilesByMatchAction(GetProfilesByMatchActionRequest) returns (GetProfilesByMatchActionResponse);
@@ -19,7 +29,7 @@ message UpdateUserProfileRequest {
     google.protobuf.BoolValue   is_bride                = 1;
     google.protobuf.StringValue full_name               = 2;
     google.protobuf.StringValue date_of_birth           = 3;
-    google.protobuf.Int32Value  height_cm               = 4;
+    google.protobuf.UInt32Value  height_cm               = 4;
     google.protobuf.BoolValue   physically_challenged   = 5;
     google.protobuf.StringValue community               = 6;
     google.protobuf.StringValue marital_status          = 7;
@@ -33,12 +43,32 @@ message UpdateUserProfileResponse {
     google.protobuf.BoolValue success = 1;
 }
 
+message GetProfilePhotoUploadURLRequest {
+    google.protobuf.StringValue content_type = 1;
+}
+
+message GetProfilePhotoUploadURLResponse {
+    google.protobuf.StringValue upload_url = 1;
+    google.protobuf.StringValue object_key = 2;
+    google.protobuf.UInt32Value expires_in_seconds = 3;
+}
+
+message ConfirmProfilePhotoUploadRequest {
+    google.protobuf.StringValue object_key = 1;
+    google.protobuf.UInt64Value file_size = 2;
+}
+
+message ConfirmProfilePhotoUploadResponse {
+    google.protobuf.BoolValue success = 1;
+    google.protobuf.StringValue profile_picture_url = 2;
+}
+
 message UpdateUserPartnerPreferencesRequest {
     google.protobuf.StringValue operation_type = 1;
-    google.protobuf.Int32Value  min_age_years = 2;
-    google.protobuf.Int32Value  max_age_years = 3;
-    google.protobuf.Int32Value  min_height_cm = 4;
-    google.protobuf.Int32Value  max_height_cm = 5;
+    google.protobuf.UInt32Value  min_age_years = 2;
+    google.protobuf.UInt32Value  max_age_years = 3;
+    google.protobuf.UInt32Value  min_height_cm = 4;
+    google.protobuf.UInt32Value  max_height_cm = 5;
     google.protobuf.BoolValue   accept_physically_challenged = 6;
 
     // Repeated already supports optional values, so no need wrapper
@@ -48,6 +78,13 @@ message UpdateUserPartnerPreferencesRequest {
     repeated string preferred_profession_types = 10;
     repeated string preferred_education_levels = 11;
     repeated string preferred_home_districts = 12;
+
+    google.protobuf.BoolValue accept_all_communities = 13;
+    google.protobuf.BoolValue accept_all_marital_status = 14;
+    google.protobuf.BoolValue accept_all_professions = 15;
+    google.protobuf.BoolValue accept_all_profession_types = 16;
+    google.protobuf.BoolValue accept_all_education_levels = 17;
+    google.protobuf.BoolValue accept_all_home_districts = 18;
 }
 
 
@@ -73,8 +110,8 @@ message UserProfileRecommendation {
     int64 id = 1;
     string full_name = 2;
     string profile_picture_url = 3;
-    int32 age = 4;
-    int32 height_cm = 5;
+    uint32 age = 4;
+    uint32 height_cm = 5;
     string marital_status = 6;
     string profession = 7;
     string home_district = 8;
@@ -87,8 +124,8 @@ message GetMatchRecommendationsResponse {
 
 message PaginationInfo {
     int64 total_count = 1;
-    int32 limit = 2;
-    int32 offset = 3;
+    uint32 limit = 2;
+    uint32 offset = 3;
     bool has_more = 4;
 }
 

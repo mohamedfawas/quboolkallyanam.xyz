@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	chatpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/chat/v1"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
@@ -50,17 +49,11 @@ func NewChatGRPCClient(ctx context.Context,
 }
 
 func (c *chatGRPCClient) CreateConversation(ctx context.Context, req dto.CreateConversationRequest) (*dto.CreateConversationResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID context missing")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
-
-	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
-	if !ok {
-		return nil, fmt.Errorf("request ID context missing")
-	}
-	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapCreateConversationRequest(req)
 	grpcResp, err := c.client.CreateConversation(ctx, grpcReq)
@@ -71,17 +64,11 @@ func (c *chatGRPCClient) CreateConversation(ctx context.Context, req dto.CreateC
 }
 
 func (c *chatGRPCClient) SendMessage(ctx context.Context, req dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID context missing")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
-
-	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
-	if !ok {
-		return nil, fmt.Errorf("request ID context missing")
-	}
-	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapSendMessageRequest(req)
 	grpcResp, err := c.client.SendMessage(ctx, grpcReq)
@@ -92,17 +79,11 @@ func (c *chatGRPCClient) SendMessage(ctx context.Context, req dto.SendMessageReq
 }
 
 func (c *chatGRPCClient) GetConversation(ctx context.Context, req dto.GetConversationRequest) (*dto.GetConversationResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID context missing")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
-
-	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
-	if !ok {
-		return nil, fmt.Errorf("request ID context missing")
-	}
-	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapGetConversationRequest(req)
 	grpcResp, err := c.client.GetConversation(ctx, grpcReq)
@@ -114,17 +95,11 @@ func (c *chatGRPCClient) GetConversation(ctx context.Context, req dto.GetConvers
 
 
 func (c *chatGRPCClient) GetMessagesByConversationId(ctx context.Context, req dto.GetMessagesByConversationIdRequest) (*dto.GetMessagesByConversationIdResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID context missing")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
-
-	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
-	if !ok {
-		return nil, fmt.Errorf("request ID context missing")
-	}
-	ctx = contextutils.SetRequestIDContext(ctx, requestID)
 
 	grpcReq := MapGetMessagesByConversationIdRequest(req)
 	grpcResp, err := c.client.GetMessagesByConversationId(ctx, grpcReq)
