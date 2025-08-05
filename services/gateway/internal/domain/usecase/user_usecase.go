@@ -11,7 +11,12 @@ type UserUsecase interface {
 	UpdateUserProfile(ctx context.Context, req dto.UserProfilePatchRequest) error
 	GetProfilePhotoUploadURL(ctx context.Context, req dto.GetProfilePhotoUploadURLRequest) (*dto.GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(ctx context.Context, req dto.ConfirmProfilePhotoUploadRequest) (*dto.ConfirmProfilePhotoUploadResponse, error)
+	DeleteProfilePhoto(ctx context.Context, req dto.DeleteProfilePhotoRequest) error
 	
+	///////// USER ADDITIONAL PHOTO MANAGEMENT //////////
+	GetAdditionalPhotoUploadURL(ctx context.Context, req dto.GetAdditionalPhotoUploadURLRequest) (*dto.GetAdditionalPhotoUploadURLResponse, error)
+	ConfirmAdditionalPhotoUpload(ctx context.Context, req dto.ConfirmAdditionalPhotoUploadRequest) (*dto.ConfirmAdditionalPhotoUploadResponse, error)
+	DeleteAdditionalPhoto(ctx context.Context, req dto.DeleteAdditionalPhotoRequest) (*dto.DeleteAdditionalPhotoResponse, error)
 	
 	///////// PARTNER PREFERENCES MANAGEMENT //////////
 	UpdateUserPartnerPreferences(ctx context.Context, operationType string, req dto.PartnerPreferencePatchRequest) error

@@ -22,6 +22,10 @@ const (
 	UserService_UpdateUserProfile_FullMethodName            = "/user.v1.UserService/UpdateUserProfile"
 	UserService_GetProfilePhotoUploadURL_FullMethodName     = "/user.v1.UserService/GetProfilePhotoUploadURL"
 	UserService_ConfirmProfilePhotoUpload_FullMethodName    = "/user.v1.UserService/ConfirmProfilePhotoUpload"
+	UserService_DeleteProfilePhoto_FullMethodName           = "/user.v1.UserService/DeleteProfilePhoto"
+	UserService_GetAdditionalPhotoUploadURL_FullMethodName  = "/user.v1.UserService/GetAdditionalPhotoUploadURL"
+	UserService_ConfirmAdditionalPhotoUpload_FullMethodName = "/user.v1.UserService/ConfirmAdditionalPhotoUpload"
+	UserService_DeleteAdditionalPhoto_FullMethodName        = "/user.v1.UserService/DeleteAdditionalPhoto"
 	UserService_UpdateUserPartnerPreferences_FullMethodName = "/user.v1.UserService/UpdateUserPartnerPreferences"
 	UserService_RecordMatchAction_FullMethodName            = "/user.v1.UserService/RecordMatchAction"
 	UserService_GetMatchRecommendations_FullMethodName      = "/user.v1.UserService/GetMatchRecommendations"
@@ -37,6 +41,10 @@ type UserServiceClient interface {
 	// User profile photo management
 	GetProfilePhotoUploadURL(ctx context.Context, in *GetProfilePhotoUploadURLRequest, opts ...grpc.CallOption) (*GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(ctx context.Context, in *ConfirmProfilePhotoUploadRequest, opts ...grpc.CallOption) (*ConfirmProfilePhotoUploadResponse, error)
+	DeleteProfilePhoto(ctx context.Context, in *DeleteProfilePhotoRequest, opts ...grpc.CallOption) (*DeleteProfilePhotoResponse, error)
+	GetAdditionalPhotoUploadURL(ctx context.Context, in *GetAdditionalPhotoUploadURLRequest, opts ...grpc.CallOption) (*GetAdditionalPhotoUploadURLResponse, error)
+	ConfirmAdditionalPhotoUpload(ctx context.Context, in *ConfirmAdditionalPhotoUploadRequest, opts ...grpc.CallOption) (*ConfirmAdditionalPhotoUploadResponse, error)
+	DeleteAdditionalPhoto(ctx context.Context, in *DeleteAdditionalPhotoRequest, opts ...grpc.CallOption) (*DeleteAdditionalPhotoResponse, error)
 	// Partner preferences management
 	UpdateUserPartnerPreferences(ctx context.Context, in *UpdateUserPartnerPreferencesRequest, opts ...grpc.CallOption) (*UpdateUserPartnerPreferencesResponse, error)
 	// Match making
@@ -77,6 +85,46 @@ func (c *userServiceClient) ConfirmProfilePhotoUpload(ctx context.Context, in *C
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ConfirmProfilePhotoUploadResponse)
 	err := c.cc.Invoke(ctx, UserService_ConfirmProfilePhotoUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) DeleteProfilePhoto(ctx context.Context, in *DeleteProfilePhotoRequest, opts ...grpc.CallOption) (*DeleteProfilePhotoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteProfilePhotoResponse)
+	err := c.cc.Invoke(ctx, UserService_DeleteProfilePhoto_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetAdditionalPhotoUploadURL(ctx context.Context, in *GetAdditionalPhotoUploadURLRequest, opts ...grpc.CallOption) (*GetAdditionalPhotoUploadURLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAdditionalPhotoUploadURLResponse)
+	err := c.cc.Invoke(ctx, UserService_GetAdditionalPhotoUploadURL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ConfirmAdditionalPhotoUpload(ctx context.Context, in *ConfirmAdditionalPhotoUploadRequest, opts ...grpc.CallOption) (*ConfirmAdditionalPhotoUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmAdditionalPhotoUploadResponse)
+	err := c.cc.Invoke(ctx, UserService_ConfirmAdditionalPhotoUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) DeleteAdditionalPhoto(ctx context.Context, in *DeleteAdditionalPhotoRequest, opts ...grpc.CallOption) (*DeleteAdditionalPhotoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteAdditionalPhotoResponse)
+	err := c.cc.Invoke(ctx, UserService_DeleteAdditionalPhoto_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +180,10 @@ type UserServiceServer interface {
 	// User profile photo management
 	GetProfilePhotoUploadURL(context.Context, *GetProfilePhotoUploadURLRequest) (*GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(context.Context, *ConfirmProfilePhotoUploadRequest) (*ConfirmProfilePhotoUploadResponse, error)
+	DeleteProfilePhoto(context.Context, *DeleteProfilePhotoRequest) (*DeleteProfilePhotoResponse, error)
+	GetAdditionalPhotoUploadURL(context.Context, *GetAdditionalPhotoUploadURLRequest) (*GetAdditionalPhotoUploadURLResponse, error)
+	ConfirmAdditionalPhotoUpload(context.Context, *ConfirmAdditionalPhotoUploadRequest) (*ConfirmAdditionalPhotoUploadResponse, error)
+	DeleteAdditionalPhoto(context.Context, *DeleteAdditionalPhotoRequest) (*DeleteAdditionalPhotoResponse, error)
 	// Partner preferences management
 	UpdateUserPartnerPreferences(context.Context, *UpdateUserPartnerPreferencesRequest) (*UpdateUserPartnerPreferencesResponse, error)
 	// Match making
@@ -156,6 +208,18 @@ func (UnimplementedUserServiceServer) GetProfilePhotoUploadURL(context.Context, 
 }
 func (UnimplementedUserServiceServer) ConfirmProfilePhotoUpload(context.Context, *ConfirmProfilePhotoUploadRequest) (*ConfirmProfilePhotoUploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfirmProfilePhotoUpload not implemented")
+}
+func (UnimplementedUserServiceServer) DeleteProfilePhoto(context.Context, *DeleteProfilePhotoRequest) (*DeleteProfilePhotoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfilePhoto not implemented")
+}
+func (UnimplementedUserServiceServer) GetAdditionalPhotoUploadURL(context.Context, *GetAdditionalPhotoUploadURLRequest) (*GetAdditionalPhotoUploadURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAdditionalPhotoUploadURL not implemented")
+}
+func (UnimplementedUserServiceServer) ConfirmAdditionalPhotoUpload(context.Context, *ConfirmAdditionalPhotoUploadRequest) (*ConfirmAdditionalPhotoUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConfirmAdditionalPhotoUpload not implemented")
+}
+func (UnimplementedUserServiceServer) DeleteAdditionalPhoto(context.Context, *DeleteAdditionalPhotoRequest) (*DeleteAdditionalPhotoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAdditionalPhoto not implemented")
 }
 func (UnimplementedUserServiceServer) UpdateUserPartnerPreferences(context.Context, *UpdateUserPartnerPreferencesRequest) (*UpdateUserPartnerPreferencesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserPartnerPreferences not implemented")
@@ -240,6 +304,78 @@ func _UserService_ConfirmProfilePhotoUpload_Handler(srv interface{}, ctx context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).ConfirmProfilePhotoUpload(ctx, req.(*ConfirmProfilePhotoUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_DeleteProfilePhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProfilePhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeleteProfilePhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_DeleteProfilePhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeleteProfilePhoto(ctx, req.(*DeleteProfilePhotoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetAdditionalPhotoUploadURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAdditionalPhotoUploadURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetAdditionalPhotoUploadURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetAdditionalPhotoUploadURL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetAdditionalPhotoUploadURL(ctx, req.(*GetAdditionalPhotoUploadURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ConfirmAdditionalPhotoUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmAdditionalPhotoUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ConfirmAdditionalPhotoUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ConfirmAdditionalPhotoUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ConfirmAdditionalPhotoUpload(ctx, req.(*ConfirmAdditionalPhotoUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_DeleteAdditionalPhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAdditionalPhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeleteAdditionalPhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_DeleteAdditionalPhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeleteAdditionalPhoto(ctx, req.(*DeleteAdditionalPhotoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -334,6 +470,22 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfirmProfilePhotoUpload",
 			Handler:    _UserService_ConfirmProfilePhotoUpload_Handler,
+		},
+		{
+			MethodName: "DeleteProfilePhoto",
+			Handler:    _UserService_DeleteProfilePhoto_Handler,
+		},
+		{
+			MethodName: "GetAdditionalPhotoUploadURL",
+			Handler:    _UserService_GetAdditionalPhotoUploadURL_Handler,
+		},
+		{
+			MethodName: "ConfirmAdditionalPhotoUpload",
+			Handler:    _UserService_ConfirmAdditionalPhotoUpload_Handler,
+		},
+		{
+			MethodName: "DeleteAdditionalPhoto",
+			Handler:    _UserService_DeleteAdditionalPhoto_Handler,
 		},
 		{
 			MethodName: "UpdateUserPartnerPreferences",

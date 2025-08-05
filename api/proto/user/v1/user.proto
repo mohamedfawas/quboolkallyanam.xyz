@@ -15,6 +15,10 @@ service UserService {
     // User profile photo management
     rpc GetProfilePhotoUploadURL(GetProfilePhotoUploadURLRequest) returns (GetProfilePhotoUploadURLResponse);
     rpc ConfirmProfilePhotoUpload(ConfirmProfilePhotoUploadRequest) returns (ConfirmProfilePhotoUploadResponse);
+    rpc DeleteProfilePhoto(DeleteProfilePhotoRequest) returns (DeleteProfilePhotoResponse);
+    rpc GetAdditionalPhotoUploadURL(GetAdditionalPhotoUploadURLRequest) returns (GetAdditionalPhotoUploadURLResponse);
+    rpc ConfirmAdditionalPhotoUpload(ConfirmAdditionalPhotoUploadRequest) returns (ConfirmAdditionalPhotoUploadResponse);
+    rpc DeleteAdditionalPhoto(DeleteAdditionalPhotoRequest) returns (DeleteAdditionalPhotoResponse);
 
     // Partner preferences management
     rpc UpdateUserPartnerPreferences(UpdateUserPartnerPreferencesRequest) returns (UpdateUserPartnerPreferencesResponse);
@@ -61,6 +65,41 @@ message ConfirmProfilePhotoUploadRequest {
 message ConfirmProfilePhotoUploadResponse {
     google.protobuf.BoolValue success = 1;
     google.protobuf.StringValue profile_picture_url = 2;
+}
+
+message DeleteProfilePhotoRequest {
+}
+
+message DeleteProfilePhotoResponse {
+    google.protobuf.BoolValue success = 1;
+}
+
+message GetAdditionalPhotoUploadURLRequest {
+    google.protobuf.UInt32Value display_order = 1;
+    google.protobuf.StringValue content_type = 2;
+}
+message GetAdditionalPhotoUploadURLResponse {
+    google.protobuf.StringValue upload_url = 1;
+    google.protobuf.StringValue object_key = 2;
+    google.protobuf.UInt32Value expires_in_seconds = 3;
+}
+
+message ConfirmAdditionalPhotoUploadRequest {
+    google.protobuf.StringValue object_key = 1;
+    google.protobuf.UInt64Value file_size = 2;
+}
+
+message ConfirmAdditionalPhotoUploadResponse {
+    google.protobuf.BoolValue success = 1;
+    google.protobuf.StringValue additional_photo_url = 2;
+}
+
+message DeleteAdditionalPhotoRequest {
+    google.protobuf.UInt32Value display_order = 1;
+}
+
+message DeleteAdditionalPhotoResponse {
+    google.protobuf.BoolValue success = 1;
 }
 
 message UpdateUserPartnerPreferencesRequest {

@@ -96,6 +96,69 @@ func (c *userGRPCClient) ConfirmProfilePhotoUpload(ctx context.Context, req dto.
 	return MapConfirmProfilePhotoUploadResponse(resp), nil
 }
 
+func (c *userGRPCClient) DeleteProfilePhoto(ctx context.Context, req dto.DeleteProfilePhotoRequest) (*dto.DeleteProfilePhotoResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapDeleteProfilePhotoRequest(req)
+	resp, err := c.client.DeleteProfilePhoto(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapDeleteProfilePhotoResponse(resp), nil
+}
+
+///////////////////// User Additional Photo Management //////////////////
+
+func (c *userGRPCClient) GetAdditionalPhotoUploadURL(ctx context.Context, req dto.GetAdditionalPhotoUploadURLRequest) (*dto.GetAdditionalPhotoUploadURLResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapGetAdditionalPhotoUploadURLRequest(req)
+	resp, err := c.client.GetAdditionalPhotoUploadURL(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetAdditionalPhotoUploadURLResponse(resp), nil
+}
+
+
+func (c *userGRPCClient) ConfirmAdditionalPhotoUpload(ctx context.Context, req dto.ConfirmAdditionalPhotoUploadRequest) (*dto.ConfirmAdditionalPhotoUploadResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapConfirmAdditionalPhotoUploadRequest(req)
+	resp, err := c.client.ConfirmAdditionalPhotoUpload(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapConfirmAdditionalPhotoUploadResponse(resp), nil
+}
+
+func (c *userGRPCClient) DeleteAdditionalPhoto(ctx context.Context, req dto.DeleteAdditionalPhotoRequest) (*dto.DeleteAdditionalPhotoResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	grpcReq := MapDeleteAdditionalPhotoRequest(req)
+	resp, err := c.client.DeleteAdditionalPhoto(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapDeleteAdditionalPhotoResponse(resp), nil
+}
+
 
 //////////////// PARTNER PREFERENCES MANAGEMENT //////////////////
 func (c *userGRPCClient) UpdateUserPartnerPreferences(

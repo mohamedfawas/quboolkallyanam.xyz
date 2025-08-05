@@ -28,4 +28,39 @@ var (
 		GRPCStatusCode: codes.InvalidArgument,
 		PublicMsg: "The image type is not supported. The supported formats are jpeg, jpg, and png",
 	}
+	ErrInvalidImageFileSize = &AppError{
+		Err: errors.New("invalid image file size"),
+		Code: "INVALID_IMAGE_FILE_SIZE",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg: "The image file size is not supported. The maximum size is 5MB",
+	}
+	ErrProfilePhotoNotFound = &AppError{
+		Err: errors.New("profile photo not found"),
+		Code: "PROFILE_PHOTO_NOT_FOUND",
+		HTTPStatusCode: http.StatusNotFound,
+		GRPCStatusCode: codes.NotFound,
+		PublicMsg: "Profile photo not found for the user. Please upload the profile photo.",
+	}
+	ErrImageDisplayOrderOccupied = &AppError{
+		Err: errors.New("image display order occupied"),
+		Code: "IMAGE_DISPLAY_ORDER_OCCUPIED",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg: "The requested image display order is already occupied. Please try a different display order or retry after deleting existing image.",
+	}
+	ErrDisplayOrderNotOccupied = &AppError{
+		Err: errors.New("display order not occupied"),
+		Code: "DISPLAY_ORDER_NOT_OCCUPIED",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg: "There are no images at the requested display order.",
+	}
+	ErrInvalidDisplayOrder = &AppError{
+		Err: errors.New("invalid display order"),
+		Code: "INVALID_DISPLAY_ORDER",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg: "The requested display order is not valid. The display order must be between 1 and 3.",
+	}
 )

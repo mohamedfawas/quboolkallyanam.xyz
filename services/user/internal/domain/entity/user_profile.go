@@ -26,11 +26,11 @@ type UserProfile struct {
 	HighestEducationLevel validation.EducationLevel `json:"highest_education_level" gorm:"size:255"`
 	HomeDistrict          validation.HomeDistrict   `json:"home_district" gorm:"size:255"`
 
-	ProfilePictureURL string         `json:"profile_picture_url" gorm:"size:255"`
-	LastLogin         time.Time      `json:"last_login" gorm:"not null;default:CURRENT_TIMESTAMP"`
-	CreatedAt         time.Time      `json:"created_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
-	UpdatedAt         time.Time      `json:"updated_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt         gorm.DeletedAt `gorm:"index"            json:"deleted_at,omitempty"`
+	ProfileImageKey string         `json:"profile_image_key" gorm:"size:255"`
+	LastLogin       time.Time      `json:"last_login" gorm:"not null;default:CURRENT_TIMESTAMP"`
+	CreatedAt       time.Time      `json:"created_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
+	UpdatedAt       time.Time      `json:"updated_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
+	DeletedAt       gorm.DeletedAt `gorm:"index"            json:"deleted_at,omitempty"`
 
 	// Association
 	PartnerPreference PartnerPreference `json:"partner_preference,omitempty" gorm:"foreignKey:UserProfileID"`

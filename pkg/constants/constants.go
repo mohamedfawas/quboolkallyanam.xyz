@@ -85,4 +85,8 @@ const (
 
 	// Image file
 	ImageFileMaxSize = 5 * 1024 * 1024
+
+	// gcs storage
+	ProfilePhotoStorageDirectory = "profile-photos"
+	AdditionalPhotoStorageDirectory = "additional-photos"
 )

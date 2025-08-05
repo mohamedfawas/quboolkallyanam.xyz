@@ -10,3 +10,9 @@ var allowedImageType = map[string]bool{
 func IsValidImageType(contentType string) bool {
 	return allowedImageType[contentType]
 }
+
+const MaxImageFileSize = 5 * 1024 * 1024 // 5MB
+
+func IsValidImageFileSize(fileSize uint64) bool {
+	return fileSize <= MaxImageFileSize && fileSize > 0
+}

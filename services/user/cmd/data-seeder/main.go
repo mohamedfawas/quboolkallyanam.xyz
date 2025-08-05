@@ -187,7 +187,7 @@ func generateRandomUserProfile(batchNumber, recordIndex int) entity.UserProfile 
 		ProfessionType:        professionType,
 		HighestEducationLevel: educationLevel,
 		HomeDistrict:          homeDistrict,
-		ProfilePictureURL:     profilePicURL,
+		ProfileImageKey:       profilePicURL,
 		LastLogin:             time.Now().Add(-time.Duration(r.Intn(30*24)) * time.Hour),
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),

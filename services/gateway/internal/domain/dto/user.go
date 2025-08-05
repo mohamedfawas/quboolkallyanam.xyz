@@ -63,6 +63,46 @@ type ConfirmProfilePhotoUploadResponse struct {
 	ProfilePictureURL string `json:"profile_picture_url"`
 }
 
+type DeleteProfilePhotoRequest struct {
+}
+
+type DeleteProfilePhotoResponse struct {
+	Success bool `json:"success"`
+}	
+
+
+/////////////////////////////// User Additional Photo Management ///////////////////////////////
+type GetAdditionalPhotoUploadURLRequest struct {
+	DisplayOrder int32 `json:"display_order"`
+	ContentType string `json:"content_type"`
+}
+
+type GetAdditionalPhotoUploadURLResponse struct {
+	UploadURL string `json:"upload_url"`
+	ObjectKey string `json:"object_key"`
+	ExpiresInSeconds int32 `json:"expires_in_seconds"`
+}
+
+
+type ConfirmAdditionalPhotoUploadRequest struct {
+	ObjectKey string `json:"object_key"`
+	FileSize  uint64 `json:"file_size"`
+}
+
+type ConfirmAdditionalPhotoUploadResponse struct {
+	Success bool `json:"success"`
+	AdditionalPhotoURL string `json:"additional_photo_url"`
+}
+
+type DeleteAdditionalPhotoRequest struct {
+	DisplayOrder int32 `json:"display_order"`
+}
+
+type DeleteAdditionalPhotoResponse struct {
+	Success bool `json:"success"`
+}
+
+
 /////////////////// PARTNER PREFERENCES MANAGEMENT /////////////////////
 type PartnerPreferenceCreateRequest struct {
 	MinAgeYears                int      `json:"min_age_years"`

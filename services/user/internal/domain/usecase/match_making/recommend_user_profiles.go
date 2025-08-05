@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/ageutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pagination"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
@@ -16,10 +17,10 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 	limit, offset int) ([]*entity.UserProfileResponse, *pagination.PaginationData, error) {
 
 	if limit <= 0 {
-		limit = 10
+		limit = constants.DefaultPaginationLimit
 	}
-	if limit > 50 {
-		limit = 50
+	if limit > constants.MaxPaginationLimit {
+		limit = constants.MaxPaginationLimit
 	}
 	if offset < 0 {
 		offset = 0
@@ -74,10 +75,14 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 	recommendedProfiles := make([]*entity.UserProfileResponse, len(result))
 	for i, profile := range result {
 		age := ageutil.CalculateAge(profile.DateOfBirth)
+		profilePictureURL, err := u.photoStorage.GetDownloadURL(ctx, profile.ProfileImageKey, u.config.MediaStorage.URLExpiry)
+		if err != nil {
+			return nil, nil, err
+		}
 		recommendedProfiles[i] = &entity.UserProfileResponse{
 			ID:                profile.ID,
 			FullName:          profile.FullName,
-			ProfilePictureURL: &profile.ProfilePictureURL,
+			ProfilePictureURL: &profilePictureURL,
 			Age:               uint32(age),
 			HeightCm:          uint32(profile.HeightCm),
 			MaritalStatus:     string(profile.MaritalStatus),

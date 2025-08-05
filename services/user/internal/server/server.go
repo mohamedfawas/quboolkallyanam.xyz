@@ -8,17 +8,19 @@ import (
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
+	interceptors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
+	gcsstore "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/mediastorage/gcs"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
+	gcs "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/gcs"
 	messageBrokerAdapter "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/messageBroker"
 	postgresAdapters "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/adapters/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/config"
 	matchmaking "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/match_making"
-	userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/user_profile"
+	userProfileUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/usecase/userprofile"
 	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/event"
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/grpc/v1"
-	interceptors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -28,6 +30,7 @@ type Server struct {
 	grpcServer      *grpc.Server
 	pgClient        *postgres.Client
 	messagingClient messageBroker.Client
+	gcsStore        *gcsstore.GCSStore
 	logger          *zap.Logger
 }
 
@@ -52,7 +55,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		zap.String("time_zone", config.Postgres.TimeZone),
 	)
 
-	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////	
+	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
 		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
@@ -74,7 +77,42 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		}
 		rootLogger.Info("Connected to RabbitMQ ")
 	}
-
+	///////////////////////// GCS STORE INITIALIZATION /////////////////////////
+	var gcsStore *gcsstore.GCSStore
+	if config.Environment == constants.EnvProduction {
+		prodConfig := gcsstore.MediaStorageConfig{
+			Bucket:          config.MediaStorage.Bucket,
+			CredentialsFile: config.MediaStorage.CredentialsFile,
+			SignerEmail:     config.MediaStorage.SignerEmail,
+			PrivateKeyPath:  config.MediaStorage.PrivateKeyPath,
+			URLExpiry:       config.MediaStorage.URLExpiry,
+			Endpoint:        "",
+		}
+		gcsStore, err = gcsstore.NewGCSStore(ctx, prodConfig)
+		if err != nil {
+			pgClient.Close()
+			if messagingClient != nil {
+				messagingClient.Close()
+			}
+			return nil, fmt.Errorf("failed to create GCS store: %w", err)
+		}
+		rootLogger.Info("Connected to GCS with production config")
+	} else {
+		devConfig := gcsstore.MediaStorageConfig{
+			Bucket:    config.MediaStorage.Bucket,
+			URLExpiry: config.MediaStorage.URLExpiry,
+			Endpoint:  config.MediaStorage.Endpoint,
+		}
+		gcsStore, err = gcsstore.NewGCSStore(ctx, devConfig)
+		if err != nil {
+			pgClient.Close()
+			if messagingClient != nil {
+				messagingClient.Close()
+			}
+			return nil, fmt.Errorf("failed to create GCS store: %w", err)
+		}
+		rootLogger.Info("Connected to GCS with development config")
+	}
 	///////////////////////// GRPC SERVER INITIALIZATION /////////////////////////
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
@@ -83,6 +121,8 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
 	rootLogger.Info("User Profile Repository Initialized")
+	userImageRepo := postgresAdapters.NewUserImageRepository(pgClient)
+	rootLogger.Info("User Image Repository Initialized")
 	partnerPreferencesRepo := postgresAdapters.NewPartnerPreferencesRepository(pgClient)
 	rootLogger.Info("Partner Preferences Repository Initialized")
 	profileMatchRepo := postgresAdapters.NewProfileMatchRepository(pgClient)
@@ -96,12 +136,15 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
 	rootLogger.Info("Event Publisher Initialized")
 
-	///////////////////////// USE CASES INITIALIZATION /////////////////////////
-	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, partnerPreferencesRepo, eventPublisher)
-	rootLogger.Info("User Profile Use Case Initialized")
-	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager)
-	rootLogger.Info("Match Making Use Case Initialized")
+	///////////////////////// MEDIA STORAGE INITIALIZATION /////////////////////////
+	photoStorage := gcs.NewPhotoStorageAdapter(gcsStore)
+	rootLogger.Info("Media Storage Initialized")
 
+	///////////////////////// USE CASES INITIALIZATION /////////////////////////
+	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, userImageRepo, partnerPreferencesRepo, eventPublisher, photoStorage, config)
+	rootLogger.Info("User Profile Use Case Initialized")
+	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager, photoStorage, config)
+	rootLogger.Info("Match Making Use Case Initialized")
 
 	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC, rootLogger)
@@ -124,6 +167,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		grpcServer:      grpcServer,
 		pgClient:        pgClient,
 		messagingClient: messagingClient,
+		gcsStore:        gcsStore,
 		logger:          rootLogger,
 	}
 
@@ -140,6 +184,13 @@ func (s *Server) Start() error {
 
 func (s *Server) Stop() {
 	s.grpcServer.GracefulStop()
+
+	// Close GCS store
+	if s.gcsStore != nil {
+		if err := s.gcsStore.Close(); err != nil {
+			s.logger.Error("failed to close GCS store", zap.Error(err))
+		}
+	}
 
 	// Close messaging client first
 	if s.messagingClient != nil {

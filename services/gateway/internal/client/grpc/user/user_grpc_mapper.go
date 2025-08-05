@@ -96,6 +96,67 @@ func MapConfirmProfilePhotoUploadResponse(resp *userpbv1.ConfirmProfilePhotoUplo
 	}
 }
 
+////////////////////////////// Delete Profile Photo //////////////////////////////
+
+func MapDeleteProfilePhotoRequest(req dto.DeleteProfilePhotoRequest) *userpbv1.DeleteProfilePhotoRequest {
+	return &userpbv1.DeleteProfilePhotoRequest{}
+}
+
+func MapDeleteProfilePhotoResponse(resp *userpbv1.DeleteProfilePhotoResponse) *dto.DeleteProfilePhotoResponse {
+	return &dto.DeleteProfilePhotoResponse{
+		Success: resp.Success.GetValue(),
+	}
+}
+
+////////////////////////////// Get Additional Photo Upload URL //////////////////////////////
+
+func MapGetAdditionalPhotoUploadURLRequest(req dto.GetAdditionalPhotoUploadURLRequest) *userpbv1.GetAdditionalPhotoUploadURLRequest {
+	return &userpbv1.GetAdditionalPhotoUploadURLRequest{
+		DisplayOrder: &wrapperspb.UInt32Value{Value: req.DisplayOrder},
+		ContentType: &wrapperspb.StringValue{Value: req.ContentType},
+	}
+}
+
+func MapGetAdditionalPhotoUploadURLResponse(resp *userpbv1.GetAdditionalPhotoUploadURLResponse) *dto.GetAdditionalPhotoUploadURLResponse {
+	return &dto.GetAdditionalPhotoUploadURLResponse{
+		UploadURL: resp.UploadUrl.GetValue(),
+		ObjectKey: resp.ObjectKey.GetValue(),
+		ExpiresInSeconds: int32(resp.ExpiresInSeconds.GetValue()),
+	}
+}
+
+////////////////////////////// Confirm Additional Photo Upload //////////////////////////////
+
+func MapConfirmAdditionalPhotoUploadRequest(req dto.ConfirmAdditionalPhotoUploadRequest) *userpbv1.ConfirmAdditionalPhotoUploadRequest {
+	return &userpbv1.ConfirmAdditionalPhotoUploadRequest{
+		ObjectKey: &wrapperspb.StringValue{Value: req.ObjectKey},
+		FileSize: &wrapperspb.UInt64Value{Value: req.FileSize},
+	}
+}
+
+func MapConfirmAdditionalPhotoUploadResponse(resp *userpbv1.ConfirmAdditionalPhotoUploadResponse) *dto.ConfirmAdditionalPhotoUploadResponse {
+	return &dto.ConfirmAdditionalPhotoUploadResponse{
+		Success: resp.Success.GetValue(),
+		AdditionalPhotoURL: resp.AdditionalPhotoUrl.GetValue(),
+	}
+}
+
+
+////////////////////////////// Delete Additional Photo //////////////////////////////
+
+func MapDeleteAdditionalPhotoRequest(req dto.DeleteAdditionalPhotoRequest) *userpbv1.DeleteAdditionalPhotoRequest {
+	return &userpbv1.DeleteAdditionalPhotoRequest{
+		DisplayOrder: &wrapperspb.UInt32Value{Value: req.DisplayOrder},
+	}
+}
+
+
+func MapDeleteAdditionalPhotoResponse(resp *userpbv1.DeleteAdditionalPhotoResponse) *dto.DeleteAdditionalPhotoResponse {
+	return &dto.DeleteAdditionalPhotoResponse{
+		Success: resp.Success.GetValue(),
+	}
+}
+
 ////////////////////////////// Update User Partner Preferences //////////////////////////////
 
 func MapUpdateUserPartnerPreferencesRequest(operationType string, req dto.UpdatePartnerPreferenceRequest) *userpbv1.UpdateUserPartnerPreferencesRequest {

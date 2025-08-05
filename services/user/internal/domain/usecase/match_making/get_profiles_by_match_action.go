@@ -91,15 +91,19 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 	userProfileResponses := make([]*entity.UserProfileResponse, len(profiles))
 	for i, profile := range profiles {
 		age := ageutil.CalculateAge(profile.DateOfBirth)
+		profilePictureURL, err := u.photoStorage.GetDownloadURL(ctx, profile.ProfileImageKey, u.config.MediaStorage.URLExpiry)
+		if err != nil {
+			return nil, nil, err
+		}
 		userProfileResponses[i] = &entity.UserProfileResponse{
-			ID:                profile.ID,
-			FullName:          profile.FullName,
-			ProfilePictureURL: &profile.ProfilePictureURL,
-			Age:               uint32(age),
-			HeightCm:          uint32(profile.HeightCm),
-			MaritalStatus:     string(profile.MaritalStatus),
-			Profession:        string(profile.Profession),
-			HomeDistrict:      string(profile.HomeDistrict),
+			ID:              profile.ID,
+			FullName:        profile.FullName,
+			ProfilePictureURL: &profilePictureURL,
+			Age:             uint32(age),
+			HeightCm:        uint32(profile.HeightCm),
+			MaritalStatus:   string(profile.MaritalStatus),
+			Profession:      string(profile.Profession),
+			HomeDistrict:    string(profile.HomeDistrict),
 		}
 	}
 
@@ -110,5 +114,3 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 		HasMore:    end < totalCount,
 	}, nil
 }
-
-

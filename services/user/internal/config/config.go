@@ -13,7 +13,7 @@ type Config struct {
 	Postgres    PostgresConfig   `mapstructure:"postgres"`
 	RabbitMQ    RabbitMQConfig   `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig     `mapstructure:"pubsub"`
-	GCPStorage  GCPStorageConfig `mapstructure:"gcp_storage"`
+	MediaStorage  MediaStorageConfig  `mapstructure:"media_storage"`
 }
 
 type GRPCConfig struct {
@@ -39,12 +39,13 @@ type PubSubConfig struct {
 	ProjectID string `mapstructure:"project_id"`
 }
 
-type GCPStorageConfig struct {
+type MediaStorageConfig struct {
 	Bucket          string        `mapstructure:"bucket"`
 	CredentialsFile string        `mapstructure:"credentials_file"`
+	SignerEmail     string        `mapstructure:"signer_email"`
+	PrivateKeyPath  string        `mapstructure:"private_key_path"`
 	URLExpiry       time.Duration `mapstructure:"url_expiry"`
-	Endpoint        string        `mapstructure:"endpoint"` // For GCS emulator
-	ProjectID       string        `mapstructure:"project_id"`
+	Endpoint        string        `mapstructure:"endpoint"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -88,11 +89,12 @@ func bindEnvVars(v *viper.Viper) {
 		"rabbitmq.dsn",
 		"rabbitmq.exchange_name",
 		"pubsub.project_id",
-		"gcp_storage.bucket",
-		"gcp_storage.credentials_file",
-		"gcp_storage.url_expiry",
-		"gcp_storage.endpoint",
-		"gcp_storage.project_id",
+		"media_storage.bucket",
+		"media_storage.credentials_file",
+		"media_storage.signer_email",
+		"media_storage.private_key_path",
+		"media_storage.url_expiry",
+		"media_storage.endpoint",
 	}
 	for _, key := range keys {
 		_ = v.BindEnv(key)
@@ -117,9 +119,11 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("pubsub.project_id", "qubool-kallyanam-events")
 
-	// GCP Storage defaults
-	v.SetDefault("gcp_storage.bucket", "qubool-kallyanam-user-photos")
-	v.SetDefault("gcp_storage.url_expiry", 24*time.Hour) // 24 hours
-	v.SetDefault("gcp_storage.endpoint", "")             // Empty for production GCS
-	v.SetDefault("gcp_storage.project_id", "qubool-kallyanam")
+	// Media Storage defaults
+	v.SetDefault("media_storage.bucket", "qubool-kallyanam-media")
+	v.SetDefault("media_storage.credentials_file", "secrets/gcs-service-account.json")
+	v.SetDefault("media_storage.signer_email", "")
+	v.SetDefault("media_storage.private_key_path", "secrets/signer_private_key.pem")
+	v.SetDefault("media_storage.url_expiry", 15*time.Minute)
+	v.SetDefault("media_storage.endpoint", "http://localhost:4443")
 }

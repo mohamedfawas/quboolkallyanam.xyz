@@ -10,6 +10,15 @@ import (
 	"google.golang.org/api/option"
 )
 
+type MediaStorageConfig struct {
+	Bucket          string        // GCS bucket name (required)
+	CredentialsFile string        // path to service‐account JSON (only for real GCS)
+	SignerEmail     string        // service account email for SignedURL (optional)
+	PrivateKeyPath  string        // path to PEM for SignedURL (optional)
+	URLExpiry       time.Duration // default expiry for signed URLs
+	Endpoint        string        // emulator endpoint, e.g. "http://localhost:4443"; empty → real GCS
+}
+
 type GCSStore struct {
 	client      *storage.Client
 	bucket      string
@@ -19,18 +28,27 @@ type GCSStore struct {
 
 func NewGCSStore(
 	ctx context.Context,
-	bucket string,
-	credsFile string,
-	signerEmail string,
-	privateKeyPath string,
+	config MediaStorageConfig,
 ) (*GCSStore, error) {
-	if bucket == "" {
+	if config.Bucket == "" {
 		return nil, fmt.Errorf("bucket name is required")
 	}
 
+	// Build client options
 	opts := []option.ClientOption{}
-	if credsFile != "" {
-		opts = append(opts, option.WithCredentialsFile(credsFile))
+	if config.Endpoint != "" {
+		// DEV: hit emulator, no auth
+		opts = append(opts,
+			option.WithEndpoint(config.Endpoint),
+			option.WithoutAuthentication(),
+		)
+	} else {
+		// PROD: real GCS, load creds file if provided
+		if config.CredentialsFile != "" {
+			opts = append(opts,
+				option.WithCredentialsFile(config.CredentialsFile),
+			)
+		}
 	}
 
 	cli, err := storage.NewClient(ctx, opts...)
@@ -38,23 +56,26 @@ func NewGCSStore(
 		return nil, fmt.Errorf("gcs client: %w", err)
 	}
 
+	// Load private key if path provided (for Signed URLs)
 	var pk []byte
-	if privateKeyPath != "" {
-		pk, err = os.ReadFile(privateKeyPath)
+	if config.PrivateKeyPath != "" {
+		pk, err = os.ReadFile(config.PrivateKeyPath)
 		if err != nil {
+			cli.Close()
 			return nil, fmt.Errorf("read private key: %w", err)
 		}
 	}
 
-	// Validate signer email if private key is provided
-	if len(pk) > 0 && signerEmail == "" {
+	// If you’ve loaded a key, require a signer email
+	if len(pk) > 0 && config.SignerEmail == "" {
+		cli.Close()
 		return nil, fmt.Errorf("signer email is required when private key is provided")
-	}
+	}	
 
 	return &GCSStore{
 		client:      cli,
-		bucket:      bucket,
-		signerEmail: signerEmail,
+		bucket:      config.Bucket,
+		signerEmail: config.SignerEmail,
 		privateKey:  pk,
 	}, nil
 }
