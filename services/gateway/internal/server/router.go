@@ -54,7 +54,7 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 				middleware.RequireRole(constants.RoleAdmin),
 				s.authHandler.AdminGetUsers)
 			adminAuth.GET("/user", middleware.AuthMiddleware(s.jwtManager),
-				middleware.RequireRole(constants.RoleAdmin),
+				middleware.RequireRole(constants.RoleAdmin),  
 				s.authHandler.AdminGetUserByField)
 		}
 	}
