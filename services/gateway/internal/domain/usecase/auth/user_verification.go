@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/config"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
@@ -15,11 +15,11 @@ func (u *authUsecase) UserVerification(
 	config config.Config) (*dto.UserVerificationResponse, error) {
 
 	if !validation.IsValidEmail(req.Email) {
-		return nil, errors.ErrInvalidEmail
+		return nil, apperrors.ErrInvalidEmail
 	}
 
 	if !validation.IsValidOTP(req.OTP, config.OTP.Length) {
-		return nil, errors.ErrInvalidOTP
+		return nil, apperrors.ErrInvalidOTP
 	}
 
 	return u.authClient.UserVerification(ctx, req)

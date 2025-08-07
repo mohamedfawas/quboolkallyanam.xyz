@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
+	"go.uber.org/zap"
 )
 
 // @Summary User logout
@@ -14,26 +14,38 @@ import (
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param user_logout_request body dto.UserLogoutRequest true "User logout request"
 // @Success 200 {object} dto.UserLogoutResponse "User logout response"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
 // @Security BearerAuth
 // @Router /api/v1/auth/user/logout [post]
 func (h *AuthHandler) UserLogout(c *gin.Context) {
+	authCtx, err := contextutils.ExtractAuthContext(c)
+	if err != nil {
+		apiresponse.Error(c, err, nil)
+		return
+	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, authCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
+	)
+
 	accessToken, exists := c.Get(constants.ContextKeyAccessToken)
 	if !exists {
-		log.Printf("Access token not found in context")
-		apiresponse.Fail(c, fmt.Errorf("access token not found in context"))
+		apiresponse.Error(c, apperrors.ErrAccessTokenNotFound, nil)
 		return
 	}
 
-	err := h.authUsecase.UserLogout(c.Request.Context(), accessToken.(string))
+	err = h.authUsecase.UserLogout(authCtx.Ctx, accessToken.(string))
 	if err != nil {
-		log.Printf("User logout failed: %v", err)
-		apiresponse.Fail(c, err)
+		if apperrors.ShouldLogError(err) {
+			log.Error("Failed to logout", zap.Error(err))
+		}
+		apiresponse.Error(c, err, nil)
 		return
 	}
 
+	log.Info("User logged out successfully")
 	apiresponse.Success(c, "User logged out successfully", nil)
 }

@@ -15,4 +15,7 @@ type AuthClient interface {
 	AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error)
 	AdminLogout(ctx context.Context, accessToken string) error
 	RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error)
+	BlockUser(ctx context.Context, req dto.BlockUserRequest) (*dto.BlockUserResponse, error)
+	GetUsers(ctx context.Context, req dto.GetUsersRequest) (*dto.GetUsersResponse, error)
+	GetUserByField(ctx context.Context, req dto.GetUserByFieldRequest) (*dto.GetUserByFieldResponse, error)
 }

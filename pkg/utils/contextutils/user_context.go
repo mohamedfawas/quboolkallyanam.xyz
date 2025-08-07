@@ -89,3 +89,30 @@ func PrepareGrpcContext(ctx context.Context) (context.Context, error) {
 
 	return ctx, nil
 }
+
+type RequestIDContext struct {
+	RequestID string
+}
+
+
+func ExtractRequestIDFromGrpcContext(ctx context.Context) (*RequestIDContext, error) {
+	requestID, err := GetRequestID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get request ID from context: %w", err)
+	}
+
+	return &RequestIDContext{
+		RequestID: requestID,
+	}, nil
+}
+
+func PrepareRequestIDForGrpcContext(ctx context.Context) (context.Context, error) {
+	requestID, ok := ctx.Value(constants.ContextKeyRequestID).(string)
+	if !ok {
+		return nil, fmt.Errorf("request ID context missing")
+	}
+
+	ctx = SetRequestIDContext(ctx, requestID)
+
+	return ctx, nil
+}

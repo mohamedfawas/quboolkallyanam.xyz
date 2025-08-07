@@ -1,71 +1,116 @@
 basePath: /api/v1
 definitions:
-  dto.AdminLoginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  dto.AdminLoginResponse:
-    properties:
-      access_token:
-        type: string
-      access_token_expires_at:
-        type: string
-      refresh_token:
-        type: string
-      refresh_token_expires_at:
-        type: string
-    type: object
-  dto.AdminLogoutRequest:
-    properties:
-      refresh_token:
-        type: string
-    required:
-    - refresh_token
-    type: object
-  dto.AdminLogoutResponse:
-    properties:
-      success:
-        type: boolean
-    type: object
-  dto.ErrorResponse:
+  dto.BadRequestError:
     properties:
       error:
-        example: Email is not valid
-        type: string
+        $ref: '#/definitions/dto.ErrorInfo'
       message:
-        example: Invalid input
+        example: Please check the request parameters
         type: string
-      status:
-        example: 400
-        type: integer
+      request_id:
+        example: req_123
+        type: string
+      success:
+        example: false
+        type: boolean
+      timestamp:
+        example: "2025-01-27T10:30:00Z"
+        type: string
     type: object
-  dto.RefreshTokenRequest:
+  dto.ConflictError:
     properties:
-      refresh_token:
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        example: The resource you are looking for might have been removed, had its
+          name changed, or is temporarily unavailable.
         type: string
-    required:
-    - refresh_token
+      request_id:
+        example: req_123
+        type: string
+      success:
+        example: false
+        type: boolean
+      timestamp:
+        example: "2025-01-27T10:30:00Z"
+        type: string
+    type: object
+  dto.ErrorInfo:
+    properties:
+      code:
+        type: string
+      details:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+    type: object
+  dto.InternalServerError:
+    properties:
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        example: Something went wrong. Please try again later.
+        type: string
+      request_id:
+        example: req_123
+        type: string
+      success:
+        example: false
+        type: boolean
+      timestamp:
+        example: "2025-01-27T10:30:00Z"
+        type: string
+    type: object
+  dto.NotFoundError:
+    properties:
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        example: The resource you are looking for might have been removed, had its
+          name changed, or is temporarily unavailable.
+        type: string
+      request_id:
+        example: req_123
+        type: string
+      success:
+        example: false
+        type: boolean
+      timestamp:
+        example: "2025-01-27T10:30:00Z"
+        type: string
     type: object
   dto.RefreshTokenResponse:
     properties:
       access_token:
         type: string
-      access_token_expires_at:
-        type: string
+      expires_in:
+        type: integer
       refresh_token:
         type: string
-      refresh_token_expires_at:
+    type: object
+  dto.UnauthorizedError:
+    properties:
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        example: You are not authorized to access this resource
+        type: string
+      request_id:
+        example: req_123
+        type: string
+      success:
+        example: false
+        type: boolean
+      timestamp:
+        example: "2025-01-27T10:30:00Z"
         type: string
     type: object
   dto.UserDeleteRequest:
     properties:
       password:
+        minLength: 8
         type: string
     required:
     - password
@@ -80,6 +125,7 @@ definitions:
       email:
         type: string
       password:
+        minLength: 8
         type: string
     required:
     - email
@@ -89,19 +135,10 @@ definitions:
     properties:
       access_token:
         type: string
-      access_token_expires_at:
-        type: string
+      expires_in:
+        type: integer
       refresh_token:
         type: string
-      refresh_token_expires_at:
-        type: string
-    type: object
-  dto.UserLogoutRequest:
-    properties:
-      refresh_token:
-        type: string
-    required:
-    - refresh_token
     type: object
   dto.UserLogoutResponse:
     properties:
@@ -113,6 +150,7 @@ definitions:
       email:
         type: string
       password:
+        minLength: 8
         type: string
       phone:
         type: string
@@ -123,15 +161,9 @@ definitions:
     type: object
   dto.UserRegisterResponse:
     properties:
-      created_at:
-        type: string
       email:
         type: string
-      id:
-        type: string
       phone:
-        type: string
-      updated_at:
         type: string
     type: object
   dto.UserVerificationRequest:
@@ -146,12 +178,8 @@ definitions:
     type: object
   dto.UserVerificationResponse:
     properties:
-      email:
-        type: string
-      id:
-        type: string
-      phone:
-        type: string
+      success:
+        type: boolean
     type: object
 host: quboolkallyanam.xyz
 info:
@@ -167,100 +195,6 @@ info:
   title: Qubool Kallyanam Gateway API
   version: "1.0"
 paths:
-  /api/v1/auth/admin/login:
-    post:
-      consumes:
-      - application/json
-      description: Admin login
-      parameters:
-      - description: Admin login request
-        in: body
-        name: admin_login_request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.AdminLoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Admin login response
-          schema:
-            $ref: '#/definitions/dto.AdminLoginResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      summary: Admin login
-      tags:
-      - Auth
-  /api/v1/auth/admin/logout:
-    post:
-      consumes:
-      - application/json
-      description: Admin logout
-      parameters:
-      - description: Admin logout request
-        in: body
-        name: admin_logout_request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.AdminLogoutRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Admin logout response
-          schema:
-            $ref: '#/definitions/dto.AdminLogoutResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Admin logout
-      tags:
-      - Auth
-  /api/v1/auth/refresh:
-    post:
-      consumes:
-      - application/json
-      description: Refresh token
-      parameters:
-      - description: Refresh token request
-        in: body
-        name: refresh_token_request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RefreshTokenRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Refresh token response
-          schema:
-            $ref: '#/definitions/dto.RefreshTokenResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Refresh token
-      tags:
-      - Auth
   /api/v1/auth/user/delete:
     post:
       consumes:
@@ -281,13 +215,17 @@ paths:
           schema:
             $ref: '#/definitions/dto.UserDeleteResponse'
         "400":
-          description: Bad request
+          description: Bad request - validation errors
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.InternalServerError'
       security:
       - BearerAuth: []
       summary: User delete
@@ -313,13 +251,17 @@ paths:
           schema:
             $ref: '#/definitions/dto.UserLoginResponse'
         "400":
-          description: Bad request
+          description: Bad request - validation errors
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.InternalServerError'
       summary: User login
       tags:
       - Auth
@@ -328,13 +270,6 @@ paths:
       consumes:
       - application/json
       description: User logout
-      parameters:
-      - description: User logout request
-        in: body
-        name: user_logout_request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UserLogoutRequest'
       produces:
       - application/json
       responses:
@@ -343,16 +278,50 @@ paths:
           schema:
             $ref: '#/definitions/dto.UserLogoutResponse'
         "400":
-          description: Bad request
+          description: Bad request - validation errors
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.BadRequestError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.InternalServerError'
       security:
       - BearerAuth: []
       summary: User logout
+      tags:
+      - Auth
+  /api/v1/auth/user/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh the access token using a valid refresh token passed in
+        headers
+      parameters:
+      - description: Refresh token
+        in: header
+        name: Refresh-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Refresh token response
+          schema:
+            $ref: '#/definitions/dto.RefreshTokenResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      summary: Refresh token
       tags:
       - Auth
   /api/v1/auth/user/register:
@@ -375,13 +344,17 @@ paths:
           schema:
             $ref: '#/definitions/dto.UserRegisterResponse'
         "400":
-          description: Bad request
+          description: Bad request - validation errors
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.BadRequestError'
+        "409":
+          description: Conflict - email/phone already exists
+          schema:
+            $ref: '#/definitions/dto.ConflictError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.InternalServerError'
       summary: User register
       tags:
       - Auth
@@ -405,13 +378,17 @@ paths:
           schema:
             $ref: '#/definitions/dto.UserVerificationResponse'
         "400":
-          description: Bad request
+          description: Bad request - validation errors
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.BadRequestError'
+        "404":
+          description: User not found/OTP expired
+          schema:
+            $ref: '#/definitions/dto.NotFoundError'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.InternalServerError'
       summary: User verification
       tags:
       - Auth

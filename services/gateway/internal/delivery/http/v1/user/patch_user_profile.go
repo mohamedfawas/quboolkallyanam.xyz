@@ -10,17 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Partial update user profile
-// @Description Partial update user profile
-// @Tags User
-// @Accept json
-// @Produce json
-// @Param user_profile_patch_request body dto.UserProfilePatchRequest true "User profile patch request"
-// @Success 200 {object} apiresponse.Response "User profile updated successfully"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Router /api/v1/user/profile [patch]
 
 func (h *UserHandler) PatchUserProfile(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)

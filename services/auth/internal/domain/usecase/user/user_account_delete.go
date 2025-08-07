@@ -3,12 +3,12 @@ package user
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"time"
+
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 )
 
 func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, password string) error {
@@ -18,15 +18,14 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 	}
 
 	if user == nil {
-		return appErrors.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	if !hash.VerifyPassword(user.PasswordHash, password) {
-		return appErrors.ErrInvalidCredentials
+		return apperrors.ErrInvalidCredentials
 	}
 
-	now := timeutil.NowIST()
-	if err := u.userRepository.SoftDeleteUser(ctx, userID, now); err != nil {
+	if err := u.userRepository.SoftDeleteUser(ctx, userID); err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
@@ -34,18 +33,16 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	now = timeutil.NowIST()
 	if u.messageBroker != nil {
 		userDeletedEvent := map[string]interface{}{
 			constants.UserID:    userID,
 			constants.EventType: constants.EventUserDeleted,
-			constants.Timestamp: now,
+			constants.Timestamp: time.Now().UTC(),
 		}
 		if err := u.messageBroker.Publish(constants.EventUserDeleted, userDeletedEvent); err != nil {
-			return fmt.Errorf("failed to publish user deleted event: %w", err)
+			// No need to fail the process, the logging will be done in the message broker
 		}
 	}
 
-	log.Printf("User account deleted successfully : %v", userID)
 	return nil
 }

@@ -10,18 +10,6 @@ import (
 	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
 )
 
-// @Summary Get active subscription by user ID
-// @Description Get the active subscription for the authenticated user
-// @Tags Payment
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} dto.ActiveSubscription "Active subscription details"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 404 {object} apiresponse.Response "No active subscription found"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Router /api/v1/payment/subscription/active [get]
 func (h *PaymentHandler) GetActiveSubscriptionByUserID(c *gin.Context) {
 	userID, exists := c.Get(constants.ContextKeyUserID)
 	if !exists {

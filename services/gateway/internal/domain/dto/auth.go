@@ -17,7 +17,7 @@ type UserVerificationRequest struct {
 }
 
 type UserVerificationResponse struct {
-	Success string `json:"success"`
+	Success bool `json:"success"`
 }
 
 type UserLoginRequest struct {
@@ -66,4 +66,44 @@ type RefreshTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int64  `json:"expires_in"`
+}
+
+type BlockUserRequest struct {
+	Field string `json:"field" binding:"required,oneof=email phone id"`
+	Value string `json:"value" binding:"required"`
+}
+
+type BlockUserResponse struct {
+	Success bool `json:"success"`
+}
+
+type GetUsersRequest struct {
+	Page  int32 `json:"page" binding:"required,min=1"`
+	Limit int32 `json:"limit" binding:"required,min=1,max=50"`
+}
+
+type GetUserResponse struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	Phone         string `json:"phone"`
+	EmailVerified bool   `json:"email_verified"`
+	PremiumUntil  *string `json:"premium_until,omitempty"`
+	LastLoginAt   *string `json:"last_login_at,omitempty"`
+	IsBlocked     bool   `json:"is_blocked"`
+	CreatedAt     string `json:"created_at"`
+	UpdatedAt     string `json:"updated_at"`
+}
+
+type GetUsersResponse struct {
+	Users []GetUserResponse `json:"users"`
+}
+
+
+type GetUserByFieldRequest struct {
+	Field string `json:"field" binding:"required,oneof=email phone id"`
+	Value string `json:"value" binding:"required"`
+}
+
+type GetUserByFieldResponse struct {
+	User GetUserResponse `json:"user"`
 }

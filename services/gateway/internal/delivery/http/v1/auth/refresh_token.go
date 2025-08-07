@@ -1,33 +1,42 @@
 package auth
 
 import (
-	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"go.uber.org/zap"
 )
 
 // @Summary Refresh token
-// @Description Refresh token
+// @Description Refresh the access token using a valid refresh token passed in headers
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param refresh_token_request body dto.RefreshTokenRequest true "Refresh token request"
+// @Param Refresh-Token header string true "Refresh token"
 // @Success 200 {object} dto.RefreshTokenResponse "Refresh token response"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Security BearerAuth
-// @Router /api/v1/auth/refresh [post]
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized - invalid credentials"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Router /api/v1/auth/user/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	reqCtx, err := contextutils.ExtractRequestContext(c)
+	if err != nil {
+		h.logger.Error("Failed to extract context data", zap.Error(err))
+		apiresponse.Error(c, err, nil)
+		return
+	}
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, reqCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+	)
+
 	refreshToken := c.GetHeader(constants.HeaderRefreshToken)
 	if strings.TrimSpace(refreshToken) == "" {
-		log.Printf("Refresh token not found in header")
-		apiresponse.Fail(c, fmt.Errorf("refresh token not found in header"))
+		apiresponse.Error(c, apperrors.ErrRefreshTokenNotFound, nil)
 		return
 	}
 
@@ -35,12 +44,15 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		RefreshToken: refreshToken,
 	}
 
-	resp, err := h.authUsecase.RefreshToken(c.Request.Context(), req)
+	resp, err := h.authUsecase.RefreshToken(reqCtx.Ctx, req)
 	if err != nil {
-		log.Printf("Failed to refresh token: %v", err)
-		apiresponse.Fail(c, err)
+		if apperrors.ShouldLogError(err) {
+			log.Error("Failed to refresh token", zap.Error(err))
+		}
+		apiresponse.Error(c, err, nil)
 		return
 	}
 
+	log.Info("Token refreshed successfully")
 	apiresponse.Success(c, "Token refreshed successfully", resp)
 }

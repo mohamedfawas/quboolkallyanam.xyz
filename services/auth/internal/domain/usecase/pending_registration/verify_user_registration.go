@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	timeutil "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/timeutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 )
 
@@ -20,27 +20,27 @@ func (u *pendingRegistrationUsecase) VerifyUserRegistration(ctx context.Context,
 	}
 
 	if pendingRegistration == nil {
-		return appErrors.ErrPendingRegistrationNotFound
+		return apperrors.ErrPendingRegistrationNotFound
 	}
 
 	OTPKey := fmt.Sprintf("%s%s", constants.RedisPrefixOTP, email)
 	valid, err := u.validateOTP(ctx, otp, OTPKey)
 	if err != nil {
-		if errors.Is(err, appErrors.ErrOTPNotFound) {
-			return appErrors.ErrOTPNotFound
+		if errors.Is(err, apperrors.ErrOTPNotFound) {
+			return apperrors.ErrOTPNotFound
 		}
 		return fmt.Errorf("failed to validate otp: %w", err)
 	}
 
 	if !valid {
-		return appErrors.ErrInvalidOTP
+		return apperrors.ErrInvalidOTP
 	}
 
 	if err := u.otpRepository.DeleteOTP(ctx, OTPKey); err != nil {
 		return fmt.Errorf("failed to delete after otp validation: %w", err)
 	}
 
-	now := timeutil.NowIST()
+	now := time.Now().UTC()
 	user := &entity.User{
 		Email:         pendingRegistration.Email,
 		Phone:         pendingRegistration.Phone,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	customerrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 )
 
 type JWTConfig struct {
@@ -60,7 +60,7 @@ func (j *JWTManager) generateToken(userID, role string, ttl time.Duration) (stri
 func (j *JWTManager) VerifyToken(tokenStr string) (*AppClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &AppClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, customerrors.ErrInvalidToken
+			return nil, apperrors.ErrInvalidToken
 		}
 		return []byte(j.config.SecretKey), nil
 	})
@@ -68,21 +68,21 @@ func (j *JWTManager) VerifyToken(tokenStr string) (*AppClaims, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, jwt.ErrTokenExpired):
-			return nil, customerrors.ErrExpiredToken
+			return nil, apperrors.ErrExpiredToken
 		case errors.Is(err, jwt.ErrTokenNotValidYet):
-			return nil, customerrors.ErrTokenNotActive
+			return nil, apperrors.ErrTokenNotActive
 		default:
-			return nil, customerrors.ErrInvalidToken
+			return nil, apperrors.ErrInvalidToken
 		}
 	}
 
 	claims, ok := token.Claims.(*AppClaims)
 	if !ok || !token.Valid {
-		return nil, customerrors.ErrInvalidToken
+		return nil, apperrors.ErrInvalidToken
 	}
 
 	if claims.Issuer != j.config.Issuer {
-		return nil, customerrors.ErrInvalidToken
+		return nil, apperrors.ErrInvalidToken
 	}
 
 	return claims, nil

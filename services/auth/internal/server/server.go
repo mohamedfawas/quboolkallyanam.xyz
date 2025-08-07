@@ -44,9 +44,13 @@ type Server struct {
 	messagingClient messageBroker.Client
 	jwtManager      jwt.JWTManager
 	logger          *zap.Logger
+	ctx             context.Context 
+	cancel          context.CancelFunc
 }
 
 func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
+	// Create child context with cancellation
+	serverCtx, cancel := context.WithCancel(ctx)
 	///////////////////////// POSTGRES INITIALIZATION /////////////////////////
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
@@ -154,6 +158,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	adminUC := adminUsecase.NewAdminUsecase(
 		adminRepo,
 		tokenRepo,
+		userRepo,
 		*jwtManager,
 		config,
 	)
@@ -172,7 +177,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	rootLogger.Info("Payment Event Handler Initialized")
 
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
-	authHandler := grpcHandlerv1.NewAuthHandler(userUC, adminUC, pendingRegistrationUC, config)
+	authHandler := grpcHandlerv1.NewAuthHandler(userUC, adminUC, pendingRegistrationUC, config, rootLogger)
 	authpbv1.RegisterAuthServiceServer(grpcServer, authHandler)
 	rootLogger.Info("gRPC Handler Initialized")
 
@@ -184,7 +189,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 
 	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {
-		if err := paymentEventHandler.StartListening(ctx); err != nil {
+		if err := paymentEventHandler.StartListening(serverCtx); err != nil {
 			rootLogger.Error("Failed to start payment event handler", zap.Error(err))
 		}
 	}()
@@ -197,6 +202,8 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		messagingClient: messagingClient,
 		jwtManager:      *jwtManager,
 		logger:          rootLogger,
+		ctx:             serverCtx,
+		cancel:          cancel,
 	}
 
 	return server, nil
@@ -212,6 +219,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop() {
+	s.cancel()	
 	s.grpcServer.GracefulStop()
 
 	// Close messaging client first

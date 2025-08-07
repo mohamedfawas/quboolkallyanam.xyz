@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package auth.v1;
 
-import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/auth/v1;authpbv1";
 
@@ -10,11 +11,14 @@ service AuthService {
     rpc UserRegister(UserRegisterRequest) returns (UserRegisterResponse);
     rpc UserVerification(UserVerificationRequest) returns (UserVerificationResponse);
     rpc UserLogin(UserLoginRequest) returns (UserLoginResponse);
-    rpc UserLogout(UserLogoutRequest) returns (google.protobuf.Empty);
-    rpc UserDelete(UserDeleteRequest) returns (google.protobuf.Empty);
+    rpc UserLogout(UserLogoutRequest) returns (UserLogoutResponse);
+    rpc UserDelete(UserDeleteRequest) returns (UserDeleteResponse);
     rpc AdminLogin(AdminLoginRequest) returns (AdminLoginResponse);
-    rpc AdminLogout(AdminLogoutRequest) returns (google.protobuf.Empty);
+    rpc AdminLogout(AdminLogoutRequest) returns (AdminLogoutResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+    rpc BlockUser(BlockUserRequest) returns (BlockUserResponse);
+    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+    rpc GetUserByField(GetUserByFieldRequest) returns (GetUserByFieldResponse);
 }
 
 message UserRegisterRequest {
@@ -34,7 +38,7 @@ message UserVerificationRequest {
 }
 
 message UserVerificationResponse {
-    string success = 1;
+    google.protobuf.BoolValue success = 1;
 }
 
 message UserLoginRequest {
@@ -53,7 +57,7 @@ message UserLogoutRequest {
 }
 
 message UserLogoutResponse {
-    google.protobuf.Empty success = 1;
+    google.protobuf.BoolValue success = 1;
 }
 
 message AdminLoginRequest {
@@ -72,11 +76,15 @@ message AdminLogoutRequest {
 }
 
 message AdminLogoutResponse {
-    google.protobuf.Empty success = 1;
+    google.protobuf.BoolValue success = 1;
 }
 
 message UserDeleteRequest {
     string password = 1;
+}
+
+message UserDeleteResponse {
+    google.protobuf.BoolValue success = 1;
 }
 
 message RefreshTokenRequest {
@@ -87,4 +95,43 @@ message RefreshTokenResponse {
     string access_token = 1;
     string refresh_token = 2;
     int64 expires_in = 3;
+}
+
+message BlockUserRequest {
+    string field = 1;
+    string value = 2;
+}
+
+message BlockUserResponse {
+    google.protobuf.BoolValue success = 1;
+}
+
+message GetUsersRequest {
+    int32 page = 1;
+    int32 limit = 2;
+}
+
+message GetUserResponse {
+    string id = 1;
+    string email = 2;
+    string phone = 3;
+    bool email_verified = 4;
+    google.protobuf.Timestamp premium_until = 5;
+    google.protobuf.Timestamp last_login_at = 6;
+    bool is_blocked = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
+
+message GetUsersResponse {
+    repeated GetUserResponse users = 1;
+}
+
+message GetUserByFieldRequest {
+    string field = 1;
+    string value = 2;
+}
+
+message GetUserByFieldResponse {
+    GetUserResponse user = 1;
 }

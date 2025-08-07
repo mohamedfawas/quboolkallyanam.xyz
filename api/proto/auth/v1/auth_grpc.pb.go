@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -28,6 +27,9 @@ const (
 	AuthService_AdminLogin_FullMethodName       = "/auth.v1.AuthService/AdminLogin"
 	AuthService_AdminLogout_FullMethodName      = "/auth.v1.AuthService/AdminLogout"
 	AuthService_RefreshToken_FullMethodName     = "/auth.v1.AuthService/RefreshToken"
+	AuthService_BlockUser_FullMethodName        = "/auth.v1.AuthService/BlockUser"
+	AuthService_GetUsers_FullMethodName         = "/auth.v1.AuthService/GetUsers"
+	AuthService_GetUserByField_FullMethodName   = "/auth.v1.AuthService/GetUserByField"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -37,11 +39,14 @@ type AuthServiceClient interface {
 	UserRegister(ctx context.Context, in *UserRegisterRequest, opts ...grpc.CallOption) (*UserRegisterResponse, error)
 	UserVerification(ctx context.Context, in *UserVerificationRequest, opts ...grpc.CallOption) (*UserVerificationResponse, error)
 	UserLogin(ctx context.Context, in *UserLoginRequest, opts ...grpc.CallOption) (*UserLoginResponse, error)
-	UserLogout(ctx context.Context, in *UserLogoutRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	UserDelete(ctx context.Context, in *UserDeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UserLogout(ctx context.Context, in *UserLogoutRequest, opts ...grpc.CallOption) (*UserLogoutResponse, error)
+	UserDelete(ctx context.Context, in *UserDeleteRequest, opts ...grpc.CallOption) (*UserDeleteResponse, error)
 	AdminLogin(ctx context.Context, in *AdminLoginRequest, opts ...grpc.CallOption) (*AdminLoginResponse, error)
-	AdminLogout(ctx context.Context, in *AdminLogoutRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AdminLogout(ctx context.Context, in *AdminLogoutRequest, opts ...grpc.CallOption) (*AdminLogoutResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
+	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
+	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
+	GetUserByField(ctx context.Context, in *GetUserByFieldRequest, opts ...grpc.CallOption) (*GetUserByFieldResponse, error)
 }
 
 type authServiceClient struct {
@@ -82,9 +87,9 @@ func (c *authServiceClient) UserLogin(ctx context.Context, in *UserLoginRequest,
 	return out, nil
 }
 
-func (c *authServiceClient) UserLogout(ctx context.Context, in *UserLogoutRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *authServiceClient) UserLogout(ctx context.Context, in *UserLogoutRequest, opts ...grpc.CallOption) (*UserLogoutResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(UserLogoutResponse)
 	err := c.cc.Invoke(ctx, AuthService_UserLogout_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -92,9 +97,9 @@ func (c *authServiceClient) UserLogout(ctx context.Context, in *UserLogoutReques
 	return out, nil
 }
 
-func (c *authServiceClient) UserDelete(ctx context.Context, in *UserDeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *authServiceClient) UserDelete(ctx context.Context, in *UserDeleteRequest, opts ...grpc.CallOption) (*UserDeleteResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(UserDeleteResponse)
 	err := c.cc.Invoke(ctx, AuthService_UserDelete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -112,9 +117,9 @@ func (c *authServiceClient) AdminLogin(ctx context.Context, in *AdminLoginReques
 	return out, nil
 }
 
-func (c *authServiceClient) AdminLogout(ctx context.Context, in *AdminLogoutRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *authServiceClient) AdminLogout(ctx context.Context, in *AdminLogoutRequest, opts ...grpc.CallOption) (*AdminLogoutResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(AdminLogoutResponse)
 	err := c.cc.Invoke(ctx, AuthService_AdminLogout_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -132,6 +137,36 @@ func (c *authServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRe
 	return out, nil
 }
 
+func (c *authServiceClient) BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BlockUserResponse)
+	err := c.cc.Invoke(ctx, AuthService_BlockUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUsersResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetUserByField(ctx context.Context, in *GetUserByFieldRequest, opts ...grpc.CallOption) (*GetUserByFieldResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserByFieldResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetUserByField_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -139,11 +174,14 @@ type AuthServiceServer interface {
 	UserRegister(context.Context, *UserRegisterRequest) (*UserRegisterResponse, error)
 	UserVerification(context.Context, *UserVerificationRequest) (*UserVerificationResponse, error)
 	UserLogin(context.Context, *UserLoginRequest) (*UserLoginResponse, error)
-	UserLogout(context.Context, *UserLogoutRequest) (*emptypb.Empty, error)
-	UserDelete(context.Context, *UserDeleteRequest) (*emptypb.Empty, error)
+	UserLogout(context.Context, *UserLogoutRequest) (*UserLogoutResponse, error)
+	UserDelete(context.Context, *UserDeleteRequest) (*UserDeleteResponse, error)
 	AdminLogin(context.Context, *AdminLoginRequest) (*AdminLoginResponse, error)
-	AdminLogout(context.Context, *AdminLogoutRequest) (*emptypb.Empty, error)
+	AdminLogout(context.Context, *AdminLogoutRequest) (*AdminLogoutResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
+	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
+	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
+	GetUserByField(context.Context, *GetUserByFieldRequest) (*GetUserByFieldResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -163,20 +201,29 @@ func (UnimplementedAuthServiceServer) UserVerification(context.Context, *UserVer
 func (UnimplementedAuthServiceServer) UserLogin(context.Context, *UserLoginRequest) (*UserLoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserLogin not implemented")
 }
-func (UnimplementedAuthServiceServer) UserLogout(context.Context, *UserLogoutRequest) (*emptypb.Empty, error) {
+func (UnimplementedAuthServiceServer) UserLogout(context.Context, *UserLogoutRequest) (*UserLogoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserLogout not implemented")
 }
-func (UnimplementedAuthServiceServer) UserDelete(context.Context, *UserDeleteRequest) (*emptypb.Empty, error) {
+func (UnimplementedAuthServiceServer) UserDelete(context.Context, *UserDeleteRequest) (*UserDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserDelete not implemented")
 }
 func (UnimplementedAuthServiceServer) AdminLogin(context.Context, *AdminLoginRequest) (*AdminLoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminLogin not implemented")
 }
-func (UnimplementedAuthServiceServer) AdminLogout(context.Context, *AdminLogoutRequest) (*emptypb.Empty, error) {
+func (UnimplementedAuthServiceServer) AdminLogout(context.Context, *AdminLogoutRequest) (*AdminLogoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminLogout not implemented")
 }
 func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
+}
+func (UnimplementedAuthServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlockUser not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUserByField(context.Context, *GetUserByFieldRequest) (*GetUserByFieldResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserByField not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -343,6 +390,60 @@ func _AuthService_RefreshToken_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_BlockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).BlockUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_BlockUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).BlockUser(ctx, req.(*BlockUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUsers(ctx, req.(*GetUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetUserByField_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByFieldRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUserByField(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetUserByField_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUserByField(ctx, req.(*GetUserByFieldRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -381,6 +482,18 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RefreshToken",
 			Handler:    _AuthService_RefreshToken_Handler,
+		},
+		{
+			MethodName: "BlockUser",
+			Handler:    _AuthService_BlockUser_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _AuthService_GetUsers_Handler,
+		},
+		{
+			MethodName: "GetUserByField",
+			Handler:    _AuthService_GetUserByField_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

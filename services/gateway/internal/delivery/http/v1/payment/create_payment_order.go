@@ -11,17 +11,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-// @Summary Create payment order
-// @Description Create payment order
-// @Tags Payment
-// @Accept json
-// @Produce json
-// @Param payment_order_request body dto.PaymentOrderRequest true "Payment order request"
-// @Success 200 {object} dto.PaymentOrderResponse "Payment order response"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Router /api/v1/payment/order [post]
+
 func (h *PaymentHandler) CreatePaymentOrder(c *gin.Context) {
 	var req dto.PaymentOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

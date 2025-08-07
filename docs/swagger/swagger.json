@@ -18,154 +18,6 @@
     "host": "quboolkallyanam.xyz",
     "basePath": "/api/v1",
     "paths": {
-        "/api/v1/auth/admin/login": {
-            "post": {
-                "description": "Admin login",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Admin login",
-                "parameters": [
-                    {
-                        "description": "Admin login request",
-                        "name": "admin_login_request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AdminLoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Admin login response",
-                        "schema": {
-                            "$ref": "#/definitions/dto.AdminLoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/admin/logout": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Admin logout",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Admin logout",
-                "parameters": [
-                    {
-                        "description": "Admin logout request",
-                        "name": "admin_logout_request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AdminLogoutRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Admin logout response",
-                        "schema": {
-                            "$ref": "#/definitions/dto.AdminLogoutResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/refresh": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Refresh token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Refresh token",
-                "parameters": [
-                    {
-                        "description": "Refresh token request",
-                        "name": "refresh_token_request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshTokenRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Refresh token response",
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshTokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/auth/user/delete": {
             "post": {
                 "security": [
@@ -203,15 +55,21 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - validation errors",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.BadRequestError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UnauthorizedError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.InternalServerError"
                         }
                     }
                 }
@@ -249,15 +107,21 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - validation errors",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.BadRequestError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UnauthorizedError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.InternalServerError"
                         }
                     }
                 }
@@ -281,17 +145,6 @@
                     "Auth"
                 ],
                 "summary": "User logout",
-                "parameters": [
-                    {
-                        "description": "User logout request",
-                        "name": "user_logout_request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserLogoutRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "User logout response",
@@ -300,15 +153,65 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - validation errors",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.BadRequestError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.InternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/user/refresh": {
+            "post": {
+                "description": "Refresh the access token using a valid refresh token passed in headers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Refresh token",
+                        "name": "Refresh-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Refresh token response",
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefreshTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BadRequestError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UnauthorizedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.InternalServerError"
                         }
                     }
                 }
@@ -346,15 +249,21 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - validation errors",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.BadRequestError"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict - email/phone already exists",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ConflictError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.InternalServerError"
                         }
                     }
                 }
@@ -392,15 +301,21 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad request - validation errors",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.BadRequestError"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found/OTP expired",
+                        "schema": {
+                            "$ref": "#/definitions/dto.NotFoundError"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/dto.InternalServerError"
                         }
                     }
                 }
@@ -408,82 +323,116 @@
         }
     },
     "definitions": {
-        "dto.AdminLoginRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.AdminLoginResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "access_token_expires_at": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "refresh_token_expires_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.AdminLogoutRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.AdminLogoutResponse": {
-            "type": "object",
-            "properties": {
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "dto.ErrorResponse": {
+        "dto.BadRequestError": {
             "type": "object",
             "properties": {
                 "error": {
-                    "type": "string",
-                    "example": "Email is not valid"
+                    "$ref": "#/definitions/dto.ErrorInfo"
                 },
                 "message": {
                     "type": "string",
-                    "example": "Invalid input"
+                    "example": "Please check the request parameters"
                 },
-                "status": {
-                    "type": "integer",
-                    "example": 400
+                "request_id": {
+                    "type": "string",
+                    "example": "req_123"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-01-27T10:30:00Z"
                 }
             }
         },
-        "dto.RefreshTokenRequest": {
+        "dto.ConflictError": {
             "type": "object",
-            "required": [
-                "refresh_token"
-            ],
             "properties": {
-                "refresh_token": {
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "The resource you are looking for might have been removed, had its name changed, or is temporarily unavailable."
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "req_123"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-01-27T10:30:00Z"
+                }
+            }
+        },
+        "dto.ErrorInfo": {
+            "type": "object",
+            "properties": {
+                "code": {
                     "type": "string"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.InternalServerError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Something went wrong. Please try again later."
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "req_123"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-01-27T10:30:00Z"
+                }
+            }
+        },
+        "dto.NotFoundError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "The resource you are looking for might have been removed, had its name changed, or is temporarily unavailable."
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "req_123"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-01-27T10:30:00Z"
                 }
             }
         },
@@ -493,14 +442,35 @@
                 "access_token": {
                     "type": "string"
                 },
-                "access_token_expires_at": {
-                    "type": "string"
+                "expires_in": {
+                    "type": "integer"
                 },
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.UnauthorizedError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/dto.ErrorInfo"
                 },
-                "refresh_token_expires_at": {
-                    "type": "string"
+                "message": {
+                    "type": "string",
+                    "example": "You are not authorized to access this resource"
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "req_123"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-01-27T10:30:00Z"
                 }
             }
         },
@@ -511,7 +481,8 @@
             ],
             "properties": {
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 8
                 }
             }
         },
@@ -534,7 +505,8 @@
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 8
                 }
             }
         },
@@ -544,23 +516,9 @@
                 "access_token": {
                     "type": "string"
                 },
-                "access_token_expires_at": {
-                    "type": "string"
+                "expires_in": {
+                    "type": "integer"
                 },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "refresh_token_expires_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.UserLogoutRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
                 "refresh_token": {
                     "type": "string"
                 }
@@ -586,7 +544,8 @@
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 8
                 },
                 "phone": {
                     "type": "string"
@@ -596,19 +555,10 @@
         "dto.UserRegisterResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
                 "email": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "string"
-                },
                 "phone": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 }
             }
@@ -631,14 +581,8 @@
         "dto.UserVerificationResponse": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
+                "success": {
+                    "type": "boolean"
                 }
             }
         }

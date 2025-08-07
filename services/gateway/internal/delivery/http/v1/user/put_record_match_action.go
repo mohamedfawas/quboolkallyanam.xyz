@@ -11,18 +11,6 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
-// @Summary Record match action
-// @Description Record a match action (like, dislike, etc.)
-// @Tags User
-// @Accept json
-// @Produce json
-// @Param record_match_action_request body dto.RecordMatchActionRequest true "Record match action request"
-// @Success 200 {object} dto.RecordMatchActionResponse "Match action recorded successfully"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Security BearerAuth
-// @Router /api/v1/user/match-action [put]
 func (h *UserHandler) PutRecordMatchAction(c *gin.Context) {
 	var req dto.RecordMatchActionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

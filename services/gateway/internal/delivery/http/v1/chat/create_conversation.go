@@ -10,19 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Create conversation
-// @Description Create a new conversation between users
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Param create_conversation_request body dto.CreateConversationRequest true "Create conversation request"
-// @Success 200 {object} dto.CreateConversationResponse "Conversation created successfully"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Failure 404 {object} apiresponse.Response "User not found"
-// @Security BearerAuth
-// @Router /api/v1/chat/conversation [post]
+
 func (h *ChatHandler) CreateConversation(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {

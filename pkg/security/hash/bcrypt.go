@@ -1,7 +1,8 @@
 package hash
 
 import (
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"fmt"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -10,7 +11,7 @@ const DefaultCost = 12
 func HashPassword(password string) (string, error) {
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), DefaultCost)
 	if err != nil {
-		return "", errors.ErrHashGenerationFailed
+		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
 	return string(hashedBytes), nil
 }

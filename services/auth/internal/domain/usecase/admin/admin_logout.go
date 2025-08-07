@@ -3,28 +3,20 @@ package admin
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 )
 
 func (u *adminUsecase) AdminLogout(ctx context.Context, accessToken string) error {
 	claims, err := u.jwtManager.VerifyToken(accessToken)
 	if err != nil {
-		switch err {
-		case appErrors.ErrExpiredToken:
-			return appErrors.ErrExpiredToken
-		case appErrors.ErrTokenNotActive:
-			return appErrors.ErrTokenNotActive
-		default:
-			return appErrors.ErrInvalidToken
-		}
+		return err
 	}
 
 	if claims.Role != constants.RoleAdmin {
-		return appErrors.ErrUnauthorized
+		return apperrors.ErrUnauthorized
 	}
 
 	tokenID := claims.ID
@@ -35,12 +27,12 @@ func (u *adminUsecase) AdminLogout(ctx context.Context, accessToken string) erro
 	}
 
 	if isBlacklisted {
-		return appErrors.ErrInvalidToken
+		return apperrors.ErrInvalidToken
 	}
 
 	timeUntilExpiry := time.Until(claims.ExpiresAt.Time)
 	if timeUntilExpiry <= 0 {
-		return appErrors.ErrExpiredToken
+		return apperrors.ErrExpiredToken
 	}
 	err = u.tokenRepository.BlacklistToken(ctx, blacklistKey, timeUntilExpiry)
 	if err != nil {
@@ -54,6 +46,5 @@ func (u *adminUsecase) AdminLogout(ctx context.Context, accessToken string) erro
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	log.Printf("Admin logged out successfully : %v", userID)
 	return nil
 }

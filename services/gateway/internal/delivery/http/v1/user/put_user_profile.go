@@ -10,20 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Update user profile
-// @Description Update user profile
-// @Tags User
-// @Accept json
-// @Produce json
-// @Param user_profile_put_request body dto.UserProfilePutRequest true "User profile put request"
-// @Success 200 {object} apiresponse.Response "User profile updated successfully"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 404 {object} apiresponse.Response "User profile not found"
-// @Failure 422 {object} apiresponse.Response "Validation error"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Security BearerAuth
-// @Router /api/v1/user/profile [put]
 func (h *UserHandler) PutUserProfile(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {

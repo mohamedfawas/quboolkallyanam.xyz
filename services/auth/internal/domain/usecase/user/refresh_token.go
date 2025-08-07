@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 )
 
 func (u *userUseCase) RefreshToken(ctx context.Context, refreshToken string) (*entity.TokenPair, error) {
 	claims, err := u.jwtManager.VerifyToken(refreshToken)
 	if err != nil {
-		return nil, appErrors.ErrInvalidToken
+		return nil, err
 	}
 
 	userID := claims.UserID
@@ -24,14 +24,32 @@ func (u *userUseCase) RefreshToken(ctx context.Context, refreshToken string) (*e
 	}
 
 	if !valid {
-		return nil, appErrors.ErrInvalidToken
+		return nil, apperrors.ErrInvalidToken
 	}
 
 	if err := u.tokenRepository.DeleteRefreshToken(ctx, userID); err != nil {
 		return nil, fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	newAccessToken, err := u.jwtManager.GenerateAccessToken(userID, constants.RoleUser)
+	user, err := u.userRepository.GetUser(ctx, "id", userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if user == nil {
+		return nil, apperrors.ErrUserNotFound
+	}
+
+	if user.IsBlocked {
+		return nil, apperrors.ErrUserBlocked
+	}
+
+	role := constants.RoleUser
+	if user.IsPremium() {
+		role = constants.RolePremiumUser
+	}
+
+	newAccessToken, err := u.jwtManager.GenerateAccessToken(userID, role)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}

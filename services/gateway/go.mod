@@ -16,6 +16,7 @@ require (
 	github.com/mohamedfawas/quboolkallyanam.xyz/docs/swagger v0.0.0-00010101000000-000000000000
 	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250731085440-946591715af3
 	github.com/spf13/viper v1.20.1
+	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	go.opentelemetry.io/otel v1.37.0

@@ -12,22 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Get messages by conversation ID
-// @Description Get messages by conversation ID
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Param conversation_id path string true "Conversation ID"
-// @Param limit query int false "Limit"
-// @Param offset query int false "Offset"
-// @Success 200 {object} dto.PublicGetMessagesByConversationIdResponse "Messages fetched successfully"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Failure 404 {object} apiresponse.Response "Conversation not found"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Security BearerAuth
-// @Router /api/v1/chat/conversation/{conversation_id}/messages [get]
+
 
 func (h *ChatHandler) GetMessagesByConversationId(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)

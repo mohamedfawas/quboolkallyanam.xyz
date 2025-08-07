@@ -112,7 +112,7 @@ func MapDeleteProfilePhotoResponse(resp *userpbv1.DeleteProfilePhotoResponse) *d
 
 func MapGetAdditionalPhotoUploadURLRequest(req dto.GetAdditionalPhotoUploadURLRequest) *userpbv1.GetAdditionalPhotoUploadURLRequest {
 	return &userpbv1.GetAdditionalPhotoUploadURLRequest{
-		DisplayOrder: &wrapperspb.UInt32Value{Value: req.DisplayOrder},
+		DisplayOrder: &wrapperspb.UInt32Value{Value: uint32(req.DisplayOrder)},
 		ContentType: &wrapperspb.StringValue{Value: req.ContentType},
 	}
 }
@@ -146,7 +146,7 @@ func MapConfirmAdditionalPhotoUploadResponse(resp *userpbv1.ConfirmAdditionalPho
 
 func MapDeleteAdditionalPhotoRequest(req dto.DeleteAdditionalPhotoRequest) *userpbv1.DeleteAdditionalPhotoRequest {
 	return &userpbv1.DeleteAdditionalPhotoRequest{
-		DisplayOrder: &wrapperspb.UInt32Value{Value: req.DisplayOrder},
+		DisplayOrder: &wrapperspb.UInt32Value{Value: uint32(req.DisplayOrder)},
 	}
 }
 

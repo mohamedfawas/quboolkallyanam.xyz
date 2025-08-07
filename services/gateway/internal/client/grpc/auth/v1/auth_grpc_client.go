@@ -4,10 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"google.golang.org/grpc"
@@ -52,22 +50,30 @@ func NewAuthGRPCClient(
 }
 
 func (c *authGRPCClient) UserRegister(ctx context.Context, req dto.UserRegisterRequest) (*dto.UserRegisterResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	grpcReq := MapUserRegisterRequest(req)
 	grpcResp, err := c.client.UserRegister(ctx, grpcReq)
 	if err != nil {
-		log.Printf("UserRegister error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapUserRegisterResponse(grpcResp), nil
 }
 
 func (c *authGRPCClient) UserVerification(ctx context.Context, req dto.UserVerificationRequest) (*dto.UserVerificationResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	grpcReq := MapUserVerificationRequest(req)
 	grpcResp, err := c.client.UserVerification(ctx, grpcReq)
 	if err != nil {
-		log.Printf("UserVerification error in auth grpc client: %v", err)
 		return nil, err
 	}
 
@@ -75,69 +81,138 @@ func (c *authGRPCClient) UserVerification(ctx context.Context, req dto.UserVerif
 }
 
 func (c *authGRPCClient) UserLogin(ctx context.Context, req dto.UserLoginRequest) (*dto.UserLoginResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := MapUserLoginRequest(req)
 	grpcResp, err := c.client.UserLogin(ctx, grpcReq)
 	if err != nil {
-		log.Printf("UserLogin error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapUserLoginResponse(grpcResp), nil
 }
 
 func (c *authGRPCClient) UserLogout(ctx context.Context, accessToken string) error {
-	grpcReq := MapUserLogoutRequest(accessToken)
-	_, err := c.client.UserLogout(ctx, grpcReq)
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
 	if err != nil {
-		log.Printf("UserLogout error in auth grpc client: %v", err)
+		return err
+	}
+
+	grpcReq := MapUserLogoutRequest(accessToken)
+	_, err = c.client.UserLogout(ctx, grpcReq)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c *authGRPCClient) AdminLogin(ctx context.Context, req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := MapAdminLoginRequest(req)
 	grpcResp, err := c.client.AdminLogin(ctx, grpcReq)
 	if err != nil {
-		log.Printf("AdminLogin error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapAdminLoginResponse(grpcResp), nil
 }
 
 func (c *authGRPCClient) AdminLogout(ctx context.Context, accessToken string) error {
-	grpcReq := MapAdminLogoutRequest(accessToken)
-	_, err := c.client.AdminLogout(ctx, grpcReq)
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
 	if err != nil {
-		log.Printf("AdminLogout error in auth grpc client: %v", err)
+		return err
+	}
+
+	grpcReq := MapAdminLogoutRequest(accessToken)
+	_, err = c.client.AdminLogout(ctx, grpcReq)
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c *authGRPCClient) UserDelete(ctx context.Context, req dto.UserDeleteRequest) error {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return err
 	}
 
-	ctx = contextutils.SetUserContext(ctx, userID)
 	grpcReq := MapUserDeleteRequest(req)
-	_, err := c.client.UserDelete(ctx, grpcReq)
+	_, err = c.client.UserDelete(ctx, grpcReq)
 	if err != nil {
-		log.Printf("UserDelete error in auth grpc client: %v", err)
 		return err
 	}
 	return nil
 }
 
 func (c *authGRPCClient) RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := MapRefreshTokenRequest(req)
 	grpcResp, err := c.client.RefreshToken(ctx, grpcReq)
 	if err != nil {
-		log.Printf("RefreshToken error in auth grpc client: %v", err)
 		return nil, err
 	}
 	return MapRefreshTokenResponse(grpcResp), nil
+}
+
+func (c *authGRPCClient) BlockUser(ctx context.Context, req dto.BlockUserRequest) (*dto.BlockUserResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapBlockUserRequest(req)
+	grpcResp, err := c.client.BlockUser(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapBlockUserResponse(grpcResp), nil
+}
+
+func (c *authGRPCClient) GetUsers(ctx context.Context, req dto.GetUsersRequest) (*dto.GetUsersResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapGetUsersRequest(req)
+	grpcResp, err := c.client.GetUsers(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetUsersResponse(grpcResp), nil
+}
+
+func (c *authGRPCClient) GetUserByField(ctx context.Context, req dto.GetUserByFieldRequest) (*dto.GetUserByFieldResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapGetUserByFieldRequest(req)
+	grpcResp, err := c.client.GetUserByField(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetUserByFieldResponse(grpcResp), nil
 }
 
 func (c *authGRPCClient) Close() error {

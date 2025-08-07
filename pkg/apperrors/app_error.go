@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AppError struct {
@@ -21,4 +22,16 @@ func IsAppError(err error) bool {
 	var ae *AppError
 
 	return errors.As(err, &ae)
+}
+
+func ShouldLogError(err error) bool {
+	if IsAppError(err) {
+		return false
+	}
+
+	if st, ok := status.FromError(err); ok {
+		return st.Code() == codes.Internal
+	}
+
+	return true
 }

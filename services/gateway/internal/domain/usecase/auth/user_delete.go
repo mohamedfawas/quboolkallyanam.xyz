@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
@@ -13,7 +13,7 @@ func (u *authUsecase) UserDelete(
 	req dto.UserDeleteRequest) error {
 
 	if !validation.IsValidPassword(req.Password, validation.DefaultPasswordRequirements()) {
-		return errors.ErrInvalidPassword
+		return apperrors.ErrInvalidPassword
 	}
 
 	return u.authClient.UserDelete(ctx, req)

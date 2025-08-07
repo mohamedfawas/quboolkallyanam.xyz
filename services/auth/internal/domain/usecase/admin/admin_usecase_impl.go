@@ -10,6 +10,7 @@ import (
 type adminUsecase struct {
 	adminRepository repository.AdminRepository
 	tokenRepository repository.TokenRepository
+	userRepository  repository.UserRepository
 	jwtManager      jwtManager.JWTManager
 	config          *config.Config
 }
@@ -17,12 +18,14 @@ type adminUsecase struct {
 func NewAdminUsecase(
 	adminRepository repository.AdminRepository,
 	tokenRepository repository.TokenRepository,
+	userRepository repository.UserRepository,
 	jwtManager jwtManager.JWTManager,
 	config *config.Config) usecase.AdminUsecase {
 
 	return &adminUsecase{
 		adminRepository: adminRepository,
 		tokenRepository: tokenRepository,
+		userRepository:  userRepository,
 		jwtManager:      jwtManager,
 		config:          config,
 	}

@@ -37,10 +37,8 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 			userAuth.POST("/delete", middleware.AuthMiddleware(s.jwtManager),
 				middleware.RequireRole(constants.RoleUser),
 				s.authHandler.UserDelete)
-			userAuth.POST("/refresh", s.authHandler.RefreshToken)
-			// TODO: Add more user auth routes as needed
-			// userAuth.POST("/forgot-password", s.authHandler.ForgotPassword)
-			// userAuth.POST("/reset-password", s.authHandler.ResetPassword)
+			userAuth.POST("/refresh",
+				s.authHandler.RefreshToken)
 		}
 
 		adminAuth := auth.Group("/admin")
@@ -49,11 +47,16 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 			adminAuth.POST("/logout", middleware.AuthMiddleware(s.jwtManager),
 				middleware.RequireRole(constants.RoleAdmin),
 				s.authHandler.AdminLogout)
-			// TODO: Add more admin auth routes as needed
-			// adminAuth.POST("/refresh", s.authHandler.AdminRefreshToken)
+			adminAuth.POST("/block-user", middleware.AuthMiddleware(s.jwtManager),
+				middleware.RequireRole(constants.RoleAdmin),
+				s.authHandler.AdminBlockUser)
+			adminAuth.GET("/users", middleware.AuthMiddleware(s.jwtManager),
+				middleware.RequireRole(constants.RoleAdmin),
+				s.authHandler.AdminGetUsers)
+			adminAuth.GET("/user", middleware.AuthMiddleware(s.jwtManager),
+				middleware.RequireRole(constants.RoleAdmin),
+				s.authHandler.AdminGetUserByField)
 		}
-		auth.POST("/refresh", middleware.AuthMiddleware(s.jwtManager),
-			s.authHandler.RefreshToken)
 	}
 }
 
@@ -119,6 +122,18 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.DeleteProfilePhoto)
+		user.POST("/profile/additional-photo",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetAdditionalPhotoUploadURL)
+		user.POST("/profile/additional-photo/confirm",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.ConfirmAdditionalPhotoUpload)
+		user.DELETE("/profile/additional-photo",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.DeleteAdditionalPhoto)
 		user.POST("/preference",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),

@@ -21,10 +21,6 @@ func (u *adminUsecase) AdminLogin(ctx context.Context, email, password string) (
 		return nil, apperrors.ErrAdminNotFound
 	}
 
-	if !admin.IsActive {
-		return nil, apperrors.ErrAdminAccountDisabled
-	}
-
 	if !hash.VerifyPassword(admin.PasswordHash, password) {
 		return nil, apperrors.ErrAdminInvalidCredentials
 	}

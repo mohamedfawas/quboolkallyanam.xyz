@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 
-	errors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
 
@@ -13,11 +13,11 @@ func (u *authUsecase) AdminLogin(
 	req dto.AdminLoginRequest) (*dto.AdminLoginResponse, error) {
 
 	if !validation.IsValidEmail(req.Email) {
-		return nil, errors.ErrInvalidEmail
+		return nil, apperrors.ErrInvalidEmail
 	}
 
 	if !validation.IsValidPassword(req.Password, validation.DefaultPasswordRequirements()) {
-		return nil, errors.ErrInvalidPassword
+		return nil, apperrors.ErrInvalidPassword
 	}
 
 	return u.authClient.AdminLogin(ctx, req)

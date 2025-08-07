@@ -118,15 +118,7 @@ func (h *ChatHandler) authenticateWebSocket(c *gin.Context) (string, error) {
 	return userID, nil
 }
 
-// @Summary Handle WebSocket connection
-// @Description Handles WebSocket connection for chat
-// @Tags Chat
-// @Accept json
-// @Produce json
-// @Success 200 {string} string "WebSocket connection established"
-// @Failure 401 {string} string "Unauthorized"
-// @Router /chat/ws [get]
-// @Security BearerAuth
+
 func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 	requestID, exists := c.Get(constants.ContextKeyRequestID)
 	if !exists {

@@ -31,10 +31,13 @@ type Server struct {
 	mongoClient     *mongodb.Client
 	messagingClient messageBroker.Client
 	logger          *zap.Logger
+	ctx             context.Context
+	cancel          context.CancelFunc
 }
 
 func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logger) (*Server, error) {
-
+	// Create child context with cancellation
+	serverCtx, cancel := context.WithCancel(ctx)
 	///////////////////////// POSTGRES INITIALIZATION /////////////////////////
 	pgClient, err := postgres.NewClient(postgres.Config{
 		Host:     config.Postgres.Host,
@@ -121,7 +124,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 
 	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {
-		if err := userEventHandler.StartListening(ctx); err != nil {
+		if err := userEventHandler.StartListening(serverCtx); err != nil {
 			rootLogger.Error("Failed to start user event listener", zap.Error(err))
 		}
 	}()
@@ -133,6 +136,8 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		mongoClient:     mongoClient,
 		messagingClient: messagingClient,
 		logger:          rootLogger,
+		ctx:             serverCtx,
+		cancel:          cancel,
 	}
 
 	return server, nil
@@ -148,6 +153,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop() {
+	s.cancel()
 	s.grpcServer.GracefulStop()
 
 	// Close messaging client first

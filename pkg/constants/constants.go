@@ -40,6 +40,7 @@ const (
 	HeaderRefreshToken    = "Refresh-Token"
 	BearerTokenPrefix     = "Bearer "
 	DefaultCostBcrypt     = 12
+	DefaultOTPLength      = 6
 
 	// Roles
 	RoleUser        = "user"

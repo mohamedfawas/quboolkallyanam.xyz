@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
-	"log"
+	"errors"
+
+	"gorm.io/gorm"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
@@ -24,7 +26,9 @@ func (r *pendingRegistrationRepository) CreatePendingRegistration(ctx context.Co
 func (r *pendingRegistrationRepository) GetPendingRegistration(ctx context.Context, field, value string) (*entity.PendingRegistration, error) {
 	var pendingRegistration entity.PendingRegistration
 	if err := r.db.GormDB.WithContext(ctx).Where(field+" = ?", value).First(&pendingRegistration).Error; err != nil {
-		log.Printf("GetPendingRegistration error in pending registration repository: %v", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &pendingRegistration, nil

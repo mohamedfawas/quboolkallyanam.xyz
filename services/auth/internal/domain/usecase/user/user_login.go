@@ -2,42 +2,33 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
-	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	authevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/auth"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
-	"gorm.io/gorm"
 )
 
 func (u *userUseCase) Login(ctx context.Context, email, password string) (*entity.TokenPair, error) {
 	user, err := u.userRepository.GetUser(ctx, "email", email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, appErrors.ErrUserNotFound
-		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	if user == nil {
-		return nil, appErrors.ErrUserNotFound
+		return nil, apperrors.ErrUserNotFound
 	}
 
-	if !user.IsActive {
-		return nil, appErrors.ErrAccountDisabled
-	}
 
 	if user.IsBlocked {
-		return nil, appErrors.ErrAccountBlocked
+		return nil, apperrors.ErrUserBlocked
 	}
 
 	if !hash.VerifyPassword(user.PasswordHash, password) {
-		return nil, appErrors.ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	role := constants.RoleUser
@@ -74,7 +65,6 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 
 	if err := u.eventPublisher.PublishUserLoginSuccess(ctx, userLoginEvent); err != nil {
 		// No need to fail the login process if the event publishing fails
-		log.Printf("failed to publish user login success event: %v", err)
 	}
 
 	tokenPair := &entity.TokenPair{
@@ -82,8 +72,6 @@ func (u *userUseCase) Login(ctx context.Context, email, password string) (*entit
 		RefreshToken: refreshToken,
 		ExpiresIn:    int64(u.config.Auth.JWT.AccessTokenMinutes) * 60,
 	}
-
-	log.Printf("The user is logged in successfully, user id: %s", user.ID.String())
 
 	return tokenPair, nil
 }

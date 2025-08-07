@@ -50,4 +50,32 @@ var (
 		GRPCStatusCode: codes.InvalidArgument,
 		PublicMsg:      "Invalid operation type.",
 	}
+	ErrInvalidField = &AppError{
+		Err:            errors.New("invalid field"),
+		Code:           "INVALID_FIELD",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "The field you requested to update is non existent.",
+	}
+	ErrInvalidPaginationPage = &AppError{
+		Err:            errors.New("invalid pagination page"),
+		Code:           "INVALID_PAGINATION_PAGE",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Invalid pagination page.",
+	}
+	ErrInvalidPaginationLimit = &AppError{		
+		Err:            errors.New("invalid pagination limit"),
+		Code:           "INVALID_PAGINATION_LIMIT",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Invalid pagination limit.",
+	}
+	ErrMissingRequiredFields = &AppError{
+		Err:            errors.New("missing required fields"),
+		Code:           "MISSING_REQUIRED_FIELDS",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Missing required fields.",
+	}
 )

@@ -24,11 +24,10 @@ func (h *UserHandler) DeleteAdditionalPhoto(c *gin.Context) {
 		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
 	)
 
-	// Get display_order from path parameter
 	displayOrderStr := c.Param("display_order")
 	displayOrderInt, err := strconv.Atoi(displayOrderStr)
 	if err != nil {
-		apiresponse.Error(c, apperrors.ErrInvalidInput, nil)
+		apiresponse.Error(c, apperrors.ErrInvalidDisplayOrder, nil)
 		return
 	}
 

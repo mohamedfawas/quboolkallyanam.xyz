@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	postgres "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/auth/internal/domain/repository"
 )

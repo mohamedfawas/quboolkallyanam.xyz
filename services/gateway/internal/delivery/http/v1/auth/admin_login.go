@@ -1,38 +1,40 @@
 package auth
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/gin-gonic/gin"
-	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"go.uber.org/zap"
 )
 
-// @Summary Admin login
-// @Description Admin login
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param admin_login_request body dto.AdminLoginRequest true "Admin login request"
-// @Success 200 {object} dto.AdminLoginResponse "Admin login response"
-// @Failure 400 {object} apiresponse.Response "Bad request"
-// @Failure 401 {object} apiresponse.Response "Unauthorized"
-// @Failure 500 {object} apiresponse.Response "Internal server error"
-// @Router /api/v1/auth/admin/login [post]
 func (h *AuthHandler) AdminLogin(c *gin.Context) {
+	reqCtx, err := contextutils.ExtractRequestContext(c)
+	if err != nil {
+		h.logger.Error("Failed to extract context data", zap.Error(err))
+		apiresponse.Error(c, err, nil)
+		return
+	}
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, reqCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+	)
 	var req dto.AdminLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
+		apiresponse.Error(c, apperrors.ErrBindingJSON, nil)
 		return
 	}
 
-	resp, err := h.authUsecase.AdminLogin(c.Request.Context(), req)
+	resp, err := h.authUsecase.AdminLogin(reqCtx.Ctx, req)
 	if err != nil {
-		log.Printf("Failed to login: %v", err)
-		apiresponse.Fail(c, err)
+		if apperrors.ShouldLogError(err) {
+			log.Error("Failed to login", zap.Error(err))
+		}
+		apiresponse.Error(c, err, nil)
 		return
 	}
 
+	log.Info("Admin login successful")
 	apiresponse.Success(c, "Admin logged in successfully", resp)
 }
