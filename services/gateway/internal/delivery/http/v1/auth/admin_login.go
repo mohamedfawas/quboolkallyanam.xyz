@@ -10,6 +10,17 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Admin login
+// @Description Admin login
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param admin_login_request body dto.AdminLoginRequest true "Admin login request"
+// @Success 200 {object} dto.AdminLoginResponse "Admin login response"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized - invalid credentials"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Router /api/v1/auth/admin/login [post]
 func (h *AuthHandler) AdminLogin(c *gin.Context) {
 	reqCtx, err := contextutils.ExtractRequestContext(c)
 	if err != nil {

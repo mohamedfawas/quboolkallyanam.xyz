@@ -10,6 +10,21 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Get user by field
+// @Description Get a specific user by email, phone, or ID for admin
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param field query string true "Field to search by" Enums(email, phone, id)
+// @Param value query string true "Value to search for"
+// @Success 200 {object} dto.GetUserByFieldResponse "User details"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized - invalid credentials"
+// @Failure 403 {object} dto.ForbiddenError "Forbidden - insufficient role"
+// @Failure 404 {object} dto.NotFoundError "User not found"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/auth/admin/user [get]
 func (h *AuthHandler) AdminGetUserByField(c *gin.Context) {
 	reqCtx, err := contextutils.ExtractRequestContext(c)
 	if err != nil {
@@ -26,7 +41,7 @@ func (h *AuthHandler) AdminGetUserByField(c *gin.Context) {
 	value := c.Query("value")
 
 	if field == "" || value == "" {
-		apiresponse.Error(c, apperrors.ErrMissingRequiredFields , nil)
+		apiresponse.Error(c, apperrors.ErrMissingRequiredFields, nil)
 		return
 	}
 

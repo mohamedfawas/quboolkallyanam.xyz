@@ -1,5 +1,30 @@
 basePath: /api/v1
 definitions:
+  dto.AdminLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.AdminLoginResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+    type: object
+  dto.AdminLogoutResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
   dto.BadRequestError:
     properties:
       error:
@@ -16,6 +41,25 @@ definitions:
       timestamp:
         example: "2025-01-27T10:30:00Z"
         type: string
+    type: object
+  dto.BlockUserRequest:
+    properties:
+      field:
+        enum:
+        - email
+        - phone
+        - id
+        type: string
+      value:
+        type: string
+    required:
+    - field
+    - value
+    type: object
+  dto.BlockUserResponse:
+    properties:
+      success:
+        type: boolean
     type: object
   dto.ConflictError:
     properties:
@@ -45,6 +89,56 @@ definitions:
         type: object
       message:
         type: string
+    type: object
+  dto.ForbiddenError:
+    properties:
+      error:
+        $ref: '#/definitions/dto.ErrorInfo'
+      message:
+        example: You are not allowed to access this resource
+        type: string
+      request_id:
+        example: req_123
+        type: string
+      success:
+        example: false
+        type: boolean
+      timestamp:
+        example: "2025-01-27T10:30:00Z"
+        type: string
+    type: object
+  dto.GetUserByFieldResponse:
+    properties:
+      user:
+        $ref: '#/definitions/dto.GetUserResponse'
+    type: object
+  dto.GetUserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      id:
+        type: string
+      is_blocked:
+        type: boolean
+      last_login_at:
+        type: string
+      phone:
+        type: string
+      premium_until:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.GetUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/dto.GetUserResponse'
+        type: array
     type: object
   dto.InternalServerError:
     properties:
@@ -195,6 +289,197 @@ info:
   title: Qubool Kallyanam Gateway API
   version: "1.0"
 paths:
+  /api/v1/auth/admin/block-user:
+    post:
+      consumes:
+      - application/json
+      description: Block a user by email, phone, or ID
+      parameters:
+      - description: Block user request
+        in: body
+        name: block_user_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BlockUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Block user response
+          schema:
+            $ref: '#/definitions/dto.BlockUserResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      security:
+      - BearerAuth: []
+      summary: Block user
+      tags:
+      - Auth
+  /api/v1/auth/admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Admin login
+      parameters:
+      - description: Admin login request
+        in: body
+        name: admin_login_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AdminLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin login response
+          schema:
+            $ref: '#/definitions/dto.AdminLoginResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      summary: Admin login
+      tags:
+      - Auth
+  /api/v1/auth/admin/logout:
+    post:
+      consumes:
+      - application/json
+      description: Admin logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin logout response
+          schema:
+            $ref: '#/definitions/dto.AdminLogoutResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      security:
+      - BearerAuth: []
+      summary: Admin logout
+      tags:
+      - Auth
+  /api/v1/auth/admin/user:
+    get:
+      consumes:
+      - application/json
+      description: Get a specific user by email, phone, or ID for admin
+      parameters:
+      - description: Field to search by
+        enum:
+        - email
+        - phone
+        - id
+        in: query
+        name: field
+        required: true
+        type: string
+      - description: Value to search for
+        in: query
+        name: value
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details
+          schema:
+            $ref: '#/definitions/dto.GetUserByFieldResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "403":
+          description: Forbidden - insufficient role
+          schema:
+            $ref: '#/definitions/dto.ForbiddenError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/dto.NotFoundError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      security:
+      - BearerAuth: []
+      summary: Get user by field
+      tags:
+      - Auth
+  /api/v1/auth/admin/users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users with pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Users list
+          schema:
+            $ref: '#/definitions/dto.GetUsersResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      security:
+      - BearerAuth: []
+      summary: Get users
+      tags:
+      - Auth
   /api/v1/auth/user/delete:
     post:
       consumes:

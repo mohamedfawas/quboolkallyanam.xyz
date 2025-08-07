@@ -12,6 +12,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Get users
+// @Description Get all users with pagination
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param page query int true "Page number"
+// @Param limit query int true "Items per page"
+// @Success 200 {object} dto.GetUsersResponse "Users list"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized - invalid credentials"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/auth/admin/users [get]
 func (h *AuthHandler) AdminGetUsers(c *gin.Context) {
 	reqCtx, err := contextutils.ExtractRequestContext(c)
 	if err != nil {

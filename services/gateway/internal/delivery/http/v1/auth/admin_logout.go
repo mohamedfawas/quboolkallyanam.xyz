@@ -2,13 +2,24 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"go.uber.org/zap"
 )
 
+// @Summary Admin logout
+// @Description Admin logout
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.AdminLogoutResponse "Admin logout response"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized - invalid credentials"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/auth/admin/logout [post]
 func (h *AuthHandler) AdminLogout(c *gin.Context) {
 	reqCtx, err := contextutils.ExtractRequestContext(c)
 	if err != nil {
