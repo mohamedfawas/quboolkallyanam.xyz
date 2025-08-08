@@ -13,6 +13,6 @@ func IsValidImageType(contentType string) bool {
 
 const MaxImageFileSize = 5 * 1024 * 1024 // 5MB
 
-func IsValidImageFileSize(fileSize uint64) bool {
+func IsValidImageFileSize(fileSize int64) bool {
 	return fileSize <= MaxImageFileSize && fileSize > 0
 }

@@ -32,7 +32,7 @@ func (h *UserHandler) DeleteAdditionalPhoto(ctx context.Context,
 		return nil, err
 	}
 
-	err = h.userProfileUsecase.DeleteAdditionalPhoto(ctx, userIDUUID, req.DisplayOrder.Value)
+	err = h.userProfileUsecase.DeleteAdditionalPhoto(ctx, userIDUUID, int32(req.DisplayOrder.Value))
 	if err != nil {
 		if !apperrors.IsAppError(err) {
 			log.Error("Failed to delete additional photo", zap.Error(err))

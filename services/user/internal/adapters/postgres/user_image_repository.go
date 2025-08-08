@@ -21,6 +21,7 @@ func (r *userImageRepository) DisplayOrderOccupied(
 	ctx context.Context,
 	userID uuid.UUID,
 	displayOrder int32) (bool, error) {
+
 	var count int64
 	err := r.db.GormDB.WithContext(ctx).
 		Model(&entity.UserImage{}).
@@ -32,7 +33,10 @@ func (r *userImageRepository) DisplayOrderOccupied(
 	return count > 0, nil
 }
 
-func (r *userImageRepository) CreateUserImage(ctx context.Context, userImage *entity.UserImage) error {
+func (r *userImageRepository) CreateUserImage(
+	ctx context.Context, 
+	userImage *entity.UserImage) error {
+
 	err := r.db.GormDB.WithContext(ctx).Create(userImage).Error
 	if err != nil {
 		return err
@@ -40,7 +44,11 @@ func (r *userImageRepository) CreateUserImage(ctx context.Context, userImage *en
 	return nil
 }
 
-func (r *userImageRepository) DeleteUserImage(ctx context.Context, userID uuid.UUID, displayOrder int32) error {
+func (r *userImageRepository) DeleteUserImage(
+	ctx context.Context, 
+	userID uuid.UUID, 
+	displayOrder int32) error {
+
 	err := r.db.GormDB.WithContext(ctx).
 		Model(&entity.UserImage{}).
 		Where("user_id = ? AND display_order = ?", userID, displayOrder).
@@ -51,7 +59,11 @@ func (r *userImageRepository) DeleteUserImage(ctx context.Context, userID uuid.U
 	return nil
 }
 
-func (r *userImageRepository) GetUserImage(ctx context.Context, userID uuid.UUID, displayOrder int32) (*entity.UserImage, error) {
+func (r *userImageRepository) GetUserImage(
+	ctx context.Context, 
+	userID uuid.UUID, 
+	displayOrder int32) (*entity.UserImage, error) {
+		
 	var userImage entity.UserImage
 	err := r.db.GormDB.WithContext(ctx).
 		Model(&entity.UserImage{}).
@@ -60,4 +72,6 @@ func (r *userImageRepository) GetUserImage(ctx context.Context, userID uuid.UUID
 	if err != nil {
 		return nil, err
 	}
+
+	return &userImage, nil
 }

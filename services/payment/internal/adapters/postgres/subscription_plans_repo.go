@@ -32,6 +32,18 @@ func (r *subscriptionPlansRepository) GetPlanByID(ctx context.Context, planID st
 	return &plan, nil
 }
 
+func (r *subscriptionPlansRepository) GetPlanByIDTx(ctx context.Context, tx *gorm.DB, planID string) (*entity.SubscriptionPlan, error) {
+	var plan entity.SubscriptionPlan
+	if err := tx.WithContext(ctx).Where("id = ?", planID).First(&plan).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		log.Printf("GetPlanByIDTx error in subscription plans repository: %v", err)
+		return nil, err
+	}
+	return &plan, nil
+}
+
 func (r *subscriptionPlansRepository) CreatePlan(ctx context.Context, plan entity.SubscriptionPlan) error {
 	if err := r.db.GormDB.WithContext(ctx).Create(&plan).Error; err != nil {
 		log.Printf("CreatePlan error in subscription plans repository: %v", err)
@@ -40,6 +52,7 @@ func (r *subscriptionPlansRepository) CreatePlan(ctx context.Context, plan entit
 	return nil
 }
 
+
 func (r *subscriptionPlansRepository) UpdatePlan(ctx context.Context, planID string, plan entity.SubscriptionPlan) error {
 	if err := r.db.GormDB.WithContext(ctx).Where("id = ?", planID).Updates(&plan).Error; err != nil {
 		log.Printf("UpdatePlan error in subscription plans repository: %v", err)
@@ -47,6 +60,7 @@ func (r *subscriptionPlansRepository) UpdatePlan(ctx context.Context, planID str
 	}
 	return nil
 }
+
 
 func (r *subscriptionPlansRepository) GetActivePlans(ctx context.Context) ([]*entity.SubscriptionPlan, error) {
 	var plans []*entity.SubscriptionPlan

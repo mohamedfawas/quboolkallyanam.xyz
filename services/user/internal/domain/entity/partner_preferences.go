@@ -11,10 +11,10 @@ type PartnerPreference struct {
 	UserProfileID int64 `json:"user_profile_id" gorm:"not null;uniqueIndex"`
 
 	// uint16 better maps to smallint than uint8
-	MinAgeYears uint16 `json:"min_age_years" gorm:"type:smallint;not null;default:18"`
-	MaxAgeYears uint16 `json:"max_age_years" gorm:"type:smallint;not null;default:100"`
-	MinHeightCm uint16 `json:"min_height_cm" gorm:"type:smallint;not null;default:130"`
-	MaxHeightCm uint16 `json:"max_height_cm" gorm:"type:smallint;not null;default:220"`
+	MinAgeYears int16 `json:"min_age_years" gorm:"type:smallint;not null;default:18"`
+	MaxAgeYears int16 `json:"max_age_years" gorm:"type:smallint;not null;default:100"`
+	MinHeightCm int16 `json:"min_height_cm" gorm:"type:smallint;not null;default:130"`
+	MaxHeightCm int16 `json:"max_height_cm" gorm:"type:smallint;not null;default:220"`
 
 	AcceptPhysicallyChallenged bool `json:"accept_physically_challenged" gorm:"not null;default:true"`
 
@@ -35,12 +35,12 @@ type PartnerPreference struct {
 func (PartnerPreference) TableName() string {
 	return "partner_preferences"
 }
-
+	
 type UpdateUserPartnerPreferencesRequest struct {
-	MinAgeYears                *uint32   `json:"min_age_years,omitempty"`
-	MaxAgeYears                *uint32   `json:"max_age_years,omitempty"`
-	MinHeightCM                *uint32   `json:"min_height_cm,omitempty"`
-	MaxHeightCM                *uint32   `json:"max_height_cm,omitempty"`
+	MinAgeYears                *int16   `json:"min_age_years,omitempty"`
+	MaxAgeYears                *int16   `json:"max_age_years,omitempty"`
+	MinHeightCM                *int16   `json:"min_height_cm,omitempty"`
+	MaxHeightCM                *int16   `json:"max_height_cm,omitempty"`
 	AcceptPhysicallyChallenged *bool     `json:"accept_physically_challenged,omitempty"`
 	PreferredCommunities       *[]string `json:"preferred_communities,omitempty"`
 	PreferredMaritalStatus     *[]string `json:"preferred_marital_status,omitempty"`

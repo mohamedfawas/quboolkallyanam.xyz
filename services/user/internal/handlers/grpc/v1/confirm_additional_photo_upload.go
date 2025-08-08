@@ -36,7 +36,7 @@ func (h *UserHandler) ConfirmAdditionalPhotoUpload(ctx context.Context,
 		ctx,
 		userIDUUID,
 		req.ObjectKey.Value,
-		req.FileSize.Value,
+		int64(req.FileSize.Value),
 	)
 	if err != nil {
 		if !appErrors.IsAppError(err) {

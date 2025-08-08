@@ -10,19 +10,19 @@ import (
 	"go.uber.org/zap"
 )
 
-// @Summary Block user
-// @Description Block a user by email, phone, or ID
+// @Summary Unblock user
+// @Description Unblock a user by email, phone, or ID
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param block_user_request body dto.BlockOrUnblockUserRequest true "Block user request"
-// @Success 200 {object} dto.BlockOrUnblockUserResponse "Block user response"
+// @Param unblock_user_request body dto.BlockOrUnblockUserRequest true "Unblock user request"
+// @Success 200 {object} dto.BlockOrUnblockUserResponse "Unblock user response"
 // @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
 // @Failure 401 {object} dto.UnauthorizedError "Unauthorized - invalid credentials"
 // @Failure 500 {object} dto.InternalServerError "Internal server error"
 // @Security BearerAuth
-// @Router /api/v1/auth/admin/block-user [post]
-func (h *AuthHandler) AdminBlockUser(c *gin.Context) {
+// @Router /api/v1/auth/admin/unblock-user [post]
+func (h *AuthHandler) AdminUnBlockUser(c *gin.Context) {
 	reqCtx, err := contextutils.ExtractRequestContext(c)
 	if err != nil {
 		h.logger.Error("Failed to extract context data", zap.Error(err))
@@ -39,20 +39,20 @@ func (h *AuthHandler) AdminBlockUser(c *gin.Context) {
 		return
 	}
 
-	req.ShouldBlock = true
+	req.ShouldBlock = false
 
 	resp, err := h.authUsecase.BlockOrUnblockUser(reqCtx.Ctx, req)
 	if err != nil {
 		if apperrors.ShouldLogError(err) {
-			log.Error("Failed to block user", zap.Error(err))
+			log.Error("Failed to unblock user", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	log.Info("User block request processed successfully",
+	log.Info("User unblock request processed successfully",
 		zap.String("field", req.Field),
 		zap.String("value", req.Value),
 	)
-	apiresponse.Success(c, "User block request processed successfully", resp)
+	apiresponse.Success(c, "User unblock request processed successfully", resp)
 }

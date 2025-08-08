@@ -20,16 +20,13 @@ func NewSubscriptionsRepository(db *postgres.Client) repository.SubscriptionsRep
 	return &subscriptionsRepository{db: db}
 }
 
-func (r *subscriptionsRepository) CreateSubscription(ctx context.Context, subscription *entity.Subscription) error {
-	db := GetDBFromContext(ctx, r.db.GormDB)
-	return db.WithContext(ctx).Create(subscription).Error
+func (r *subscriptionsRepository) CreateSubscriptionTx(ctx context.Context, tx *gorm.DB, subscription *entity.Subscription) error {
+	return tx.WithContext(ctx).Create(subscription).Error
 }
 
 func (r *subscriptionsRepository) GetActiveSubscriptionByUserID(ctx context.Context, userID string) (*entity.Subscription, error) {
 	var subscription entity.Subscription
-	db := GetDBFromContext(ctx, r.db.GormDB)
-
-	err := db.WithContext(ctx).
+	err := r.db.GormDB.WithContext(ctx).
 		Where("user_id = ? AND status = ? AND end_date > NOW()", userID, "active").
 		First(&subscription).Error
 
@@ -44,7 +41,23 @@ func (r *subscriptionsRepository) GetActiveSubscriptionByUserID(ctx context.Cont
 	return &subscription, nil
 }
 
-func (r *subscriptionsRepository) UpdateSubscription(ctx context.Context, subscription *entity.Subscription) error {
-	db := GetDBFromContext(ctx, r.db.GormDB)
-	return db.WithContext(ctx).Save(subscription).Error
+func (r *subscriptionsRepository) GetActiveSubscriptionByUserIDTx(ctx context.Context, tx *gorm.DB, userID string) (*entity.Subscription, error) {
+	var subscription entity.Subscription
+	err := tx.WithContext(ctx).
+		Where("user_id = ? AND status = ? AND end_date > NOW()", userID, "active").
+		First(&subscription).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		log.Printf("GetActiveSubscriptionByUserIDTx error in subscriptions repository: %v", err)
+		return nil, err
+	}
+
+	return &subscription, nil
+}
+
+func (r *subscriptionsRepository) UpdateSubscriptionTx(ctx context.Context, tx *gorm.DB, subscription *entity.Subscription) error {
+	return tx.WithContext(ctx).Save(subscription).Error
 }

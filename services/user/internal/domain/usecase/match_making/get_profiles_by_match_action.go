@@ -96,14 +96,14 @@ func (u *matchMakingUsecase) GetProfilesByMatchAction(ctx context.Context,
 			return nil, nil, err
 		}
 		userProfileResponses[i] = &entity.UserProfileResponse{
-			ID:              profile.ID,
-			FullName:        profile.FullName,
+			ID:                profile.ID,
+			FullName:          profile.FullName,
 			ProfilePictureURL: &profilePictureURL,
-			Age:             uint32(age),
-			HeightCm:        uint32(profile.HeightCm),
-			MaritalStatus:   string(profile.MaritalStatus),
-			Profession:      string(profile.Profession),
-			HomeDistrict:    string(profile.HomeDistrict),
+			Age:               int32(age),
+			HeightCm:          int32(profile.HeightCm),
+			MaritalStatus:     string(profile.MaritalStatus),
+			Profession:        string(profile.Profession),
+			HomeDistrict:      string(profile.HomeDistrict),
 		}
 	}
 

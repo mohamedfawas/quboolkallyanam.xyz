@@ -7,7 +7,11 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 )
 
-func (u *userProfileUsecase) DeleteAdditionalPhoto(ctx context.Context, userID uuid.UUID, displayOrder int32) error {
+func (u *userProfileUsecase) DeleteAdditionalPhoto(
+	ctx context.Context,
+	userID uuid.UUID,
+	displayOrder int32) error {
+
 	userImage, err := u.userImageRepository.GetUserImage(ctx, userID, displayOrder)
 	if err != nil {
 		return err

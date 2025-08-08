@@ -7,7 +7,10 @@ import (
 	apperrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 )
 
-func (u *userProfileUsecase) DeleteProfilePhoto(ctx context.Context, userID uuid.UUID) error {
+func (u *userProfileUsecase) DeleteProfilePhoto(
+	ctx context.Context,
+	userID uuid.UUID) error {
+
 	profile, err := u.userProfileRepository.GetProfileByUserID(ctx, userID)
 	if err != nil {
 		return err

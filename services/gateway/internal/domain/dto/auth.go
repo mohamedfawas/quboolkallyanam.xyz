@@ -68,12 +68,13 @@ type RefreshTokenResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-type BlockUserRequest struct {
+type BlockOrUnblockUserRequest struct {
 	Field string `json:"field" binding:"required,oneof=email phone id"`
 	Value string `json:"value" binding:"required"`
+	ShouldBlock bool `json:"should_block" ` // don't give required for bool values
 }
 
-type BlockUserResponse struct {
+type BlockOrUnblockUserResponse struct {
 	Success bool `json:"success"`
 }
 

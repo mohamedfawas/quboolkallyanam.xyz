@@ -16,7 +16,7 @@ service AuthService {
     rpc AdminLogin(AdminLoginRequest) returns (AdminLoginResponse);
     rpc AdminLogout(AdminLogoutRequest) returns (AdminLogoutResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
-    rpc BlockUser(BlockUserRequest) returns (BlockUserResponse);
+    rpc BlockOrUnblockUser(BlockOrUnblockUserRequest) returns (BlockOrUnblockUserResponse);
     rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
     rpc GetUserByField(GetUserByFieldRequest) returns (GetUserByFieldResponse);
 }
@@ -97,12 +97,13 @@ message RefreshTokenResponse {
     int64 expires_in = 3;
 }
 
-message BlockUserRequest {
+message BlockOrUnblockUserRequest {
     string field = 1;
     string value = 2;
+    bool should_block = 3;
 }
 
-message BlockUserResponse {
+message BlockOrUnblockUserResponse {
     google.protobuf.BoolValue success = 1;
 }
 

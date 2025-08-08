@@ -8,7 +8,7 @@ import (
 )
 
 
-func (u *adminUsecase) BlockUser(ctx context.Context, field string, value string) error {
+func (u *adminUsecase) BlockOrUnblockUser(ctx context.Context, field string, value string, shouldBlock bool) error {
 	user, err := u.userRepository.GetUser(ctx, field, value)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
@@ -18,11 +18,11 @@ func (u *adminUsecase) BlockUser(ctx context.Context, field string, value string
 		return apperrors.ErrUserNotFound
 	}
 
-	if user.IsBlocked {
+	if user.IsBlocked == shouldBlock {
 		return apperrors.ErrUserAlreadyBlocked
 	}
-	
-	err = u.userRepository.BlockUser(ctx, field, value)
+
+	err = u.userRepository.BlockOrUnblockUser(ctx, field, value, shouldBlock)
 	if err != nil {
 		return fmt.Errorf("failed to block user: %w", err)
 	}

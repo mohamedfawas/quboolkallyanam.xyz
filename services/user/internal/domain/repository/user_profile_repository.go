@@ -19,7 +19,7 @@ type UserProfileRepository interface {
 	UpdateUserProfile(ctx context.Context,
 		userProfile *entity.UserProfile) error
 	GetUserProfileByID(ctx context.Context,
-		id uint) (*entity.UserProfile, error)
+		id int64) (*entity.UserProfile, error)
 	GetPotentialProfiles(ctx context.Context,
 		userID uuid.UUID,
 		excludedIDs []uuid.UUID,

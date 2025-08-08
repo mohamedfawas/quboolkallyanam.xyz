@@ -7,7 +7,7 @@ import (
 )
 
 type ProfileMatch struct {
-	ID        uint64    `gorm:"primaryKey;autoIncrement"`
+	ID        int64    `gorm:"primaryKey;autoIncrement"`
 	UserID    uuid.UUID `gorm:"type:uuid;not null"`
 	TargetID  uuid.UUID `gorm:"type:uuid;not null"`
 	IsLiked   bool      `gorm:"not null;default:false"`

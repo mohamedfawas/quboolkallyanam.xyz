@@ -62,8 +62,8 @@ func (h *UserHandler) GetMatchRecommendations(
 
 	protoPagination := &userpbv1.PaginationInfo{
 		TotalCount: pagination.TotalCount,
-		Limit:      uint32(pagination.Limit),
-		Offset:     uint32(pagination.Offset),
+		Limit:      int32(pagination.Limit),
+		Offset:     int32(pagination.Offset),
 		HasMore:    pagination.HasMore,
 	}
 

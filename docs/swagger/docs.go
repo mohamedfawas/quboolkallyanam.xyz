@@ -49,7 +49,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.BlockUserRequest"
+                            "$ref": "#/definitions/dto.BlockOrUnblockUserRequest"
                         }
                     }
                 ],
@@ -57,7 +57,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Block user response",
                         "schema": {
-                            "$ref": "#/definitions/dto.BlockUserResponse"
+                            "$ref": "#/definitions/dto.BlockOrUnblockUserResponse"
                         }
                     },
                     "400": {
@@ -156,6 +156,63 @@ const docTemplate = `{
                         "description": "Admin logout response",
                         "schema": {
                             "$ref": "#/definitions/dto.AdminLogoutResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - validation errors",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BadRequestError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UnauthorizedError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.InternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/admin/unblock-user": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unblock a user by email, phone, or ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Unblock user",
+                "parameters": [
+                    {
+                        "description": "Unblock user request",
+                        "name": "unblock_user_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlockOrUnblockUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Unblock user response",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BlockOrUnblockUserResponse"
                         }
                     },
                     "400": {
@@ -687,7 +744,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.BlockUserRequest": {
+        "dto.BlockOrUnblockUserRequest": {
             "type": "object",
             "required": [
                 "field",
@@ -702,12 +759,16 @@ const docTemplate = `{
                         "id"
                     ]
                 },
+                "should_block": {
+                    "description": "don't give required for bool values",
+                    "type": "boolean"
+                },
                 "value": {
                     "type": "string"
                 }
             }
         },
-        "dto.BlockUserResponse": {
+        "dto.BlockOrUnblockUserResponse": {
             "type": "object",
             "properties": {
                 "success": {

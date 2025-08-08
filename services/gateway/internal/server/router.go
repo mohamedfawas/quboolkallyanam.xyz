@@ -50,11 +50,14 @@ func (s *Server) registerAuthRoutes(v1 *gin.RouterGroup) {
 			adminAuth.POST("/block-user", middleware.AuthMiddleware(s.jwtManager),
 				middleware.RequireRole(constants.RoleAdmin),
 				s.authHandler.AdminBlockUser)
+			adminAuth.POST("/unblock-user", middleware.AuthMiddleware(s.jwtManager),
+				middleware.RequireRole(constants.RoleAdmin),
+				s.authHandler.AdminUnBlockUser)
 			adminAuth.GET("/users", middleware.AuthMiddleware(s.jwtManager),
 				middleware.RequireRole(constants.RoleAdmin),
 				s.authHandler.AdminGetUsers)
 			adminAuth.GET("/user", middleware.AuthMiddleware(s.jwtManager),
-				middleware.RequireRole(constants.RoleAdmin),  
+				middleware.RequireRole(constants.RoleAdmin),
 				s.authHandler.AdminGetUserByField)
 		}
 	}

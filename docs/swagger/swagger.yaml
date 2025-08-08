@@ -42,7 +42,7 @@ definitions:
         example: "2025-01-27T10:30:00Z"
         type: string
     type: object
-  dto.BlockUserRequest:
+  dto.BlockOrUnblockUserRequest:
     properties:
       field:
         enum:
@@ -50,13 +50,16 @@ definitions:
         - phone
         - id
         type: string
+      should_block:
+        description: don't give required for bool values
+        type: boolean
       value:
         type: string
     required:
     - field
     - value
     type: object
-  dto.BlockUserResponse:
+  dto.BlockOrUnblockUserResponse:
     properties:
       success:
         type: boolean
@@ -300,14 +303,14 @@ paths:
         name: block_user_request
         required: true
         schema:
-          $ref: '#/definitions/dto.BlockUserRequest'
+          $ref: '#/definitions/dto.BlockOrUnblockUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Block user response
           schema:
-            $ref: '#/definitions/dto.BlockUserResponse'
+            $ref: '#/definitions/dto.BlockOrUnblockUserResponse'
         "400":
           description: Bad request - validation errors
           schema:
@@ -386,6 +389,42 @@ paths:
       security:
       - BearerAuth: []
       summary: Admin logout
+      tags:
+      - Auth
+  /api/v1/auth/admin/unblock-user:
+    post:
+      consumes:
+      - application/json
+      description: Unblock a user by email, phone, or ID
+      parameters:
+      - description: Unblock user request
+        in: body
+        name: unblock_user_request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BlockOrUnblockUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Unblock user response
+          schema:
+            $ref: '#/definitions/dto.BlockOrUnblockUserResponse'
+        "400":
+          description: Bad request - validation errors
+          schema:
+            $ref: '#/definitions/dto.BadRequestError'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/dto.UnauthorizedError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.InternalServerError'
+      security:
+      - BearerAuth: []
+      summary: Unblock user
       tags:
       - Auth
   /api/v1/auth/admin/user:

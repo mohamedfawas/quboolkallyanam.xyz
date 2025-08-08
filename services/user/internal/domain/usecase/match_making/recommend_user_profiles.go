@@ -65,7 +65,7 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 
 	if len(result) == 0 {
 		return []*entity.UserProfileResponse{}, &pagination.PaginationData{
-			TotalCount: totalCount, 
+			TotalCount: totalCount,
 			Limit:      limit,
 			Offset:     offset,
 			HasMore:    false,
@@ -83,8 +83,8 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 			ID:                profile.ID,
 			FullName:          profile.FullName,
 			ProfilePictureURL: &profilePictureURL,
-			Age:               uint32(age),
-			HeightCm:          uint32(profile.HeightCm),
+			Age:               int32(age),
+			HeightCm:          int32(profile.HeightCm),
 			MaritalStatus:     string(profile.MaritalStatus),
 			Profession:        string(profile.Profession),
 			HomeDistrict:      string(profile.HomeDistrict),
@@ -92,9 +92,9 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 	}
 
 	return recommendedProfiles, &pagination.PaginationData{
-		TotalCount: totalCount, 
+		TotalCount: totalCount,
 		Limit:      limit,
 		Offset:     offset,
-		HasMore:    int64(offset+limit) < totalCount, 
+		HasMore:    int64(offset+limit) < totalCount,
 	}, nil
 }

@@ -128,16 +128,17 @@ func MapRefreshTokenResponse(resp *authpbv1.RefreshTokenResponse) *dto.RefreshTo
 	}
 }
 
-/////////////////////////// Block user //////////////////////////////
-func MapBlockUserRequest(req dto.BlockUserRequest) *authpbv1.BlockUserRequest {
-	return &authpbv1.BlockUserRequest{
+/////////////////////////// Block or unblock user //////////////////////////////
+func MapBlockOrUnblockUserRequest(req dto.BlockOrUnblockUserRequest) *authpbv1.BlockOrUnblockUserRequest {
+	return &authpbv1.BlockOrUnblockUserRequest{
 		Field: req.Field,
 		Value: req.Value,
+		ShouldBlock: req.ShouldBlock,
 	}
 }
 
-func MapBlockUserResponse(resp *authpbv1.BlockUserResponse) *dto.BlockUserResponse {
-	return &dto.BlockUserResponse{
+func MapBlockOrUnblockUserResponse(resp *authpbv1.BlockOrUnblockUserResponse) *dto.BlockOrUnblockUserResponse {
+	return &dto.BlockOrUnblockUserResponse{
 		Success: resp.Success.GetValue(),
 	}
 }

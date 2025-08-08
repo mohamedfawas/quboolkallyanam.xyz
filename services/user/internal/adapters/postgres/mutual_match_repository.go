@@ -19,7 +19,10 @@ func NewMutualMatchRepository(db *postgres.Client) repository.MutualMatchReposit
 	return &mutualMatchRepository{db: db}
 }
 
-func (r *mutualMatchRepository) GetMutualMatch(ctx context.Context, userID1, userID2 uuid.UUID) (*entity.MutualMatch, error) {
+func (r *mutualMatchRepository) GetMutualMatch(
+	ctx context.Context,
+	userID1, userID2 uuid.UUID) (*entity.MutualMatch, error) {
+
 	var mutualMatch entity.MutualMatch
 
 	err := r.db.GormDB.WithContext(ctx).
@@ -37,7 +40,10 @@ func (r *mutualMatchRepository) GetMutualMatch(ctx context.Context, userID1, use
 	return &mutualMatch, nil
 }
 
-func (r *mutualMatchRepository) DeactivateMutualMatchTx(ctx context.Context, tx *gorm.DB, userID1, userID2 uuid.UUID) error {
+func (r *mutualMatchRepository) DeactivateMutualMatchTx(
+	ctx context.Context,
+	tx *gorm.DB,
+	userID1, userID2 uuid.UUID) error {
 
 	now := time.Now().UTC()
 	return tx.WithContext(ctx).
@@ -52,7 +58,11 @@ func (r *mutualMatchRepository) DeactivateMutualMatchTx(ctx context.Context, tx 
 }
 
 // upsert method : create if not exists, reactivate if exists and deleted
-func (r *mutualMatchRepository) UpsertMutualMatchTx(ctx context.Context, tx *gorm.DB, userID1, userID2 uuid.UUID) error {
+func (r *mutualMatchRepository) UpsertMutualMatchTx(
+	ctx context.Context,
+	tx *gorm.DB,
+	userID1, userID2 uuid.UUID) error {
+
 	now := time.Now().UTC()
 
 	mutualMatch := &entity.MutualMatch{
@@ -73,25 +83,27 @@ func (r *mutualMatchRepository) UpsertMutualMatchTx(ctx context.Context, tx *gor
 		FirstOrCreate(mutualMatch).Error
 }
 
-func (r *mutualMatchRepository) GetMutualMatchedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
-    var userIDs []uuid.UUID
+func (r *mutualMatchRepository) GetMutualMatchedUserIDs(
+	ctx context.Context,
+	userID uuid.UUID) ([]uuid.UUID, error) {
 
-    const sql = `
+	var userIDs []uuid.UUID
+
+	const sql = `
     SELECT
       CASE WHEN user_id_1 = ? THEN user_id_2 ELSE user_id_1 END AS user_id
     FROM mutual_matches
     WHERE (user_id_1 = ? OR user_id_2 = ?) AND is_deleted = false
     ORDER BY updated_at DESC
     `
-    // Bind userID three times: once for the CASE, twice for the WHERE clauses
-    err := r.db.GormDB.WithContext(ctx).
-        Raw(sql, userID, userID, userID).
-        Scan(&userIDs).Error
+	// Bind userID three times: once for the CASE, twice for the WHERE clauses
+	err := r.db.GormDB.WithContext(ctx).
+		Raw(sql, userID, userID, userID).
+		Scan(&userIDs).Error
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return userIDs, nil
+	return userIDs, nil
 }
-

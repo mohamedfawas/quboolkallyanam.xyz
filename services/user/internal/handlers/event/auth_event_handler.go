@@ -33,7 +33,7 @@ func (h *AuthEventHandler) StartListening(ctx context.Context) error {
 	handler := func(data []byte) error {
 		var authEvent authevents.UserLoginSuccessEvent
 		if err := json.Unmarshal(data, &authEvent); err != nil {
-			h.logger.Error("[USER] failed to unmarshal user login success event",
+			h.logger.Error("failed to unmarshal user login success event",
 				zap.String(constants.UserIDS, authEvent.UserID.String()),
 				zap.Error(err))
 			return err
@@ -42,20 +42,20 @@ func (h *AuthEventHandler) StartListening(ctx context.Context) error {
 		return h.handleUserLoginSuccess(ctx, authEvent)
 	}
 
-	h.logger.Info("[USER] starting to listen for user login success events")
+	h.logger.Info("starting to listen for user login success events")
 	return h.messagingClient.Subscribe(constants.EventUserLoginSuccess, handler)
 }
 
 func (h *AuthEventHandler) handleUserLoginSuccess(ctx context.Context, event authevents.UserLoginSuccessEvent) error {
 
 	if err := h.userProfileUsecase.UpdateUserLastLogin(ctx, event.UserID, event.Email, event.Phone); err != nil {
-		h.logger.Error("[USER] failed to update user last login",
+		h.logger.Error("failed to update user last login",
 			zap.String(constants.UserIDS, event.UserID.String()),
 			zap.Error(err))
 		return err
 	}
 
-	h.logger.Info("[USER] user last login updated successfully",
+	h.logger.Info("user last login updated successfully",
 		zap.String(constants.UserIDS, event.UserID.String()))
 	return nil
 }

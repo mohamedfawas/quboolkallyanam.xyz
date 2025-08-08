@@ -113,18 +113,18 @@ func (r *userRepository) IsRegistered(ctx context.Context,
 	return count > 0, nil
 }
 
-func (r *userRepository) BlockUser(ctx context.Context,
-	field, value string) error {
+func (r *userRepository) BlockOrUnblockUser(ctx context.Context,
+	field, value string, shouldBlock bool) error {
 	
 	allowed := map[string]bool{"email": true, "phone": true, "id": true}
 	if !allowed[field] {
-		return fmt.Errorf("invalid field %q for BlockUser", field)
+		return fmt.Errorf("invalid field %q for BlockOrUnblockUser", field)
 	}
 
 	return r.db.GormDB.WithContext(ctx).
 		Model(&entity.User{}).
 		Where(map[string]interface{}{field: value}).
-		Updates(map[string]interface{}{"is_blocked": true, "updated_at": time.Now().UTC()}).Error
+		Updates(map[string]interface{}{"is_blocked": shouldBlock, "updated_at": time.Now().UTC()}).Error
 }
 
 

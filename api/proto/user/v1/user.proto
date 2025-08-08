@@ -2,13 +2,11 @@ syntax = "proto3";
 
 package user.v1;
 
-// import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1;userpbv1";
 
 service UserService {
-
     // User profile management
     rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
 
@@ -33,7 +31,7 @@ message UpdateUserProfileRequest {
     google.protobuf.BoolValue   is_bride                = 1;
     google.protobuf.StringValue full_name               = 2;
     google.protobuf.StringValue date_of_birth           = 3;
-    google.protobuf.UInt32Value  height_cm               = 4;
+    google.protobuf.Int32Value  height_cm               = 4;
     google.protobuf.BoolValue   physically_challenged   = 5;
     google.protobuf.StringValue community               = 6;
     google.protobuf.StringValue marital_status          = 7;
@@ -54,12 +52,12 @@ message GetProfilePhotoUploadURLRequest {
 message GetProfilePhotoUploadURLResponse {
     google.protobuf.StringValue upload_url = 1;
     google.protobuf.StringValue object_key = 2;
-    google.protobuf.UInt32Value expires_in_seconds = 3;
+    google.protobuf.Int32Value expires_in_seconds = 3;
 }
 
 message ConfirmProfilePhotoUploadRequest {
     google.protobuf.StringValue object_key = 1;
-    google.protobuf.UInt64Value file_size = 2;
+    google.protobuf.Int64Value file_size = 2;
 }
 
 message ConfirmProfilePhotoUploadResponse {
@@ -75,18 +73,18 @@ message DeleteProfilePhotoResponse {
 }
 
 message GetAdditionalPhotoUploadURLRequest {
-    google.protobuf.UInt32Value display_order = 1;
+    google.protobuf.Int32Value display_order = 1;
     google.protobuf.StringValue content_type = 2;
 }
 message GetAdditionalPhotoUploadURLResponse {
     google.protobuf.StringValue upload_url = 1;
     google.protobuf.StringValue object_key = 2;
-    google.protobuf.UInt32Value expires_in_seconds = 3;
+    google.protobuf.Int32Value expires_in_seconds = 3;
 }
 
 message ConfirmAdditionalPhotoUploadRequest {
     google.protobuf.StringValue object_key = 1;
-    google.protobuf.UInt64Value file_size = 2;
+    google.protobuf.Int64Value file_size = 2;
 }
 
 message ConfirmAdditionalPhotoUploadResponse {
@@ -95,7 +93,7 @@ message ConfirmAdditionalPhotoUploadResponse {
 }
 
 message DeleteAdditionalPhotoRequest {
-    google.protobuf.UInt32Value display_order = 1;
+    google.protobuf.Int32Value display_order = 1;
 }
 
 message DeleteAdditionalPhotoResponse {
@@ -104,10 +102,10 @@ message DeleteAdditionalPhotoResponse {
 
 message UpdateUserPartnerPreferencesRequest {
     google.protobuf.StringValue operation_type = 1;
-    google.protobuf.UInt32Value  min_age_years = 2;
-    google.protobuf.UInt32Value  max_age_years = 3;
-    google.protobuf.UInt32Value  min_height_cm = 4;
-    google.protobuf.UInt32Value  max_height_cm = 5;
+    google.protobuf.Int32Value  min_age_years = 2;
+    google.protobuf.Int32Value  max_age_years = 3;
+    google.protobuf.Int32Value  min_height_cm = 4;
+    google.protobuf.Int32Value  max_height_cm = 5;
     google.protobuf.BoolValue   accept_physically_challenged = 6;
 
     // Repeated already supports optional values, so no need wrapper
@@ -133,7 +131,7 @@ message UpdateUserPartnerPreferencesResponse {
 
 message RecordMatchActionRequest {
     string action = 1;
-    uint32 target_profile_id = 2;
+    int64 target_profile_id = 2;
 }
 
 message RecordMatchActionResponse {
@@ -149,8 +147,8 @@ message UserProfileRecommendation {
     int64 id = 1;
     string full_name = 2;
     string profile_picture_url = 3;
-    uint32 age = 4;
-    uint32 height_cm = 5;
+    int32 age = 4;
+    int32 height_cm = 5;
     string marital_status = 6;
     string profession = 7;
     string home_district = 8;
@@ -163,8 +161,8 @@ message GetMatchRecommendationsResponse {
 
 message PaginationInfo {
     int64 total_count = 1;
-    uint32 limit = 2;
-    uint32 offset = 3;
+    int32 limit = 2;
+    int32 offset = 3;
     bool has_more = 4;
 }
 

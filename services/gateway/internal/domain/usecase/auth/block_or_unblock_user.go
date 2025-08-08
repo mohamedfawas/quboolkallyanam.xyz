@@ -9,14 +9,14 @@ import (
 )
 
 
-func (u *authUsecase) BlockUser(
+func (u *authUsecase) BlockOrUnblockUser(
 	ctx context.Context, 
-	req dto.BlockUserRequest) (*dto.BlockUserResponse, error) {
+	req dto.BlockOrUnblockUserRequest) (*dto.BlockOrUnblockUserResponse, error) {
 	
 	allowedFields := []string{"email", "phone", "id"}
 	if !slices.Contains(allowedFields, req.Field) {
 		return nil, apperrors.ErrInvalidField
 	}
 	
-	return u.authClient.BlockUser(ctx, req)
+	return u.authClient.BlockOrUnblockUser(ctx, req)
 }

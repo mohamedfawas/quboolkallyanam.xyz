@@ -13,8 +13,6 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pointerutil"
 )
 
-
-
 func (h *UserHandler) GetProfilesByMatchAction(
 	ctx context.Context, 
 	req *userpbv1.GetProfilesByMatchActionRequest) (*userpbv1.GetProfilesByMatchActionResponse, error) {
@@ -62,8 +60,8 @@ func (h *UserHandler) GetProfilesByMatchAction(
 
 	protoPagination := &userpbv1.PaginationInfo{
 		TotalCount: pagination.TotalCount,
-		Limit:      uint32(pagination.Limit),
-		Offset:     uint32(pagination.Offset),
+		Limit:      int32(pagination.Limit),
+		Offset:     int32(pagination.Offset),
 		HasMore:    pagination.HasMore,
 	}
 

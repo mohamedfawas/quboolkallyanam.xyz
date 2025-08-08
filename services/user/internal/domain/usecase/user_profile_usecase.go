@@ -25,7 +25,7 @@ type UserProfileUsecase interface {
 	ConfirmProfilePhotoUpload(ctx context.Context,
 		userID uuid.UUID,
 		objectKey string,
-		fileSize uint64) (string, error)
+		fileSize int64) (string, error)
 	DeleteProfilePhoto(ctx context.Context,
 		userID uuid.UUID) error
 	GetAdditionalPhotoUploadURL(ctx context.Context,
@@ -35,7 +35,7 @@ type UserProfileUsecase interface {
 	ConfirmAdditionalPhotoUpload(ctx context.Context,
 		userID uuid.UUID,
 		objectKey string,
-		fileSize uint64) (string, error)
+		fileSize int64) (string, error)
 	DeleteAdditionalPhoto(ctx context.Context,
 		userID uuid.UUID,
 		displayOrder int32) error

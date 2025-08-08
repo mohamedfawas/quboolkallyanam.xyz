@@ -35,7 +35,7 @@ func (h *UserHandler) RecordMatchAction(ctx context.Context, req *userpbv1.Recor
 		return nil, status.Errorf(codes.InvalidArgument, "target profile ID is required")
 	}
 
-	success, err := h.matchMakingUsecase.RecordMatchAction(ctx, userIDUUID, uint(req.TargetProfileId), req.Action)
+	success, err := h.matchMakingUsecase.RecordMatchAction(ctx, userIDUUID, int64(req.TargetProfileId), req.Action)
 	if err != nil {
 		log.Printf("Failed to record match action: %v", err)
 		return nil, err

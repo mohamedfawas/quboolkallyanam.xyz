@@ -45,6 +45,6 @@ func (h *UserHandler) GetAdditionalPhotoUploadURL(ctx context.Context,
 	return &userpbv1.GetAdditionalPhotoUploadURLResponse{
 		UploadUrl:        &wrapperspb.StringValue{Value: response.UploadURL},
 		ObjectKey:        &wrapperspb.StringValue{Value: response.ObjectKey},
-		ExpiresInSeconds: &wrapperspb.UInt32Value{Value: response.ExpiresInSeconds},
+		ExpiresInSeconds: &wrapperspb.Int32Value{Value: int32(response.ExpiresInSeconds)},
 	}, nil
 }

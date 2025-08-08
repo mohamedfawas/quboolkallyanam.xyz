@@ -38,8 +38,8 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 
 	var paymentVerifiedEvent paymentEvents.PaymentVerified
 
-	err := u.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
-		payment, err := u.paymentRepository.GetPaymentDetailsByRazorpayOrderID(txCtx, req.RazorpayOrderID)
+	err := u.txManager.WithTransaction(ctx, func(tx *gorm.DB) error {
+		payment, err := u.paymentRepository.GetPaymentDetailsByRazorpayOrderIDTx(ctx, tx, req.RazorpayOrderID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return appErrors.ErrPaymentNotFound
@@ -56,7 +56,7 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 			return appErrors.ErrPaymentExpired
 		}
 
-		plan, err := u.subscriptionPlanRepository.GetPlanByID(txCtx, payment.PlanID)
+		plan, err := u.subscriptionPlanRepository.GetPlanByIDTx(ctx, tx, payment.PlanID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return appErrors.ErrSubscriptionPlanNotFound
@@ -70,12 +70,12 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 		payment.Status = constants.PaymentStatusCompleted
 		payment.UpdatedAt = time.Now().UTC()
 
-		if err := u.paymentRepository.UpdatePayment(txCtx, payment); err != nil {
+		if err := u.paymentRepository.UpdatePaymentTx(ctx, tx, payment); err != nil {
 			log.Printf("failed to update payment: %v", err)
 			return err
 		}
 
-		existingSubscription, err := u.subscriptionRepository.GetActiveSubscriptionByUserID(txCtx, payment.UserID)
+		existingSubscription, err := u.subscriptionRepository.GetActiveSubscriptionByUserIDTx(ctx, tx, payment.UserID)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Printf("failed to check existing subscription: %v", err)
 			return err
@@ -85,7 +85,7 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 		if existingSubscription != nil {
 			existingSubscription.Status = constants.SubscriptionStatusCancelled
 			existingSubscription.UpdatedAt = time.Now().UTC()
-			if err := u.subscriptionRepository.UpdateSubscription(txCtx, existingSubscription); err != nil {
+			if err := u.subscriptionRepository.UpdateSubscriptionTx(ctx, tx, existingSubscription); err != nil {
 				log.Printf("failed to deactivate existing subscription: %v", err)
 				return err
 			}
@@ -103,13 +103,13 @@ func (u *paymentUsecase) VerifyPayment(ctx context.Context, req *entity.VerifyPa
 			UpdatedAt: now,
 		}
 
-		if err := u.subscriptionRepository.CreateSubscription(txCtx, subscription); err != nil {
+		if err := u.subscriptionRepository.CreateSubscriptionTx(ctx, tx, subscription); err != nil {
 			log.Printf("failed to create subscription: %v", err)
 			return err
 		}
 
 		// Get the newly created subscription to populate response
-		newSubscription, err := u.subscriptionRepository.GetActiveSubscriptionByUserID(txCtx, payment.UserID)
+		newSubscription, err := u.subscriptionRepository.GetActiveSubscriptionByUserIDTx(ctx, tx, payment.UserID)
 		if err != nil {
 			log.Printf("failed to get active subscription: %v", err)
 			return err

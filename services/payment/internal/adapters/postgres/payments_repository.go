@@ -7,6 +7,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/repository"
+	"gorm.io/gorm"
 )
 
 type paymentsRepository struct {
@@ -18,15 +19,12 @@ func NewPaymentsRepository(db *postgres.Client) repository.PaymentsRepository {
 }
 
 func (r *paymentsRepository) CreatePayment(ctx context.Context, payment *entity.Payment) error {
-	db := GetDBFromContext(ctx, r.db.GormDB)
-	return db.WithContext(ctx).Create(payment).Error
+	return r.db.GormDB.WithContext(ctx).Create(payment).Error
 }
 
 func (r *paymentsRepository) GetPaymentDetailsByRazorpayOrderID(ctx context.Context, razorpayOrderID string) (*entity.Payment, error) {
 	var payment entity.Payment
-	db := GetDBFromContext(ctx, r.db.GormDB)
-
-	err := db.WithContext(ctx).
+	err := r.db.GormDB.WithContext(ctx).
 		Where("razorpay_order_id = ?", razorpayOrderID).
 		First(&payment).Error
 
@@ -37,16 +35,26 @@ func (r *paymentsRepository) GetPaymentDetailsByRazorpayOrderID(ctx context.Cont
 	return &payment, nil
 }
 
-func (r *paymentsRepository) UpdatePayment(ctx context.Context, payment *entity.Payment) error {
-	db := GetDBFromContext(ctx, r.db.GormDB)
-	return db.WithContext(ctx).Save(payment).Error
+func (r *paymentsRepository) GetPaymentDetailsByRazorpayOrderIDTx(ctx context.Context, tx *gorm.DB, razorpayOrderID string) (*entity.Payment, error) {
+	var payment entity.Payment
+	err := tx.WithContext(ctx).
+		Where("razorpay_order_id = ?", razorpayOrderID).
+		First(&payment).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &payment, nil
+}
+
+func (r *paymentsRepository) UpdatePaymentTx(ctx context.Context, tx *gorm.DB, payment *entity.Payment) error {
+	return tx.WithContext(ctx).Save(payment).Error
 }
 
 func (r *paymentsRepository) GetPaymentHistory(ctx context.Context, userID uuid.UUID) ([]*entity.Payment, error) {
 	var payments []*entity.Payment
-	db := GetDBFromContext(ctx, r.db.GormDB)
-
-	err := db.WithContext(ctx).
+	err := r.db.GormDB.WithContext(ctx).
 		Where("user_id = ?", userID).
 		Order("created_at DESC").
 		Find(&payments).Error

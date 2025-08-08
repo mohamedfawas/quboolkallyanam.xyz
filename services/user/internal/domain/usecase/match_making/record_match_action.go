@@ -15,7 +15,7 @@ import (
 func (u *matchMakingUsecase) RecordMatchAction(
 	ctx context.Context,
 	userID uuid.UUID,
-	targetProfileID uint,
+	targetProfileID int64,
 	action string) (bool, error) {
 
 	targetProfile, err := u.userProfileRepository.GetUserProfileByID(ctx, targetProfileID)

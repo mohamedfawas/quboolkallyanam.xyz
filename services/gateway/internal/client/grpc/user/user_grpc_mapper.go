@@ -52,7 +52,7 @@ func MapUpdateUserProfileRequest(req dto.UserProfilePatchRequest) *userpbv1.Upda
 	}
 
 	if req.HeightCm != nil {
-		grpcReq.HeightCm = &wrapperspb.UInt32Value{Value: uint32(pointerutil.GetIntValue(req.HeightCm))}
+		grpcReq.HeightCm = &wrapperspb.Int32Value{Value: int32(pointerutil.GetIntValue(req.HeightCm))}
 	}
 
 	return grpcReq
@@ -85,7 +85,7 @@ func MapGetProfilePhotoUploadURLResponse(resp *userpbv1.GetProfilePhotoUploadURL
 func MapConfirmProfilePhotoUploadRequest(req dto.ConfirmProfilePhotoUploadRequest) *userpbv1.ConfirmProfilePhotoUploadRequest {
 	return &userpbv1.ConfirmProfilePhotoUploadRequest{
 		ObjectKey: &wrapperspb.StringValue{Value: req.ObjectKey},
-		FileSize: &wrapperspb.UInt64Value{Value: req.FileSize},
+		FileSize: &wrapperspb.Int64Value{Value: req.FileSize},
 	}
 }
 
@@ -112,7 +112,7 @@ func MapDeleteProfilePhotoResponse(resp *userpbv1.DeleteProfilePhotoResponse) *d
 
 func MapGetAdditionalPhotoUploadURLRequest(req dto.GetAdditionalPhotoUploadURLRequest) *userpbv1.GetAdditionalPhotoUploadURLRequest {
 	return &userpbv1.GetAdditionalPhotoUploadURLRequest{
-		DisplayOrder: &wrapperspb.UInt32Value{Value: uint32(req.DisplayOrder)},
+		DisplayOrder: &wrapperspb.Int32Value{Value: int32(req.DisplayOrder)},
 		ContentType: &wrapperspb.StringValue{Value: req.ContentType},
 	}
 }
@@ -130,7 +130,7 @@ func MapGetAdditionalPhotoUploadURLResponse(resp *userpbv1.GetAdditionalPhotoUpl
 func MapConfirmAdditionalPhotoUploadRequest(req dto.ConfirmAdditionalPhotoUploadRequest) *userpbv1.ConfirmAdditionalPhotoUploadRequest {
 	return &userpbv1.ConfirmAdditionalPhotoUploadRequest{
 		ObjectKey: &wrapperspb.StringValue{Value: req.ObjectKey},
-		FileSize: &wrapperspb.UInt64Value{Value: req.FileSize},
+		FileSize: &wrapperspb.Int64Value{Value: req.FileSize},
 	}
 }
 
@@ -146,7 +146,7 @@ func MapConfirmAdditionalPhotoUploadResponse(resp *userpbv1.ConfirmAdditionalPho
 
 func MapDeleteAdditionalPhotoRequest(req dto.DeleteAdditionalPhotoRequest) *userpbv1.DeleteAdditionalPhotoRequest {
 	return &userpbv1.DeleteAdditionalPhotoRequest{
-		DisplayOrder: &wrapperspb.UInt32Value{Value: uint32(req.DisplayOrder)},
+		DisplayOrder: &wrapperspb.Int32Value{Value: int32(req.DisplayOrder)},
 	}
 }
 
@@ -165,19 +165,19 @@ func MapUpdateUserPartnerPreferencesRequest(operationType string, req dto.Update
 	}
 
 	if req.MinAgeYears != nil {
-		grpcReq.MinAgeYears = &wrapperspb.UInt32Value{Value: uint32(*req.MinAgeYears)}
+		grpcReq.MinAgeYears = &wrapperspb.Int32Value{Value: int32(*req.MinAgeYears)}
 	}
 
 	if req.MaxAgeYears != nil {
-		grpcReq.MaxAgeYears = &wrapperspb.UInt32Value{Value: uint32(*req.MaxAgeYears)}
+		grpcReq.MaxAgeYears = &wrapperspb.Int32Value{Value: int32(*req.MaxAgeYears)}
 	}
 
 	if req.MinHeightCM != nil {
-		grpcReq.MinHeightCm = &wrapperspb.UInt32Value{Value: uint32(*req.MinHeightCM)}
+		grpcReq.MinHeightCm = &wrapperspb.Int32Value{Value: int32(*req.MinHeightCM)}
 	}
 
 	if req.MaxHeightCM != nil {
-		grpcReq.MaxHeightCm = &wrapperspb.UInt32Value{Value: uint32(*req.MaxHeightCM)}
+		grpcReq.MaxHeightCm = &wrapperspb.Int32Value{Value: int32(*req.MaxHeightCM)}
 	}
 
 	if req.AcceptPhysicallyChallenged != nil {
@@ -247,7 +247,7 @@ func MapUpdateUserPartnerPreferencesResponse(resp *userpbv1.UpdateUserPartnerPre
 func MapRecordMatchActionRequest(req dto.RecordMatchActionRequest) *userpbv1.RecordMatchActionRequest {
 	return &userpbv1.RecordMatchActionRequest{
 		Action:          req.Action,
-		TargetProfileId: uint32(req.TargetProfileID),
+		TargetProfileId: req.TargetProfileID,
 	}
 }
 

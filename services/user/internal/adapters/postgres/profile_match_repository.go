@@ -19,7 +19,11 @@ func NewProfileMatchRepository(db *postgres.Client) repository.ProfileMatchRepos
 	return &profileMatchRepository{db: db}
 }
 
-func (r *profileMatchRepository) GetExistingMatch(ctx context.Context, userID uuid.UUID, targetID uuid.UUID) (*entity.ProfileMatch, error) {
+func (r *profileMatchRepository) GetExistingMatch(
+	ctx context.Context,
+	userID uuid.UUID,
+	targetID uuid.UUID) (*entity.ProfileMatch, error) {
+
 	var match entity.ProfileMatch
 
 	err := r.db.GormDB.WithContext(ctx).
@@ -36,7 +40,11 @@ func (r *profileMatchRepository) GetExistingMatch(ctx context.Context, userID uu
 	return &match, nil
 }
 
-func (r *profileMatchRepository) CreateMatchAction(ctx context.Context, userID uuid.UUID, targetID uuid.UUID, isLiked bool) error {
+func (r *profileMatchRepository) CreateMatchAction(
+	ctx context.Context,
+	userID uuid.UUID,
+	targetID uuid.UUID, isLiked bool) error {
+
 	match := entity.ProfileMatch{
 		UserID:   userID,
 		TargetID: targetID,
@@ -46,7 +54,13 @@ func (r *profileMatchRepository) CreateMatchAction(ctx context.Context, userID u
 	return r.db.GormDB.WithContext(ctx).Create(&match).Error
 }
 
-func (r *profileMatchRepository) CreateMatchActionTx(ctx context.Context, tx *gorm.DB, userID uuid.UUID, targetID uuid.UUID, isLiked bool) error {
+func (r *profileMatchRepository) CreateMatchActionTx(
+	ctx context.Context,
+	tx *gorm.DB,
+	userID uuid.UUID,
+	targetID uuid.UUID,
+	isLiked bool) error {
+
 	match := entity.ProfileMatch{
 		UserID:   userID,
 		TargetID: targetID,
@@ -91,7 +105,10 @@ func (r *profileMatchRepository) UpdateMatchActionTx(
 		}).Error
 }
 
-func (r *profileMatchRepository) GetMatchedProfileIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+func (r *profileMatchRepository) GetMatchedProfileIDs(
+	ctx context.Context,
+	userID uuid.UUID) ([]uuid.UUID, error) {
+
 	var matchedIDs []uuid.UUID
 	err := r.db.GormDB.WithContext(ctx).
 		Model(&entity.ProfileMatch{}).
@@ -108,7 +125,10 @@ func (r *profileMatchRepository) GetMatchedProfileIDs(ctx context.Context, userI
 	return matchedIDs, nil
 }
 
-func (r *profileMatchRepository) GetLikedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+func (r *profileMatchRepository) GetLikedUserIDs(
+	ctx context.Context,
+	userID uuid.UUID) ([]uuid.UUID, error) {
+
 	var likedIDs []uuid.UUID
 	err := r.db.GormDB.WithContext(ctx).
 		Model(&entity.ProfileMatch{}).
@@ -126,7 +146,10 @@ func (r *profileMatchRepository) GetLikedUserIDs(ctx context.Context, userID uui
 	return likedIDs, nil
 }
 
-func (r *profileMatchRepository) GetPassedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+func (r *profileMatchRepository) GetPassedUserIDs(
+	ctx context.Context,
+	userID uuid.UUID) ([]uuid.UUID, error) {
+
 	var passedIDs []uuid.UUID
 	err := r.db.GormDB.WithContext(ctx).
 		Model(&entity.ProfileMatch{}).

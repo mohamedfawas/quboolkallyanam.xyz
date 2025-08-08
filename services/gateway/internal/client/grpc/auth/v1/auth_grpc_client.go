@@ -170,19 +170,19 @@ func (c *authGRPCClient) RefreshToken(ctx context.Context, req dto.RefreshTokenR
 	return MapRefreshTokenResponse(grpcResp), nil
 }
 
-func (c *authGRPCClient) BlockUser(ctx context.Context, req dto.BlockUserRequest) (*dto.BlockUserResponse, error) {
+func (c *authGRPCClient) BlockOrUnblockUser(ctx context.Context, req dto.BlockOrUnblockUserRequest) (*dto.BlockOrUnblockUserResponse, error) {
 	var err error
 	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	grpcReq := MapBlockUserRequest(req)
-	grpcResp, err := c.client.BlockUser(ctx, grpcReq)
+	grpcReq := MapBlockOrUnblockUserRequest(req)
+	grpcResp, err := c.client.BlockOrUnblockUser(ctx, grpcReq)
 	if err != nil {
 		return nil, err
 	}
-	return MapBlockUserResponse(grpcResp), nil
+	return MapBlockOrUnblockUserResponse(grpcResp), nil
 }
 
 func (c *authGRPCClient) GetUsers(ctx context.Context, req dto.GetUsersRequest) (*dto.GetUsersResponse, error) {

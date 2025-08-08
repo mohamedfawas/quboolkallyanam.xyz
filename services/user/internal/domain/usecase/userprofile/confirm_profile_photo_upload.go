@@ -13,7 +13,7 @@ func (u *userProfileUsecase) ConfirmProfilePhotoUpload(
 	ctx context.Context,
 	userID uuid.UUID,
 	objectKey string,
-	fileSize uint64) (string, error) {
+	fileSize int64) (string, error) {
 
 	if !validation.IsValidImageFileSize(fileSize) {
 		return "", apperrors.ErrInvalidImageFileSize

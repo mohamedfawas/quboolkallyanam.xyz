@@ -41,7 +41,7 @@ func (u *userProfileUsecase) UpdateUserProfile(
 		existingProfile.DateOfBirth = *dateOfBirth
 	}
 	if req.HeightCm != nil {
-		existingProfile.HeightCm = uint16(*req.HeightCm)
+		existingProfile.HeightCm = int16(*req.HeightCm)
 	}
 	if req.PhysicallyChallenged != nil {
 		existingProfile.PhysicallyChallenged = *req.PhysicallyChallenged

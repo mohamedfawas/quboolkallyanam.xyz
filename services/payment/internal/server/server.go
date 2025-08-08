@@ -108,8 +108,8 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	rootLogger.Info("Subscription plans repository created")
 	subscriptionsRepo := postgresAdapters.NewSubscriptionsRepository(pgClient)
 	rootLogger.Info("Subscriptions repository created")
-	txManager := postgresAdapters.NewTxManager(pgClient)
-	rootLogger.Info("Tx manager created")
+	txManager := postgres.NewTransactionManager(pgClient)
+	rootLogger.Info("Transaction manager created")
 
 	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapters.NewEventPublisher(messagingClient)

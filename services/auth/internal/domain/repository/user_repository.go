@@ -15,6 +15,6 @@ type UserRepository interface {
 	UpdateLastLogin(ctx context.Context, userID string, now time.Time) error
 	UpdatePremiumUntil(ctx context.Context, userID string, premiumUntil time.Time, now time.Time) error
 	IsRegistered(ctx context.Context, field, value string) (bool, error)
-	BlockUser(ctx context.Context, field, value string) error
+	BlockOrUnblockUser(ctx context.Context, field, value string, shouldBlock bool) error
 	GetUsers(ctx context.Context, page, limit int) ([]*entity.User, error)
 }

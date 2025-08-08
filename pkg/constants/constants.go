@@ -90,4 +90,8 @@ const (
 	// gcs storage
 	ProfilePhotoStorageDirectory = "profile-photos"
 	AdditionalPhotoStorageDirectory = "additional-photos"
+
+	// user profile
+	MinHeightCm = 100
+	MaxHeightCm = 250
 )

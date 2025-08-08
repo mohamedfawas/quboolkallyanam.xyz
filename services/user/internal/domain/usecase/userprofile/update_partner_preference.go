@@ -58,15 +58,15 @@ func (u *userProfileUsecase) createPartnerPreferences(
 	}
 
 	if validation.IsValidAgeRange(int(*req.MinAgeYears), int(*req.MaxAgeYears)) {
-		preferences.MinAgeYears = uint16(*req.MinAgeYears)
-		preferences.MaxAgeYears = uint16(*req.MaxAgeYears)
+		preferences.MinAgeYears = int16(*req.MinAgeYears)
+		preferences.MaxAgeYears = int16(*req.MaxAgeYears)
 	} else {
 		return appError.ErrInvalidAgeRange
 	}
 
 	if validation.IsValidHeightRange(int(*req.MinHeightCM), int(*req.MaxHeightCM)) {
-		preferences.MinHeightCm = uint16(*req.MinHeightCM)
-		preferences.MaxHeightCm = uint16(*req.MaxHeightCM)
+		preferences.MinHeightCm = int16(*req.MinHeightCM)
+		preferences.MaxHeightCm = int16(*req.MaxHeightCM)
 	} else {
 		return appError.ErrInvalidHeightRange
 	}
@@ -125,20 +125,20 @@ func (u *userProfileUsecase) patchPartnerPreferences(
 	// Handle age range updates
 	if req.MinAgeYears != nil && req.MaxAgeYears != nil {
 		if validation.IsValidAgeRange(int(*req.MinAgeYears), int(*req.MaxAgeYears)) {
-			patch["min_age_years"] = uint16(*req.MinAgeYears)
-			patch["max_age_years"] = uint16(*req.MaxAgeYears)
+			patch["min_age_years"] = int16(*req.MinAgeYears)
+			patch["max_age_years"] = int16(*req.MaxAgeYears)
 		} else {
 			return appError.ErrInvalidAgeRange
 		}
 	} else if req.MinAgeYears != nil {
 		if validation.IsValidAge(int(*req.MinAgeYears)) && int(*req.MinAgeYears) <= int(existingPartnerPreferences.MaxAgeYears) {
-			patch["min_age_years"] = uint16(*req.MinAgeYears)
+			patch["min_age_years"] = int16(*req.MinAgeYears)
 		} else {
 			return appError.ErrInvalidAgeRange
 		}
 	} else if req.MaxAgeYears != nil {
 		if validation.IsValidAge(int(*req.MaxAgeYears)) && int(*req.MaxAgeYears) >= int(existingPartnerPreferences.MinAgeYears) {
-			patch["max_age_years"] = uint16(*req.MaxAgeYears)
+			patch["max_age_years"] = int16(*req.MaxAgeYears)
 		} else {
 			return appError.ErrInvalidAgeRange
 		}
@@ -147,20 +147,20 @@ func (u *userProfileUsecase) patchPartnerPreferences(
 	// Handle height range updates
 	if req.MinHeightCM != nil && req.MaxHeightCM != nil {
 		if validation.IsValidHeightRange(int(*req.MinHeightCM), int(*req.MaxHeightCM)) {
-			patch["min_height_cm"] = uint16(*req.MinHeightCM)
-			patch["max_height_cm"] = uint16(*req.MaxHeightCM)
+			patch["min_height_cm"] = int16(*req.MinHeightCM)
+			patch["max_height_cm"] = int16(*req.MaxHeightCM)
 		} else {
 			return appError.ErrInvalidHeightRange
 		}
 	} else if req.MinHeightCM != nil {
 		if validation.IsValidHeight(int(*req.MinHeightCM)) && int(*req.MinHeightCM) <= int(existingPartnerPreferences.MaxHeightCm) {
-			patch["min_height_cm"] = uint16(*req.MinHeightCM)
+			patch["min_height_cm"] = int16(*req.MinHeightCM)
 		} else {
 			return appError.ErrInvalidHeightRange
 		}
 	} else if req.MaxHeightCM != nil {
 		if validation.IsValidHeight(int(*req.MaxHeightCM)) && int(*req.MaxHeightCM) >= int(existingPartnerPreferences.MinHeightCm) {
-			patch["max_height_cm"] = uint16(*req.MaxHeightCM)
+			patch["max_height_cm"] = int16(*req.MaxHeightCM)
 		} else {
 			return appError.ErrInvalidHeightRange
 		}

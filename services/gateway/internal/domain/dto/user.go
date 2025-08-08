@@ -55,7 +55,7 @@ type GetProfilePhotoUploadURLResponse struct {
 
 type ConfirmProfilePhotoUploadRequest struct {
 	ObjectKey string `json:"object_key"`
-	FileSize  uint64 `json:"file_size"`
+	FileSize  int64 `json:"file_size"`
 }
 
 type ConfirmProfilePhotoUploadResponse struct {
@@ -86,7 +86,7 @@ type GetAdditionalPhotoUploadURLResponse struct {
 
 type ConfirmAdditionalPhotoUploadRequest struct {
 	ObjectKey string `json:"object_key"`
-	FileSize  uint64 `json:"file_size"`
+	FileSize  int64 `json:"file_size"`
 }
 
 type ConfirmAdditionalPhotoUploadResponse struct {
@@ -158,7 +158,7 @@ type UpdateUserProfileResponse struct {
 /////////////////// MATCH MAKING /////////////////////
 type RecordMatchActionRequest struct {
 	Action          string `json:"action"`
-	TargetProfileID uint   `json:"target_profile_id"`
+	TargetProfileID int64   `json:"target_profile_id"`
 }
 
 type RecordMatchActionResponse struct {

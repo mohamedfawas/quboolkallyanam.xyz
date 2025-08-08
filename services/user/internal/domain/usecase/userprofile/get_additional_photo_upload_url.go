@@ -10,9 +10,10 @@ import (
 )
 
 func (u *userProfileUsecase) GetAdditionalPhotoUploadURL(ctx context.Context,
-	 userID uuid.UUID, 
-	 displayOrder int32,
-	 contentType string) (*mediastorage.PhotoUploadURLResponse, error) {
+	userID uuid.UUID,
+	displayOrder int32,
+	contentType string) (*mediastorage.PhotoUploadURLResponse, error) {
+
 	if !validation.IsValidImageType(contentType) {
 		return nil, apperrors.ErrInvalidImageType
 	}
@@ -34,10 +35,10 @@ func (u *userProfileUsecase) GetAdditionalPhotoUploadURL(ctx context.Context,
 	}
 
 	response, err := u.photoStorage.GetAdditionalPhotoUploadURL(ctx,
-		 userID.String(),
-		  displayOrder, 
-		  contentType, 
-		  u.config.MediaStorage.URLExpiry)
+		userID.String(),
+		displayOrder,
+		contentType,
+		u.config.MediaStorage.URLExpiry)
 	if err != nil {
 		return nil, err
 	}

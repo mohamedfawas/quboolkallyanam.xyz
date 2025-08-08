@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 )
@@ -38,18 +39,23 @@ func (u *userProfileUsecase) UpdateUserLastLogin(ctx context.Context,
 	// create minimal profile with required fields
 	profile := &entity.UserProfile{
 		UserID:                userID,
+		IsBride:               false,
 		Email:                 email,
 		Phone:                 phone,
-		IsBride:               false,
-		LastLogin:             now,
-		CreatedAt:             now,
-		UpdatedAt:             now,
+		HeightCm:              constants.MinHeightCm,
+		PhysicallyChallenged:  false,
+		ProfileCompleted:      false,
+		
 		Community:             community,
 		MaritalStatus:         maritalStatus,
 		Profession:            profession,
 		ProfessionType:        professionType,
 		HighestEducationLevel: highestEducationLevel,
 		HomeDistrict:          homeDistrict,
+
+		LastLogin:             now,
+		CreatedAt:             now,
+		UpdatedAt:             now,
 	}
 
 	if err := u.userProfileRepository.CreateUserProfile(ctx, profile); err != nil {

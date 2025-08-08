@@ -14,7 +14,8 @@ type MatchMakingUsecase interface {
 		limit, offset int) ([]*entity.UserProfileResponse, *pagination.PaginationData, error)
 	RecordMatchAction(ctx context.Context,
 		userID uuid.UUID,
-		targetProfileID uint, action string) (bool, error)
+		targetProfileID int64,
+		action string) (bool, error)
 	GetProfilesByMatchAction(ctx context.Context,
 		userID uuid.UUID,
 		action string,

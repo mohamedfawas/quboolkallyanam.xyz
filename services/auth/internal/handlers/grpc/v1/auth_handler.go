@@ -222,7 +222,7 @@ func (h *AuthHandler) AdminLogout(ctx context.Context, req *authpbv1.AdminLogout
 	}, nil
 }
 
-func (h *AuthHandler) BlockUser(ctx context.Context, req *authpbv1.BlockUserRequest) (*authpbv1.BlockUserResponse, error) {
+func (h *AuthHandler) BlockOrUnblockUser(ctx context.Context, req *authpbv1.BlockOrUnblockUserRequest) (*authpbv1.BlockOrUnblockUserResponse, error) {
 	contextData, err := contextutils.ExtractRequestIDFromGrpcContext(ctx)
 	if err != nil {
 		h.logger.Error("Failed to extract context data", zap.Error(err))
@@ -233,16 +233,19 @@ func (h *AuthHandler) BlockUser(ctx context.Context, req *authpbv1.BlockUserRequ
 		zap.String(constants.ContextKeyRequestID, contextData.RequestID),
 	)
 
-	err = h.adminUsecase.BlockUser(ctx, req.Field, req.Value)
+	err = h.adminUsecase.BlockOrUnblockUser(ctx, req.Field, req.Value, req.ShouldBlock)
 	if err != nil {
 		if !apperrors.IsAppError(err) {
-			log.Error("Failed to block user", zap.Error(err))
+			log.Error("Failed to block or unblock user", zap.Error(err))
 		}
 		return nil, err
 	}
 
-	log.Info("User blocked successfully")
-	return &authpbv1.BlockUserResponse{
+	log.Info("User block or unblock request processed successfully",
+		zap.String("field", req.Field),
+		zap.String("value", req.Value),
+		zap.Bool("should_block", req.ShouldBlock))
+	return &authpbv1.BlockOrUnblockUserResponse{
 		Success: &wrapperspb.BoolValue{Value: true},
 	}, nil
 }

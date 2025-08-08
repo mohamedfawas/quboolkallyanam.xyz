@@ -3,18 +3,23 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   user_id                 UUID           NOT NULL UNIQUE,       -- from Auth service
   is_bride                BOOLEAN        NOT NULL DEFAULT FALSE,
   full_name               VARCHAR(200),
-  email                   VARCHAR(255),
-  phone                   VARCHAR(20),
+  email                   VARCHAR(255) NOT NULL,
+  phone                   VARCHAR(20) NOT NULL,
   date_of_birth           DATE,
   height_cm               SMALLINT NOT NULL CHECK (height_cm > 0),
   physically_challenged   BOOLEAN NOT NULL DEFAULT FALSE,
+  profile_completed       BOOLEAN NOT NULL DEFAULT FALSE,
+
   community               VARCHAR(255),
   marital_status          VARCHAR(255),
   profession              VARCHAR(255),
   profession_type         VARCHAR(255),
   highest_education_level VARCHAR(255),
   home_district           VARCHAR(255),
+
   profile_image_key     VARCHAR(255),
+
+
   last_login              TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
   created_at              TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
   updated_at              TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
@@ -79,21 +84,6 @@ WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_user_profiles_physically_challenged 
 ON user_profiles (deleted_at, physically_challenged, last_login DESC) 
 WHERE deleted_at IS NULL;
-
-
--- B-tree indexes on boolean flags
-CREATE INDEX IF NOT EXISTS idx_partner_pref_accept_all_communities
-  ON partner_preferences (accept_all_communities);
-CREATE INDEX IF NOT EXISTS idx_partner_pref_accept_all_marital_status
-  ON partner_preferences (accept_all_marital_status);
-CREATE INDEX IF NOT EXISTS idx_partner_pref_accept_all_professions
-  ON partner_preferences (accept_all_professions);
-CREATE INDEX IF NOT EXISTS idx_partner_pref_accept_all_profession_types
-  ON partner_preferences (accept_all_profession_types);
-CREATE INDEX IF NOT EXISTS idx_partner_pref_accept_all_education_levels
-  ON partner_preferences (accept_all_education_levels);
-CREATE INDEX IF NOT EXISTS idx_partner_pref_accept_all_home_districts
-  ON partner_preferences (accept_all_home_districts);
 
 -- GIN indexes on array columns
 CREATE INDEX IF NOT EXISTS idx_partner_pref_communities_gin
