@@ -7,4 +7,5 @@ const (
 	EventUserProfileCreated  = "user.profile.created"
 	EventUserProfileUpdated  = "user.profile.updated"
 	EventUserAccountDeleted  = "user.account.deleted"
+	EventAdminBlockedUser    = "admin.blocked.user"
 )

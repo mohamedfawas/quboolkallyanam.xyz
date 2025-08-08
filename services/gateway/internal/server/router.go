@@ -12,7 +12,6 @@ import (
 
 func (s *Server) setupRoutes(router *gin.Engine) {
 	router.Use(middleware.RequestIDMiddleware())
-	router.Use(middleware.ErrorHandler())
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	v1 := router.Group("/api/v1")
 
@@ -113,6 +112,10 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.PutUserProfile)
+		user.GET("/profile",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetUserProfile)
 		user.POST("/profile/profile-photo",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),

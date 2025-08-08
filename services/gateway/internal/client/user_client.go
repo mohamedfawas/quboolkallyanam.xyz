@@ -10,6 +10,7 @@ type UserClient interface {
 	///////// USER PROFILE MANAGEMENT //////////
 	UpdateUserProfile(ctx context.Context,
 		req dto.UserProfilePatchRequest) error
+	GetUserProfile(ctx context.Context) (*dto.UserProfileRecommendation, error)
 	GetProfilePhotoUploadURL(ctx context.Context,
 		req dto.GetProfilePhotoUploadURLRequest) (*dto.GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(ctx context.Context,

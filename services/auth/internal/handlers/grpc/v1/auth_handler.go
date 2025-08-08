@@ -181,8 +181,8 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpbv1.AdminLoginRe
 	}
 	log := h.logger.With(
 		zap.String(constants.ContextKeyRequestID, contextData.RequestID),
-		zap.String("admin_email", req.Email),
 	)
+
 	result, err := h.adminUsecase.AdminLogin(ctx, req.Email, req.Password)
 	if err != nil {
 		if !apperrors.IsAppError(err) {
@@ -191,7 +191,7 @@ func (h *AuthHandler) AdminLogin(ctx context.Context, req *authpbv1.AdminLoginRe
 		return nil, err
 	}
 
-	log.Info("Admin login request processed successfully", zap.String("admin_email", req.Email))
+	log.Info("Admin login request processed successfully")
 	return &authpbv1.AdminLoginResponse{
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,

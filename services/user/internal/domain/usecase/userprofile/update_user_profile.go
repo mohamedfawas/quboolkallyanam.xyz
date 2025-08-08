@@ -89,6 +89,9 @@ func (u *userProfileUsecase) UpdateUserProfile(
 		existingProfile.HomeDistrict = validation.HomeDistrict(*req.HomeDistrict)
 	}
 
+	existingProfile.ProfileCompleted = true // when the first update happens , the user have self verified the profile
+	// because when the first user profile is created it's done based on login event, so user haven't self verified the profile
+
 	now := time.Now().UTC()
 	existingProfile.UpdatedAt = now
 	existingProfile.LastLogin = now

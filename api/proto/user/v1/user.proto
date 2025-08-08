@@ -9,6 +9,7 @@ option go_package = "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/
 service UserService {
     // User profile management
     rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
+    rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
 
     // User profile photo management
     rpc GetProfilePhotoUploadURL(GetProfilePhotoUploadURLRequest) returns (GetProfilePhotoUploadURLResponse);
@@ -43,6 +44,11 @@ message UpdateUserProfileRequest {
 
 message UpdateUserProfileResponse {
     google.protobuf.BoolValue success = 1;
+}
+
+message GetUserProfileRequest {}
+message GetUserProfileResponse {
+    UserProfileRecommendation profile = 1;
 }
 
 message GetProfilePhotoUploadURLRequest {

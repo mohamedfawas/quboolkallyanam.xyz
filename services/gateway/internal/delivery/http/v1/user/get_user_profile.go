@@ -5,14 +5,12 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/errutil"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"go.uber.org/zap"
 )
 
-
-func (h *UserHandler) PatchUserProfile(c *gin.Context) {
+func (h *UserHandler) GetUserProfile(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
 		apiresponse.Error(c, err, nil)
@@ -24,22 +22,15 @@ func (h *UserHandler) PatchUserProfile(c *gin.Context) {
 		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
 	)
 
-	var req dto.UserProfilePatchRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Error(c, apperrors.ErrBindingJSON, nil)
-		return
-	}
-
-	err = h.userUsecase.UpdateUserProfile(authCtx.Ctx, req)
+	profile, err := h.userUsecase.GetUserProfile(authCtx.Ctx)
 	if err != nil {
 		if apperrors.ShouldLogError(err) && !errutil.IsGRPCError(err) {
-			log.Error("Failed to update user profile", zap.Error(err))
+			log.Error("Failed to get user profile", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	log.Info("User profile updated successfully")
-
-	apiresponse.Success(c, "User profile updated successfully", nil)
+	log.Info("User profile fetched successfully")
+	apiresponse.Success(c, "User profile fetched successfully", profile)
 }

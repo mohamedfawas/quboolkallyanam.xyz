@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	authevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/auth"
 )
 
 
@@ -25,6 +26,17 @@ func (u *adminUsecase) BlockOrUnblockUser(ctx context.Context, field string, val
 	err = u.userRepository.BlockOrUnblockUser(ctx, field, value, shouldBlock)
 	if err != nil {
 		return fmt.Errorf("failed to block user: %w", err)
+	}
+
+	adminBlockedUserEvent := authevents.AdminBlockedUserEvent{
+		UserID: user.ID,
+		Email: user.Email,
+		Phone: user.Phone,
+		ShouldBlock: shouldBlock,
+	}
+
+	if err := u.eventPublisher.PublishAdminBlockedUser(ctx, adminBlockedUserEvent); err != nil {
+		// No need to fail the process, the logging will be done in the message broker
 	}
 
 	return nil

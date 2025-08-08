@@ -95,7 +95,6 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		interceptors.UnaryErrorInterceptor(),
 	))
-	rootLogger.Info("gRPC server created")
 
 	///////////////////////// RAZORPAY SERVICE INITIALIZATION /////////////////////////
 	razorpayService := razorpay.NewService(config.Razorpay.KeyID, config.Razorpay.KeySecret)
@@ -103,17 +102,12 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	paymentsRepo := postgresAdapters.NewPaymentsRepository(pgClient)
-	rootLogger.Info("Payments repository created")
 	subscriptionPlansRepo := postgresAdapters.NewSubscriptionPlansRepository(pgClient)
-	rootLogger.Info("Subscription plans repository created")
 	subscriptionsRepo := postgresAdapters.NewSubscriptionsRepository(pgClient)
-	rootLogger.Info("Subscriptions repository created")
 	txManager := postgres.NewTransactionManager(pgClient)
-	rootLogger.Info("Transaction manager created")
 
 	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapters.NewEventPublisher(messagingClient)
-	rootLogger.Info("Event publisher created")
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	paymentUC := paymentUsecase.NewPaymentUsecase(
@@ -124,14 +118,11 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		razorpayService,
 		eventPublisher,
 	)
-	rootLogger.Info("Payment use case created")
 	subscriptionUC := subscriptionUsecase.NewSubscriptionUsecase(subscriptionPlansRepo, subscriptionsRepo)
-	rootLogger.Info("Subscription use case created")
 
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC, subscriptionUC)
 	paymentpbv1.RegisterPaymentServiceServer(grpcServer, paymentHandler)
-	rootLogger.Info("Payment Service gRPC handlers registered")
 	
 
 	server := &Server{

@@ -125,40 +125,28 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
-	rootLogger.Info("User Profile Repository Initialized")
 	userImageRepo := postgresAdapters.NewUserImageRepository(pgClient)
-	rootLogger.Info("User Image Repository Initialized")
 	partnerPreferencesRepo := postgresAdapters.NewPartnerPreferencesRepository(pgClient)
-	rootLogger.Info("Partner Preferences Repository Initialized")
 	profileMatchRepo := postgresAdapters.NewProfileMatchRepository(pgClient)
-	rootLogger.Info("Profile Match Repository Initialized")
 	mutualMatchRepo := postgresAdapters.NewMutualMatchRepository(pgClient)
-	rootLogger.Info("Mutual Match Repository Initialized")
 	transactionManager := postgres.NewTransactionManager(pgClient)
-	rootLogger.Info("Transaction Manager Initialized")
 
 	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
-	rootLogger.Info("Event Publisher Initialized")
 
 	///////////////////////// MEDIA STORAGE INITIALIZATION /////////////////////////
 	photoStorage := gcs.NewPhotoStorageAdapter(gcsStore)
-	rootLogger.Info("Media Storage Initialized")
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, userImageRepo, partnerPreferencesRepo, eventPublisher, photoStorage, config)
-	rootLogger.Info("User Profile Use Case Initialized")
 	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager, photoStorage, config)
-	rootLogger.Info("Match Making Use Case Initialized")
 
 	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC, rootLogger)
-	rootLogger.Info("Auth Event Handler Initialized")
 
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	userHandler := grpcHandlerv1.NewUserHandler(userProfileUC, matchMakingUC, rootLogger)
 	userpbv1.RegisterUserServiceServer(grpcServer, userHandler)
-	rootLogger.Info("gRPC Handler Initialized")
 
 	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {

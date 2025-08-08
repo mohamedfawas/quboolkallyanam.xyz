@@ -117,19 +117,13 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		interceptors.UnaryErrorInterceptor(),
 	))
-	rootLogger.Info("gRPC server created")
 
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userRepo := postgresAdapters.NewUserRepository(pgClient)
-	rootLogger.Info("User Repository Initialized")
 	adminRepo := postgresAdapters.NewAdminRepository(pgClient)
-	rootLogger.Info("Admin Repository Initialized")
 	pendingRegistrationRepo := postgresAdapters.NewPendingRegistrationRepository(pgClient)
-	rootLogger.Info("Pending Registration Repository Initialized")
 	tokenRepo := redisAdapters.NewTokenRepository(redisClient)
-	rootLogger.Info("Token Repository Initialized")
 	otpRepo := redisAdapters.NewOTPRepository(redisClient)
-	rootLogger.Info("OTP Repository Initialized")
 
 	///////////////////////// JWT MANAGER INITIALIZATION /////////////////////////
 	jwtManager := jwt.NewJWTManager(jwt.JWTConfig{
@@ -138,11 +132,9 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		RefreshTokenDays:   config.Auth.JWT.RefreshTokenDays,
 		Issuer:             config.Auth.JWT.Issuer,
 	})
-	rootLogger.Info("JWT Manager Initialized")
 
 	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
-	rootLogger.Info("Event Publisher Initialized")
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userUC := userUsecase.NewUserUseCase(
@@ -153,16 +145,15 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		messagingClient,
 		eventPublisher,
 	)
-	rootLogger.Info("User Use Case Initialized")
 
 	adminUC := adminUsecase.NewAdminUsecase(
 		adminRepo,
 		tokenRepo,
 		userRepo,
 		*jwtManager,
+		eventPublisher,
 		config,
 	)
-	rootLogger.Info("Admin Use Case Initialized")
 
 	pendingRegistrationUC := pendingRegistrationUsecase.NewPendingRegistrationUsecase(
 		pendingRegistrationRepo,
@@ -170,16 +161,13 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		otpRepo,
 		eventPublisher,
 	)
-	rootLogger.Info("Pending Registration Use Case Initialized")
 
 	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	paymentEventHandler := eventHandlers.NewPaymentEventHandler(messagingClient, userUC, rootLogger)
-	rootLogger.Info("Payment Event Handler Initialized")
 
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	authHandler := grpcHandlerv1.NewAuthHandler(userUC, adminUC, pendingRegistrationUC, config, rootLogger)
 	authpbv1.RegisterAuthServiceServer(grpcServer, authHandler)
-	rootLogger.Info("gRPC Handler Initialized")
 
 	///////////////////////// DEFAULT ADMIN INITIALIZATION /////////////////////////
 	if err := adminUC.InitializeDefaultAdmin(ctx, config.Admin.DefaultAdminEmail, config.Admin.DefaultAdminPassword); err != nil {

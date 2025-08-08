@@ -21,3 +21,10 @@ type UserAccountDeletionEvent struct {
 	Email  string    `json:"email"`
 	Phone  string    `json:"phone"`
 }
+
+type AdminBlockedUserEvent struct {
+	UserID uuid.UUID `json:"user_id"`
+	Email  string    `json:"email"`
+	Phone  string    `json:"phone"`
+	ShouldBlock bool   `json:"should_block"`
+}

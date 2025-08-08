@@ -65,6 +65,20 @@ func (c *userGRPCClient) UpdateUserProfile(ctx context.Context, req dto.UserProf
 	return nil
 }
 
+func (c *userGRPCClient) GetUserProfile(ctx context.Context) (*dto.UserProfileRecommendation, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.client.GetUserProfile(ctx, &userpbv1.GetUserProfileRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return MapGetUserProfileResponse(resp), nil
+}
+
 func (c *userGRPCClient) GetProfilePhotoUploadURL(ctx context.Context, req dto.GetProfilePhotoUploadURLRequest) (*dto.GetProfilePhotoUploadURLResponse, error) {
 	var err error
 	ctx, err = contextutils.PrepareGrpcContext(ctx)

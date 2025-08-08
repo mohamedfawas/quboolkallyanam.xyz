@@ -34,7 +34,7 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 	userDeletedEvent := authevents.UserAccountDeletionEvent{
 		Email: user.Email,
 		Phone: user.Phone,
-		UserID: userID,
+		UserID: user.ID,
 	}
 
 	if err := u.eventPublisher.PublishUserAccountDeletion(ctx, userDeletedEvent); err != nil {

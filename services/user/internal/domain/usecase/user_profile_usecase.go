@@ -9,6 +9,7 @@ import (
 )
 
 type UserProfileUsecase interface {
+	// USER PROFILE MANAGEMENT
 	UpdateUserLastLogin(ctx context.Context,
 		userID uuid.UUID,
 		email, phone string) error
@@ -17,10 +18,8 @@ type UserProfileUsecase interface {
 	UpdateUserProfile(ctx context.Context,
 		userID uuid.UUID,
 		req entity.UpdateUserProfileRequest) error
-	UpdateUserPartnerPreferences(ctx context.Context,
-		userID uuid.UUID,
-		operationType string,
-		req entity.UpdateUserPartnerPreferencesRequest) error
+	GetUserProfile(ctx context.Context,
+		 userID uuid.UUID) (*entity.UserProfileResponse, error)
 	GetProfilePhotoUploadURL(ctx context.Context,
 		userID uuid.UUID,
 		contentType string) (*mediastorage.PhotoUploadURLResponse, error)
@@ -30,6 +29,13 @@ type UserProfileUsecase interface {
 		fileSize int64) (string, error)
 	DeleteProfilePhoto(ctx context.Context,
 		userID uuid.UUID) error
+	// USER PARTNER PREFERENCES MANAGEMENT
+	UpdateUserPartnerPreferences(ctx context.Context,
+		userID uuid.UUID,
+		operationType string,
+		req entity.UpdateUserPartnerPreferencesRequest) error
+	
+	// ADDITIONAL PHOTOS MANAGEMENT
 	GetAdditionalPhotoUploadURL(ctx context.Context,
 		userID uuid.UUID,
 		displayOrder int32,
@@ -41,18 +47,4 @@ type UserProfileUsecase interface {
 	DeleteAdditionalPhoto(ctx context.Context,
 		userID uuid.UUID,
 		displayOrder int32) error
-	// UpdateUserDeletion
-	// PatchUserProfile
-	// GetUserProfile
-	// PostPartnerPreference
-	// PatchPartnerPreference
-	// DeletePartnerPreference
-	// GetPartnerPreference
-	// PostUserProfilePhoto
-	// DeleteUserProfilePhoto
-	// PostUserAdditionalPhotos
-	// DeleteUserAdditionalPhotos
-	// GetUserAdditionalPhotos
-	// PostUserVideo
-	// DeleteUserVideo
 }

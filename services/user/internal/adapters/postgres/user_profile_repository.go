@@ -126,7 +126,8 @@ func (r *userProfileRepository) GetPotentialProfiles(
 	baseQuery := r.db.GormDB.WithContext(ctx).
 		Model(&entity.UserProfile{}).
 		Where("user_id <> ?", userID).
-		Where("is_bride = ?", !isUserBride)
+		Where("is_bride = ?", !isUserBride).
+		Where("profile_completed = ?", true) 
 
 	if len(excludedIDs) > 0 {
 		baseQuery = baseQuery.Where("user_id NOT IN (?)", excludedIDs)

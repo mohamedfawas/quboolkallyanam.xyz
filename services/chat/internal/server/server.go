@@ -97,30 +97,22 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
 	)
-	rootLogger.Info("gRPC server created")
 
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProjectionRepo := postgresAdapters.NewUserProjectionRepository(pgClient)
-	rootLogger.Info("User Projection Repository Initialized")
 	conversationRepo := mongodbAdapters.NewConversationRepository(mongoClient)
-	rootLogger.Info("Conversation Repository Initialized")
 	messageRepo := mongodbAdapters.NewMessageRepository(mongoClient)
-	rootLogger.Info("Message Repository Initialized")
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProjectionUC := userProjectionUsecaseImpl.NewUserProjectionUsecase(userProjectionRepo)
-	rootLogger.Info("User Projection Use Case Initialized")
 	chatUC := chatUsecaseImpl.NewChatUsecase(conversationRepo, messageRepo, userProjectionRepo)
-	rootLogger.Info("Chat Use Case Initialized")
 
 	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	userEventHandler := eventHandlers.NewUserEventListener(messagingClient, userProjectionUC, rootLogger)
-	rootLogger.Info("User Event Handler Initialized")
 
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	chatHandler := v1.NewChatHandler(chatUC, rootLogger)
 	chatpbv1.RegisterChatServiceServer(grpcServer, chatHandler)
-	rootLogger.Info("gRPC Handler Initialized")
 
 	///////////////////////// EVENT LISTENER INITIALIZATION /////////////////////////
 	go func() {

@@ -60,3 +60,15 @@ func (p *eventPublisher) PublishUserAccountDeletion(ctx context.Context,
 	p.logger.Info("user account deletion event published successfully for user", zap.String("user_email", event.Email))
 	return nil
 }
+
+func (p *eventPublisher) PublishAdminBlockedUser(ctx context.Context,
+	event authevents.AdminBlockedUserEvent) error {
+
+	if err := p.messagingClient.Publish(constants.EventAdminBlockedUser, event); err != nil {
+		p.logger.Error("failed to publish admin blocked user event for user", zap.String("user_email", event.Email), zap.Error(err))
+		return err
+	}
+
+	p.logger.Info("admin blocked user event published successfully for user", zap.String("user_email", event.Email))
+	return nil
+}

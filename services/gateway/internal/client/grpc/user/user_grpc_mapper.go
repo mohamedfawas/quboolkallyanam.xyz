@@ -1,8 +1,6 @@
 package user
 
 import (
-	"time"
-
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pointerutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
@@ -22,15 +20,7 @@ func MapUpdateUserProfileRequest(req dto.UserProfilePatchRequest) *userpbv1.Upda
 	}
 
 	if req.DateOfBirth != nil {
-		// Convert date from "2006-01-02" format to RFC3339 format
-		date, err := time.Parse("2006-01-02", pointerutil.GetStringValue(req.DateOfBirth))
-		if err == nil {
-			rfc3339Date := date.Format(time.RFC3339)
-			grpcReq.DateOfBirth = &wrapperspb.StringValue{Value: rfc3339Date}
-		} else {
-			// If parsing fails, pass the original value (let the user service handle the error)
-			grpcReq.DateOfBirth = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.DateOfBirth)}
-		}
+		grpcReq.DateOfBirth = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.DateOfBirth)}
 	}
 	if req.Community != nil {
 		grpcReq.Community = &wrapperspb.StringValue{Value: pointerutil.GetStringValue(req.Community)}
@@ -61,6 +51,25 @@ func MapUpdateUserProfileRequest(req dto.UserProfilePatchRequest) *userpbv1.Upda
 func MapUpdateUserProfileResponse(resp *userpbv1.UpdateUserProfileResponse) *dto.UpdateUserProfileResponse {
 	return &dto.UpdateUserProfileResponse{
 		Success: resp.Success.GetValue(),
+	}
+}
+
+////////////////////////////// Get User Profile //////////////////////////////
+
+func MapGetUserProfileResponse(resp *userpbv1.GetUserProfileResponse) *dto.UserProfileRecommendation {
+	p := resp.GetProfile()
+	if p == nil {
+		return nil
+	}
+	return &dto.UserProfileRecommendation{
+		ID:                p.Id,
+		FullName:          p.FullName,
+		ProfilePictureURL: p.ProfilePictureUrl,
+		Age:               int(p.Age),
+		HeightCm:          int(p.HeightCm),
+		MaritalStatus:     p.MaritalStatus,
+		Profession:        p.Profession,
+		HomeDistrict:      p.HomeDistrict,
 	}
 }
 

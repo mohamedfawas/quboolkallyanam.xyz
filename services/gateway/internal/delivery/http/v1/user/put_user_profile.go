@@ -6,6 +6,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/errutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"go.uber.org/zap"
 )
@@ -44,7 +45,7 @@ func (h *UserHandler) PutUserProfile(c *gin.Context) {
 
 	err = h.userUsecase.UpdateUserProfile(authCtx.Ctx, request)
 	if err != nil {
-		if !apperrors.IsAppError(err) {
+		if apperrors.ShouldLogError(err) && !errutil.IsGRPCError(err) {
 			log.Error("Failed to update user profile", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

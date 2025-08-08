@@ -9,6 +9,7 @@ import (
 type UserUsecase interface {
 	///////// USER PROFILE MANAGEMENT //////////
 	UpdateUserProfile(ctx context.Context, req dto.UserProfilePatchRequest) error
+	GetUserProfile(ctx context.Context) (*dto.UserProfileRecommendation, error)
 	GetProfilePhotoUploadURL(ctx context.Context, req dto.GetProfilePhotoUploadURLRequest) (*dto.GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(ctx context.Context, req dto.ConfirmProfilePhotoUploadRequest) (*dto.ConfirmProfilePhotoUploadResponse, error)
 	DeleteProfilePhoto(ctx context.Context, req dto.DeleteProfilePhotoRequest) error

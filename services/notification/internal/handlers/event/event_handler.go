@@ -44,6 +44,10 @@ func (h *EventHandler) StartListening(ctx context.Context) error {
 			topic:   constants.EventUserAccountDeleted,
 			handler: h.createUserAccountDeletionHandler(ctx),
 		},
+		{
+			topic:   constants.EventAdminBlockedUser,
+			handler: h.createAdminBlockedUserHandler(ctx),
+		},
 	}
 
 	for _, sub := range subscriptions {
@@ -79,5 +83,18 @@ func (h *EventHandler) createUserAccountDeletionHandler(ctx context.Context) mes
 		}
 
 		return h.notificationUsecase.HandleUserAccountDeletion(ctx,  eventBody.Email)
+	}
+}
+
+func (h *EventHandler) createAdminBlockedUserHandler(ctx context.Context) messageBroker.MessageHandler {
+	return func(body []byte) error {
+		var eventBody authevents.AdminBlockedUserEvent
+
+		if err := json.Unmarshal(body, &eventBody); err != nil {
+			log.Printf("Error unmarshalling event: %v", err)
+			return err
+		}
+
+		return h.notificationUsecase.HandleAdminBlockedUser(ctx, eventBody.Email, eventBody.ShouldBlock)
 	}
 }

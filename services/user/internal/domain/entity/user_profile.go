@@ -16,7 +16,7 @@ type UserProfile struct {
 	Email                string    `json:"email" gorm:"not null;size:255"`
 	Phone                string    `json:"phone" gorm:"not null;size:20"`
 	DateOfBirth          time.Time `json:"date_of_birth" gorm:"type:date"`
-	HeightCm             int16    `json:"height_cm" gorm:"type:smallint;not null;check:height_cm > 0"`
+	HeightCm             int16     `json:"height_cm" gorm:"type:smallint;not null;check:height_cm > 0"`
 	PhysicallyChallenged bool      `json:"physically_challenged" gorm:"not null;default:false"`
 	ProfileCompleted     bool      `json:"profile_completed" gorm:"not null;default:false"`
 
@@ -46,7 +46,7 @@ type UpdateUserProfileRequest struct {
 	IsBride               *bool   `json:"is_bride"`
 	FullName              *string `json:"full_name"`
 	DateOfBirth           *string `json:"date_of_birth"`
-	HeightCm              *int32 `json:"height_cm"`
+	HeightCm              *int32  `json:"height_cm"`
 	PhysicallyChallenged  *bool   `json:"physically_challenged"`
 	Community             *string `json:"community"`
 	MaritalStatus         *string `json:"marital_status"`
@@ -54,14 +54,15 @@ type UpdateUserProfileRequest struct {
 	ProfessionType        *string `json:"profession_type"`
 	HighestEducationLevel *string `json:"highest_education_level"`
 	HomeDistrict          *string `json:"home_district"`
+	ProfileCompleted      *bool   `json:"profile_completed"`
 }
 
 type UserProfileResponse struct {
 	ID                int64   `json:"id"`
 	FullName          string  `json:"full_name"`
 	ProfilePictureURL *string `json:"profile_picture_url"`
-	Age               int32  `json:"age"`
-	HeightCm          int32  `json:"height_cm"`
+	Age               int32   `json:"age"`
+	HeightCm          int32   `json:"height_cm"`
 	MaritalStatus     string  `json:"marital_status"`
 	Profession        string  `json:"profession"`
 	HomeDistrict      string  `json:"home_district"`

@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	UserService_UpdateUserProfile_FullMethodName            = "/user.v1.UserService/UpdateUserProfile"
+	UserService_GetUserProfile_FullMethodName               = "/user.v1.UserService/GetUserProfile"
 	UserService_GetProfilePhotoUploadURL_FullMethodName     = "/user.v1.UserService/GetProfilePhotoUploadURL"
 	UserService_ConfirmProfilePhotoUpload_FullMethodName    = "/user.v1.UserService/ConfirmProfilePhotoUpload"
 	UserService_DeleteProfilePhoto_FullMethodName           = "/user.v1.UserService/DeleteProfilePhoto"
@@ -38,6 +39,7 @@ const (
 type UserServiceClient interface {
 	// User profile management
 	UpdateUserProfile(ctx context.Context, in *UpdateUserProfileRequest, opts ...grpc.CallOption) (*UpdateUserProfileResponse, error)
+	GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error)
 	// User profile photo management
 	GetProfilePhotoUploadURL(ctx context.Context, in *GetProfilePhotoUploadURLRequest, opts ...grpc.CallOption) (*GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(ctx context.Context, in *ConfirmProfilePhotoUploadRequest, opts ...grpc.CallOption) (*ConfirmProfilePhotoUploadResponse, error)
@@ -65,6 +67,16 @@ func (c *userServiceClient) UpdateUserProfile(ctx context.Context, in *UpdateUse
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateUserProfileResponse)
 	err := c.cc.Invoke(ctx, UserService_UpdateUserProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserProfile(ctx context.Context, in *GetUserProfileRequest, opts ...grpc.CallOption) (*GetUserProfileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserProfileResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserProfile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -177,6 +189,7 @@ func (c *userServiceClient) GetProfilesByMatchAction(ctx context.Context, in *Ge
 type UserServiceServer interface {
 	// User profile management
 	UpdateUserProfile(context.Context, *UpdateUserProfileRequest) (*UpdateUserProfileResponse, error)
+	GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error)
 	// User profile photo management
 	GetProfilePhotoUploadURL(context.Context, *GetProfilePhotoUploadURLRequest) (*GetProfilePhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(context.Context, *ConfirmProfilePhotoUploadRequest) (*ConfirmProfilePhotoUploadResponse, error)
@@ -202,6 +215,9 @@ type UnimplementedUserServiceServer struct{}
 
 func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *UpdateUserProfileRequest) (*UpdateUserProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserProfile not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserProfile(context.Context, *GetUserProfileRequest) (*GetUserProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserProfile not implemented")
 }
 func (UnimplementedUserServiceServer) GetProfilePhotoUploadURL(context.Context, *GetProfilePhotoUploadURLRequest) (*GetProfilePhotoUploadURLResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfilePhotoUploadURL not implemented")
@@ -268,6 +284,24 @@ func _UserService_UpdateUserProfile_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).UpdateUserProfile(ctx, req.(*UpdateUserProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserProfile(ctx, req.(*GetUserProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -462,6 +496,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUserProfile",
 			Handler:    _UserService_UpdateUserProfile_Handler,
+		},
+		{
+			MethodName: "GetUserProfile",
+			Handler:    _UserService_GetUserProfile_Handler,
 		},
 		{
 			MethodName: "GetProfilePhotoUploadURL",
