@@ -141,7 +141,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	rootLogger.Info("JWT Manager Initialized")
 
 	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
-	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient)
+	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
 	rootLogger.Info("Event Publisher Initialized")
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////

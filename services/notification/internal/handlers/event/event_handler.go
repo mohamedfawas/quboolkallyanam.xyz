@@ -40,6 +40,10 @@ func (h *EventHandler) StartListening(ctx context.Context) error {
 			topic:   constants.EventUserOTPRequested,
 			handler: h.createUserOTPRequestedHandler(ctx),
 		},
+		{
+			topic:   constants.EventUserAccountDeleted,
+			handler: h.createUserAccountDeletionHandler(ctx),
+		},
 	}
 
 	for _, sub := range subscriptions {
@@ -62,5 +66,18 @@ func (h *EventHandler) createUserOTPRequestedHandler(ctx context.Context) messag
 		}
 
 		return h.notificationUsecase.HandleOTPVerification(ctx, eventBody.Email, eventBody.OTP, eventBody.ExpiryMinutes)
+	}
+}
+
+func (h *EventHandler) createUserAccountDeletionHandler(ctx context.Context) messageBroker.MessageHandler {
+	return func(body []byte) error {
+		var eventBody authevents.UserAccountDeletionEvent
+
+		if err := json.Unmarshal(body, &eventBody); err != nil {
+			log.Printf("Error unmarshalling event: %v", err)
+			return err
+		}
+
+		return h.notificationUsecase.HandleUserAccountDeletion(ctx,  eventBody.Email)
 	}
 }

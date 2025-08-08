@@ -30,32 +30,74 @@ func NewAuthEventHandler(
 }
 
 func (h *AuthEventHandler) StartListening(ctx context.Context) error {
-	handler := func(data []byte) error {
-		var authEvent authevents.UserLoginSuccessEvent
-		if err := json.Unmarshal(data, &authEvent); err != nil {
-			h.logger.Error("failed to unmarshal user login success event",
-				zap.String(constants.UserIDS, authEvent.UserID.String()),
+	subscriptions := []struct {
+		topic   string
+		handler messageBroker.MessageHandler
+	}{
+		{
+			topic:   constants.EventUserLoginSuccess,
+			handler: h.createUserLoginSuccessHandler(ctx),
+		},
+		{
+			topic:   constants.EventUserAccountDeleted,
+			handler: h.createUserAccountDeletionHandler(ctx),
+		},
+		// Add other events here
+	}
+
+	for _, sub := range subscriptions {
+		if err := h.messagingClient.Subscribe(sub.topic, sub.handler); err != nil {
+			h.logger.Error("Error subscribing to topic",
+				zap.String("topic", sub.topic),
+				zap.Error(err))
+			return err
+		}
+		h.logger.Info("Successfully subscribed to topic", zap.String("topic", sub.topic))
+	}
+
+	return nil
+}
+
+func (h *AuthEventHandler) createUserLoginSuccessHandler(ctx context.Context) messageBroker.MessageHandler {
+	return func(body []byte) error {
+		var event authevents.UserLoginSuccessEvent
+
+		if err := json.Unmarshal(body, &event); err != nil {
+			h.logger.Error("Error unmarshalling user login success event", zap.Error(err))
+			return err
+		}
+
+		if err := h.userProfileUsecase.UpdateUserLastLogin(ctx, event.UserID, event.Email, event.Phone); err != nil {
+			h.logger.Error("failed to update user last login",
+				zap.String(constants.ContextKeyUserID, event.UserID.String()),
 				zap.Error(err))
 			return err
 		}
 
-		return h.handleUserLoginSuccess(ctx, authEvent)
+		h.logger.Info("user last login updated successfully",
+			zap.String(constants.ContextKeyUserID, event.UserID.String()))
+		return nil
 	}
-
-	h.logger.Info("starting to listen for user login success events")
-	return h.messagingClient.Subscribe(constants.EventUserLoginSuccess, handler)
 }
 
-func (h *AuthEventHandler) handleUserLoginSuccess(ctx context.Context, event authevents.UserLoginSuccessEvent) error {
+func (h *AuthEventHandler) createUserAccountDeletionHandler(ctx context.Context) messageBroker.MessageHandler {
+	return func(body []byte) error {
+		var event authevents.UserAccountDeletionEvent
 
-	if err := h.userProfileUsecase.UpdateUserLastLogin(ctx, event.UserID, event.Email, event.Phone); err != nil {
-		h.logger.Error("failed to update user last login",
-			zap.String(constants.UserIDS, event.UserID.String()),
-			zap.Error(err))
-		return err
+		if err := json.Unmarshal(body, &event); err != nil {
+			h.logger.Error("Error unmarshalling user account deletion event", zap.Error(err))
+			return err
+		}
+
+		if err := h.userProfileUsecase.HandleUserDeletion(ctx, event.UserID); err != nil {
+			h.logger.Error("failed to handle user deletion",
+				zap.String(constants.ContextKeyUserID, event.UserID.String()),
+				zap.Error(err))
+			return err
+		}
+
+		h.logger.Info("user account deletion handled successfully",
+			zap.String(constants.ContextKeyUserID, event.UserID.String()))
+		return nil
 	}
-
-	h.logger.Info("user last login updated successfully",
-		zap.String(constants.UserIDS, event.UserID.String()))
-	return nil
 }

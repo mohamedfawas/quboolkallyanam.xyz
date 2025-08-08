@@ -28,6 +28,16 @@ func (r *userProfileRepository) CreateUserProfile(
 		Create(userProfile).Error
 }
 
+func (r *userProfileRepository) DeleteUserProfile(
+	ctx context.Context,
+	userID uuid.UUID) error {
+
+	return r.db.GormDB.WithContext(ctx).
+		Model(&entity.UserProfile{}).
+		Where("user_id = ?", userID).
+		Delete(&entity.UserProfile{}).Error
+}
+
 func (r *userProfileRepository) UpdateLastLogin(
 	ctx context.Context,
 	userID uuid.UUID) error {

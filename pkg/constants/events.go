@@ -1,9 +1,10 @@
 package constants
 
 const (
-	EventUserPaymentVerified       = "user.payment.verified"
-	EventUserOTPRequested          = "user.otp.requested"
-	EventUserLoginSuccess          = "user.login.success"
-	EventUserProfileCreated        = "user.profile.created"
-	EventUserProfileUpdated        = "user.profile.updated"
+	EventUserPaymentVerified = "user.payment.verified"
+	EventUserOTPRequested    = "user.otp.requested"
+	EventUserLoginSuccess    = "user.login.success"
+	EventUserProfileCreated  = "user.profile.created"
+	EventUserProfileUpdated  = "user.profile.updated"
+	EventUserAccountDeleted  = "user.account.deleted"
 )

@@ -12,6 +12,8 @@ type UserProfileUsecase interface {
 	UpdateUserLastLogin(ctx context.Context,
 		userID uuid.UUID,
 		email, phone string) error
+	HandleUserDeletion(ctx context.Context,
+		userID uuid.UUID) error
 	UpdateUserProfile(ctx context.Context,
 		userID uuid.UUID,
 		req entity.UpdateUserProfileRequest) error

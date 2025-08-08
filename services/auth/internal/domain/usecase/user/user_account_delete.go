@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"time"
-
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
-	constants "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	authevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/auth"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/hash"
 )
 
@@ -33,15 +31,14 @@ func (u *userUseCase) UserAccountDelete(ctx context.Context, userID string, pass
 		return fmt.Errorf("failed to delete refresh token: %w", err)
 	}
 
-	if u.messageBroker != nil {
-		userDeletedEvent := map[string]interface{}{
-			constants.UserID:    userID,
-			constants.EventType: constants.EventUserDeleted,
-			constants.Timestamp: time.Now().UTC(),
-		}
-		if err := u.messageBroker.Publish(constants.EventUserDeleted, userDeletedEvent); err != nil {
-			// No need to fail the process, the logging will be done in the message broker
-		}
+	userDeletedEvent := authevents.UserAccountDeletionEvent{
+		Email: user.Email,
+		Phone: user.Phone,
+		UserID: userID,
+	}
+
+	if err := u.eventPublisher.PublishUserAccountDeletion(ctx, userDeletedEvent); err != nil {
+		// no need to fail the process, the logging will be done in the message broker
 	}
 
 	return nil

@@ -15,3 +15,9 @@ type UserLoginSuccessEvent struct {
 	Email  string    `json:"email"`
 	Phone  string    `json:"phone"`
 }
+
+type UserAccountDeletionEvent struct {
+	UserID uuid.UUID `json:"user_id"`
+	Email  string    `json:"email"`
+	Phone  string    `json:"phone"`
+}

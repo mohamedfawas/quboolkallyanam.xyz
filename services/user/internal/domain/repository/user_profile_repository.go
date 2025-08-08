@@ -10,6 +10,8 @@ import (
 type UserProfileRepository interface {
 	CreateUserProfile(ctx context.Context,
 		userProfile *entity.UserProfile) error
+	DeleteUserProfile(ctx context.Context,
+		userID uuid.UUID) error
 	ProfileExists(ctx context.Context,
 		userID uuid.UUID) (bool, error)
 	UpdateLastLogin(ctx context.Context,
