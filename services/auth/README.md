@@ -72,7 +72,8 @@ auth:
 ### Admin Operations  
 - `AdminLogin` - Admin login
 - `AdminLogout` - Admin logout
-- `BlockUser` - Block/unblock user
+- `BlockUser` - Block user by field (email/phone/ID)
+- `UnblockUser` - Unblock user by field (email/phone/ID)
 - `GetUsers` - List users (paginated)
 - `GetUserByField` - Get user by email/phone/ID
 
