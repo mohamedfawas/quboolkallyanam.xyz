@@ -136,10 +136,14 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.ConfirmAdditionalPhotoUpload)
-		user.DELETE("/profile/additional-photo",
+		user.DELETE("/profile/additional-photo/:display_order",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.DeleteAdditionalPhoto)
+		user.GET("/profile/additional-photos",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetAdditionalPhotos)
 		user.POST("/preference",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),

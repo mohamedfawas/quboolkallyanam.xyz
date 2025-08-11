@@ -94,7 +94,6 @@ func MapGetProfilePhotoUploadURLResponse(resp *userpbv1.GetProfilePhotoUploadURL
 func MapConfirmProfilePhotoUploadRequest(req dto.ConfirmProfilePhotoUploadRequest) *userpbv1.ConfirmProfilePhotoUploadRequest {
 	return &userpbv1.ConfirmProfilePhotoUploadRequest{
 		ObjectKey: &wrapperspb.StringValue{Value: req.ObjectKey},
-		FileSize: &wrapperspb.Int64Value{Value: req.FileSize},
 	}
 }
 
@@ -139,7 +138,6 @@ func MapGetAdditionalPhotoUploadURLResponse(resp *userpbv1.GetAdditionalPhotoUpl
 func MapConfirmAdditionalPhotoUploadRequest(req dto.ConfirmAdditionalPhotoUploadRequest) *userpbv1.ConfirmAdditionalPhotoUploadRequest {
 	return &userpbv1.ConfirmAdditionalPhotoUploadRequest{
 		ObjectKey: &wrapperspb.StringValue{Value: req.ObjectKey},
-		FileSize: &wrapperspb.Int64Value{Value: req.FileSize},
 	}
 }
 
@@ -165,6 +163,15 @@ func MapDeleteAdditionalPhotoResponse(resp *userpbv1.DeleteAdditionalPhotoRespon
 		Success: resp.Success.GetValue(),
 	}
 }
+
+////////////////////////////// Get Additional Photos //////////////////////////////
+
+func MapGetAdditionalPhotosResponse(resp *userpbv1.GetAdditionalPhotosResponse) *dto.GetAdditionalPhotosResponse {
+	return &dto.GetAdditionalPhotosResponse{
+		AdditionalPhotoURLs: resp.AdditionalPhotoUrls,
+	}
+}
+
 
 ////////////////////////////// Update User Partner Preferences //////////////////////////////
 

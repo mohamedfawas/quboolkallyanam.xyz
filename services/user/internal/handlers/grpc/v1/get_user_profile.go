@@ -35,7 +35,7 @@ func (h *UserHandler) GetUserProfile(
 
 	profile, err := h.userProfileUsecase.GetUserProfile(ctx, userIDUUID)
 	if err != nil {
-		if apperrors.ShouldLogError(err) {
+		if !apperrors.IsAppError(err) {
 			log.Error("Failed to get user profile", zap.Error(err))
 		}
 		return nil, err

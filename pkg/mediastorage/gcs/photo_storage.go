@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"errors"
+	"net/http"
+	"google.golang.org/api/googleapi"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
@@ -126,7 +129,19 @@ func (s *GCSStore) GetDownloadURL(
 }
 
 func (s *GCSStore) Delete(ctx context.Context, key string) error {
-	return s.client.Bucket(s.bucket).Object(key).Delete(ctx)
+	err := s.client.Bucket(s.bucket).Object(key).Delete(ctx)
+	if err == nil {
+		return nil
+	}
+	// Treat missing objects as a successful no-op (idempotent delete)
+	if errors.Is(err, storage.ErrObjectNotExist) {
+		return nil
+	}
+	var gErr *googleapi.Error
+	if errors.As(err, &gErr) && gErr.Code == http.StatusNotFound {
+		return nil
+	}
+	return err
 }
 
 func (s *GCSStore) Close() error {

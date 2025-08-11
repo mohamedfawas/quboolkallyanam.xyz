@@ -75,3 +75,21 @@ func (r *userImageRepository) GetUserImage(
 
 	return &userImage, nil
 }
+
+
+func (r *userImageRepository) ListUserImages(
+    ctx context.Context,
+    userID uuid.UUID,
+) ([]entity.UserImage, error) {
+
+    var images []entity.UserImage
+    err := r.db.GormDB.WithContext(ctx).
+        Model(&entity.UserImage{}).
+        Where("user_id = ?", userID).
+        Order("display_order ASC").
+        Find(&images).Error
+    if err != nil {
+        return nil, err
+    }
+    return images, nil
+}

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	apperrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
-	mediastorage "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/mediastorage"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/mediastorage"
 )
 
 func (u *userProfileUsecase) GetProfilePhotoUploadURL(ctx context.Context, 

@@ -135,7 +135,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
 
 	///////////////////////// MEDIA STORAGE INITIALIZATION /////////////////////////
-	photoStorage := gcs.NewPhotoStorageAdapter(gcsStore)
+	photoStorage := gcs.NewPhotoStorageAdapter(gcsStore, config.MediaStorage.Endpoint, config.MediaStorage.Bucket)
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, userImageRepo, partnerPreferencesRepo, eventPublisher, photoStorage, config)

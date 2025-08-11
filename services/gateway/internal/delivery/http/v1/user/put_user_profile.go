@@ -6,11 +6,23 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/errutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"go.uber.org/zap"
 )
 
+
+// @Summary Replace user profile
+// @Description Replace full user profile
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user_profile body dto.UserProfilePutRequest true "Complete user profile"
+// @Success 200 {object} dto.UpdateUserProfileResponse "Update result"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/profile [put]
 func (h *UserHandler) PutUserProfile(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -45,7 +57,7 @@ func (h *UserHandler) PutUserProfile(c *gin.Context) {
 
 	err = h.userUsecase.UpdateUserProfile(authCtx.Ctx, request)
 	if err != nil {
-		if apperrors.ShouldLogError(err) && !errutil.IsGRPCError(err) {
+		if apperrors.ShouldLogError(err) {
 			log.Error("Failed to update user profile", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

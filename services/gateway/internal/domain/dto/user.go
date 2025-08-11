@@ -55,7 +55,6 @@ type GetProfilePhotoUploadURLResponse struct {
 
 type ConfirmProfilePhotoUploadRequest struct {
 	ObjectKey string `json:"object_key"`
-	FileSize  int64 `json:"file_size"`
 }
 
 type ConfirmProfilePhotoUploadResponse struct {
@@ -86,7 +85,6 @@ type GetAdditionalPhotoUploadURLResponse struct {
 
 type ConfirmAdditionalPhotoUploadRequest struct {
 	ObjectKey string `json:"object_key"`
-	FileSize  int64 `json:"file_size"`
 }
 
 type ConfirmAdditionalPhotoUploadResponse struct {
@@ -100,6 +98,10 @@ type DeleteAdditionalPhotoRequest struct {
 
 type DeleteAdditionalPhotoResponse struct {
 	Success bool `json:"success"`
+}
+
+type GetAdditionalPhotosResponse struct {
+	AdditionalPhotoURLs []string `json:"additional_photo_urls"`
 }
 
 

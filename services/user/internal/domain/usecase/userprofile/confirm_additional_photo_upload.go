@@ -7,18 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/gcsutil"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 )
 
 func (u *userProfileUsecase) ConfirmAdditionalPhotoUpload(ctx context.Context,
 	userID uuid.UUID,
 	objectKey string,
-	fileSize int64) (string, error) {
-
-	if !validation.IsValidImageFileSize(fileSize) {
-		return "", apperrors.ErrInvalidImageFileSize
-	}
+	) (string, error) {
 
 	profile, err := u.userProfileRepository.GetProfileByUserID(ctx, userID)
 	if err != nil {

@@ -10,6 +10,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Confirm additional photo upload
+// @Description Confirm and persist the uploaded additional photo
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param request body dto.ConfirmAdditionalPhotoUploadRequest true "Confirm request"
+// @Success 200 {object} dto.ConfirmAdditionalPhotoUploadResponse "Confirmation result"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/profile/additional-photo/confirm [post]
 func (h *UserHandler) ConfirmAdditionalPhotoUpload(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -30,7 +42,7 @@ func (h *UserHandler) ConfirmAdditionalPhotoUpload(c *gin.Context) {
 
 	resp, err := h.userUsecase.ConfirmAdditionalPhotoUpload(authCtx.Ctx, req)
 	if err != nil {
-		if !apperrors.IsAppError(err) {
+		if apperrors.ShouldLogError(err) {
 			log.Error("Failed to confirm additional photo upload", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

@@ -6,23 +6,19 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 	"go.uber.org/zap"
 )
 
-// @Summary Update user profile (partial)
-// @Description Partially update user profile fields
+// @Summary Get additional photos
+// @Description Fetch all additional photos for the authenticated user
 // @Tags User
-// @Accept json
 // @Produce json
-// @Param user_profile body dto.UserProfilePatchRequest true "User profile fields to update"
-// @Success 200 {object} dto.UpdateUserProfileResponse "Update result"
-// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Success 200 {object} dto.GetAdditionalPhotosResponse "Additional photos"
 // @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
 // @Failure 500 {object} dto.InternalServerError "Internal server error"
 // @Security BearerAuth
-// @Router /api/v1/user/profile [patch]
-func (h *UserHandler) PatchUserProfile(c *gin.Context) {
+// @Router /api/v1/user/profile/additional-photos [get]
+func (h *UserHandler) GetAdditionalPhotos(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
 		apiresponse.Error(c, err, nil)
@@ -34,22 +30,15 @@ func (h *UserHandler) PatchUserProfile(c *gin.Context) {
 		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
 	)
 
-	var req dto.UserProfilePatchRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		apiresponse.Error(c, apperrors.ErrBindingJSON, nil)
-		return
-	}
-
-	err = h.userUsecase.UpdateUserProfile(authCtx.Ctx, req)
+	resp, err := h.userUsecase.GetAdditionalPhotos(authCtx.Ctx)
 	if err != nil {
 		if apperrors.ShouldLogError(err) {
-			log.Error("Failed to update user profile", zap.Error(err))
+			log.Error("Failed to get additional photos", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	log.Info("User profile updated successfully")
-
-	apiresponse.Success(c, "User profile updated successfully", nil)
+	log.Info("Additional photos fetched successfully")
+	apiresponse.Success(c, "Additional photos fetched successfully", resp)
 }

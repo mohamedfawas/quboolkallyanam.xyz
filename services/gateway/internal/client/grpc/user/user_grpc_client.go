@@ -173,6 +173,19 @@ func (c *userGRPCClient) DeleteAdditionalPhoto(ctx context.Context, req dto.Dele
 	return MapDeleteAdditionalPhotoResponse(resp), nil
 }
 
+func (c *userGRPCClient) GetAdditionalPhotos(ctx context.Context) (*dto.GetAdditionalPhotosResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.client.GetAdditionalPhotos(ctx, &userpbv1.GetAdditionalPhotosRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return MapGetAdditionalPhotosResponse(resp), nil
+}
 
 //////////////// PARTNER PREFERENCES MANAGEMENT //////////////////
 func (c *userGRPCClient) UpdateUserPartnerPreferences(

@@ -18,6 +18,7 @@ service UserService {
     rpc GetAdditionalPhotoUploadURL(GetAdditionalPhotoUploadURLRequest) returns (GetAdditionalPhotoUploadURLResponse);
     rpc ConfirmAdditionalPhotoUpload(ConfirmAdditionalPhotoUploadRequest) returns (ConfirmAdditionalPhotoUploadResponse);
     rpc DeleteAdditionalPhoto(DeleteAdditionalPhotoRequest) returns (DeleteAdditionalPhotoResponse);
+    rpc GetAdditionalPhotos(GetAdditionalPhotosRequest) returns (GetAdditionalPhotosResponse);
 
     // Partner preferences management
     rpc UpdateUserPartnerPreferences(UpdateUserPartnerPreferencesRequest) returns (UpdateUserPartnerPreferencesResponse);
@@ -63,7 +64,6 @@ message GetProfilePhotoUploadURLResponse {
 
 message ConfirmProfilePhotoUploadRequest {
     google.protobuf.StringValue object_key = 1;
-    google.protobuf.Int64Value file_size = 2;
 }
 
 message ConfirmProfilePhotoUploadResponse {
@@ -90,7 +90,6 @@ message GetAdditionalPhotoUploadURLResponse {
 
 message ConfirmAdditionalPhotoUploadRequest {
     google.protobuf.StringValue object_key = 1;
-    google.protobuf.Int64Value file_size = 2;
 }
 
 message ConfirmAdditionalPhotoUploadResponse {
@@ -104,6 +103,11 @@ message DeleteAdditionalPhotoRequest {
 
 message DeleteAdditionalPhotoResponse {
     google.protobuf.BoolValue success = 1;
+}
+
+message GetAdditionalPhotosRequest {}
+message GetAdditionalPhotosResponse {
+    repeated string additional_photo_urls = 1;
 }
 
 message UpdateUserPartnerPreferencesRequest {

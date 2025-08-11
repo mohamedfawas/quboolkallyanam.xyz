@@ -12,4 +12,5 @@ type UserImageRepository interface {
 	CreateUserImage(ctx context.Context, userImage *entity.UserImage) error
 	DeleteUserImage(ctx context.Context, userID uuid.UUID, displayOrder int32) error
 	GetUserImage(ctx context.Context, userID uuid.UUID, displayOrder int32) (*entity.UserImage, error)
+	ListUserImages(ctx context.Context, userID uuid.UUID) ([]entity.UserImage, error)
 }

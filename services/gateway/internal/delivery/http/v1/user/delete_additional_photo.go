@@ -12,6 +12,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Delete additional photo
+// @Description Delete an additional photo by its display order
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param display_order path int true "Display order"
+// @Success 200 {object} dto.DeleteAdditionalPhotoResponse "Delete result"
+// @Failure 400 {object} dto.BadRequestError "Bad request - invalid display order"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/profile/additional-photo/{display_order} [delete]
 func (h *UserHandler) DeleteAdditionalPhoto(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -37,7 +49,7 @@ func (h *UserHandler) DeleteAdditionalPhoto(c *gin.Context) {
 
 	resp, err := h.userUsecase.DeleteAdditionalPhoto(authCtx.Ctx, req)
 	if err != nil {
-		if !apperrors.IsAppError(err) {
+		if apperrors.ShouldLogError(err) {
 			log.Error("Failed to delete additional photo", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

@@ -25,8 +25,7 @@ type UserProfileUsecase interface {
 		contentType string) (*mediastorage.PhotoUploadURLResponse, error)
 	ConfirmProfilePhotoUpload(ctx context.Context,
 		userID uuid.UUID,
-		objectKey string,
-		fileSize int64) (string, error)
+		objectKey string) (string, error)
 	DeleteProfilePhoto(ctx context.Context,
 		userID uuid.UUID) error
 	// USER PARTNER PREFERENCES MANAGEMENT
@@ -42,9 +41,10 @@ type UserProfileUsecase interface {
 		contentType string) (*mediastorage.PhotoUploadURLResponse, error)
 	ConfirmAdditionalPhotoUpload(ctx context.Context,
 		userID uuid.UUID,
-		objectKey string,
-		fileSize int64) (string, error)
+		objectKey string) (string, error)
 	DeleteAdditionalPhoto(ctx context.Context,
 		userID uuid.UUID,
 		displayOrder int32) error
+	GetAdditionalPhotos(ctx context.Context, 
+		userID uuid.UUID) ([]string, error)
 }

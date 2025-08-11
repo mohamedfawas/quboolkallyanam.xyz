@@ -27,6 +27,7 @@ func NewUserProfileUsecase(
 ) usecase.UserProfileUsecase {
 	return &userProfileUsecase{
 		userProfileRepository:        userProfileRepository,
+		userImageRepository:          userImageRepository,
 		partnerPreferencesRepository: partnerPreferencesRepository,
 		eventPublisher:               eventPublisher,
 		photoStorage:                 photoStorage,

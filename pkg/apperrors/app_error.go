@@ -24,14 +24,20 @@ func IsAppError(err error) bool {
 	return errors.As(err, &ae)
 }
 
-func ShouldLogError(err error) bool {
+func ShouldLogError(err error) bool { // Used in gateway service only, never use in internal grpc services.
+	if err == nil {
+		return false
+	}
+
 	if IsAppError(err) {
 		return false
 	}
 
-	if st, ok := status.FromError(err); ok {
-		return st.Code() == codes.Internal
+	if _, ok := status.FromError(err); ok {
+		return false
 	}
 
 	return true
 }
+
+

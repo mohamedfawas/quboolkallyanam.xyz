@@ -10,6 +10,15 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Get user profile
+// @Description Fetch the authenticated user's profile
+// @Tags User
+// @Produce json
+// @Success 200 {object} dto.UserProfileRecommendation "User profile"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/profile [get]
 func (h *UserHandler) GetUserProfile(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {

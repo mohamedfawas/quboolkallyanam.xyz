@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	apperrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	mediastorage "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/mediastorage"
 )
 
@@ -14,9 +13,6 @@ func (u *userProfileUsecase) GetAdditionalPhotoUploadURL(ctx context.Context,
 	displayOrder int32,
 	contentType string) (*mediastorage.PhotoUploadURLResponse, error) {
 
-	if !validation.IsValidImageType(contentType) {
-		return nil, apperrors.ErrInvalidImageType
-	}
 
 	exists, err := u.userProfileRepository.ProfileExists(ctx, userID)
 	if err != nil {

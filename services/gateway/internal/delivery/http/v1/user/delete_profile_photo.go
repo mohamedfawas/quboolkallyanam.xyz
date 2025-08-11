@@ -10,6 +10,16 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Delete profile photo
+// @Description Delete current profile photo
+// @Tags User
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.DeleteProfilePhotoResponse "Delete result"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/profile/profile-photo [delete]
 func (h *UserHandler) DeleteProfilePhoto(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -24,7 +34,7 @@ func (h *UserHandler) DeleteProfilePhoto(c *gin.Context) {
 
 	err = h.userUsecase.DeleteProfilePhoto(authCtx.Ctx, dto.DeleteProfilePhotoRequest{})
 	if err != nil {
-		if !apperrors.IsAppError(err) {
+		if apperrors.ShouldLogError(err) {
 			log.Error("Failed to delete profile photo", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

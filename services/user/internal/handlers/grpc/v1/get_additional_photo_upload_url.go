@@ -7,7 +7,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"go.uber.org/zap"
@@ -34,7 +34,7 @@ func (h *UserHandler) GetAdditionalPhotoUploadURL(ctx context.Context,
 
 	response, err := h.userProfileUsecase.GetAdditionalPhotoUploadURL(ctx, userIDUUID, int32(req.DisplayOrder.Value), req.ContentType.Value)
 	if err != nil {
-		if !appErrors.IsAppError(err) {
+		if !apperrors.IsAppError(err) {
 			log.Error("Failed to get additional photo upload URL", zap.Error(err))
 		}
 		return nil, err

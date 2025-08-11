@@ -90,9 +90,7 @@ func (r *userProfileRepository) UpdateUserProfile(
 	userProfile *entity.UserProfile) error {
 
 	return r.db.GormDB.WithContext(ctx).
-		Model(&entity.UserProfile{}).
-		Where("user_id = ?", userProfile.UserID).
-		Updates(userProfile).Error
+		Save(userProfile).Error
 }
 
 func (r *userProfileRepository) GetUserProfileByID(

@@ -10,6 +10,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Get additional photo upload URL
+// @Description Generate a pre-signed upload URL for an additional photo
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param request body dto.GetAdditionalPhotoUploadURLRequest true "Upload request"
+// @Success 200 {object} dto.GetAdditionalPhotoUploadURLResponse "Upload URL details"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/profile/additional-photo [post]
 func (h *UserHandler) GetAdditionalPhotoUploadURL(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -30,7 +42,7 @@ func (h *UserHandler) GetAdditionalPhotoUploadURL(c *gin.Context) {
 
 	resp, err := h.userUsecase.GetAdditionalPhotoUploadURL(authCtx.Ctx, req)
 	if err != nil {
-		if !apperrors.IsAppError(err) {
+		if apperrors.ShouldLogError(err) {
 			log.Error("Failed to get additional photo upload URL", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

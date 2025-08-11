@@ -71,7 +71,7 @@ func (h *UserHandler) UpdateUserProfile(
 
 	err = h.userProfileUsecase.UpdateUserProfile(ctx, userIDUUID, entityReq)
 	if err != nil {
-		if apperrors.ShouldLogError(err) {
+		if !apperrors.IsAppError(err) {
 			log.Error("Failed to update user profile", zap.Error(err))
 		}
 		return nil, err

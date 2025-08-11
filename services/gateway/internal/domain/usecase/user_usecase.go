@@ -18,6 +18,7 @@ type UserUsecase interface {
 	GetAdditionalPhotoUploadURL(ctx context.Context, req dto.GetAdditionalPhotoUploadURLRequest) (*dto.GetAdditionalPhotoUploadURLResponse, error)
 	ConfirmAdditionalPhotoUpload(ctx context.Context, req dto.ConfirmAdditionalPhotoUploadRequest) (*dto.ConfirmAdditionalPhotoUploadResponse, error)
 	DeleteAdditionalPhoto(ctx context.Context, req dto.DeleteAdditionalPhotoRequest) (*dto.DeleteAdditionalPhotoResponse, error)
+	GetAdditionalPhotos(ctx context.Context) (*dto.GetAdditionalPhotosResponse, error)
 	
 	///////// PARTNER PREFERENCES MANAGEMENT //////////
 	UpdateUserPartnerPreferences(ctx context.Context, operationType string, req dto.PartnerPreferencePatchRequest) error
