@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
+	"github.com/lib/pq"
 )
 
 type PartnerPreference struct {
@@ -18,12 +18,12 @@ type PartnerPreference struct {
 
 	AcceptPhysicallyChallenged bool `json:"accept_physically_challenged" gorm:"not null;default:true"`
 
-	PreferredCommunities     []validation.Community      `json:"preferred_communities" gorm:"type:text[];not null;default:'{\"any\"}'"`
-	PreferredMaritalStatus   []validation.MaritalStatus  `json:"preferred_marital_status" gorm:"type:text[];not null;default:'{\"any\"}'"`
-	PreferredProfessions     []validation.Profession     `json:"preferred_professions" gorm:"type:text[];not null;default:'{\"any\"}'"`
-	PreferredProfessionTypes []validation.ProfessionType `json:"preferred_profession_types" gorm:"type:text[];not null;default:'{\"any\"}'"`
-	PreferredEducationLevels []validation.EducationLevel `json:"preferred_education_levels" gorm:"type:text[];not null;default:'{\"any\"}'"`
-	PreferredHomeDistricts   []validation.HomeDistrict   `json:"preferred_home_districts" gorm:"type:text[];not null;default:'{\"any\"}'"`
+	PreferredCommunities     pq.StringArray `json:"preferred_communities" gorm:"type:text[];not null;default:'{}'"`
+	PreferredMaritalStatus   pq.StringArray `json:"preferred_marital_status" gorm:"type:text[];not null;default:'{}'"`
+	PreferredProfessions     pq.StringArray `json:"preferred_professions" gorm:"type:text[];not null;default:'{}'"`
+	PreferredProfessionTypes pq.StringArray `json:"preferred_profession_types" gorm:"type:text[];not null;default:'{}'"`
+	PreferredEducationLevels pq.StringArray `json:"preferred_education_levels" gorm:"type:text[];not null;default:'{}'"`
+	PreferredHomeDistricts   pq.StringArray `json:"preferred_home_districts" gorm:"type:text[];not null;default:'{}'"`
 
 	CreatedAt time.Time `json:"created_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
@@ -35,6 +35,9 @@ type PartnerPreference struct {
 func (PartnerPreference) TableName() string {
 	return "partner_preferences"
 }
+
+
+
 	
 type UpdateUserPartnerPreferencesRequest struct {
 	MinAgeYears                *int16   `json:"min_age_years,omitempty"`

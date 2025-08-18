@@ -2,7 +2,8 @@ package messagebroker
 
 import (
 	"context"
-	"log"
+
+	"go.uber.org/zap"
 
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	paymentEvents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/payment"
@@ -12,27 +13,24 @@ import (
 
 type eventPublisher struct {
 	messagingClient messageBroker.Client
+	logger          *zap.Logger
 }
 
-func NewEventPublisher(messagingClient messageBroker.Client) event.EventPublisher {
+func NewEventPublisher(messagingClient messageBroker.Client, logger *zap.Logger) event.EventPublisher {
 	return &eventPublisher{
 		messagingClient: messagingClient,
+		logger:          logger,
 	}
 }
 
 func (p *eventPublisher) PublishPaymentVerified(ctx context.Context,
 	event paymentEvents.PaymentVerified) error {
 
-	if p.messagingClient == nil {
-		log.Println("messaging client is nil, skipping event publishing")
-		return nil
-	}
-
 	if err := p.messagingClient.Publish(constants.EventUserPaymentVerified, event); err != nil {
-		log.Printf("failed to publish payment verified event: %v", err)
+		p.logger.Error("failed to publish payment verified event", zap.Error(err))
 		return err
 	}
 
-	log.Printf("payment verified event published successfully for user: %s", event.UserID)
+	p.logger.Info("payment verified event published successfully for user", zap.String("user_id", event.UserID))
 	return nil
 }

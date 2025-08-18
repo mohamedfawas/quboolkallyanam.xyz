@@ -28,6 +28,7 @@ type UserClient interface {
 	///////// PARTNER PREFERENCES MANAGEMENT //////////
 	UpdateUserPartnerPreferences(ctx context.Context,
 		operationType string, req dto.UpdatePartnerPreferenceRequest) error
+	GetUserPartnerPreferences(ctx context.Context) (*dto.GetUserPartnerPreferencesResponse, error)
 	///////// MATCH MAKING //////////
 	RecordMatchAction(ctx context.Context,
 		req dto.RecordMatchActionRequest) (*dto.RecordMatchActionResponse, error)
@@ -35,4 +36,8 @@ type UserClient interface {
 		req dto.GetMatchRecommendationsRequest) (*dto.GetMatchRecommendationsResponse, error)
 	GetProfilesByMatchAction(ctx context.Context,
 		req dto.GetProfilesByMatchActionRequest) (*dto.GetProfilesByMatchActionResponse, error)
+
+	///////// USER DETAILS MANAGEMENT //////////
+	GetUserDetailsByProfileID(ctx context.Context,
+		req dto.GetUserDetailsByProfileIDRequest) (*dto.GetUserDetailsByProfileIDResponse, error)
 }

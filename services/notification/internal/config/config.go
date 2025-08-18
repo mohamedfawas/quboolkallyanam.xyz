@@ -46,6 +46,8 @@ func LoadConfig(configPath string) (*Config, error) {
 
 func initViper(path string) *viper.Viper {
 	v := viper.New()
+
+	v.SetEnvPrefix("NOTIFICATION")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 

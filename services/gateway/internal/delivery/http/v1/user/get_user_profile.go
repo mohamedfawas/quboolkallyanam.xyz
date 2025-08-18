@@ -5,7 +5,6 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/errutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"go.uber.org/zap"
 )
@@ -33,7 +32,7 @@ func (h *UserHandler) GetUserProfile(c *gin.Context) {
 
 	profile, err := h.userUsecase.GetUserProfile(authCtx.Ctx)
 	if err != nil {
-		if apperrors.ShouldLogError(err) && !errutil.IsGRPCError(err) {
+		if apperrors.ShouldLogError(err) {
 			log.Error("Failed to get user profile", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)

@@ -257,6 +257,33 @@ func MapUpdateUserPartnerPreferencesResponse(resp *userpbv1.UpdateUserPartnerPre
 	}
 }
 
+////////////////////////////// Get User Partner Preferences //////////////////////////////
+
+func MapGetUserPartnerPreferencesResponse(resp *userpbv1.GetUserPartnerPreferencesResponse) *dto.GetUserPartnerPreferencesResponse {
+	pp := resp.GetPartnerPreferences()
+	if pp == nil {
+		return nil
+	}
+	return &dto.GetUserPartnerPreferencesResponse{
+		PartnerPreferences: dto.PartnerPreferenceResponse{
+			MinAgeYears:                int(pp.MinAgeYears),
+			MaxAgeYears:                int(pp.MaxAgeYears),
+			MinHeightCM:                int(pp.MinHeightCm),
+			MaxHeightCM:                int(pp.MaxHeightCm),
+			AcceptPhysicallyChallenged: pp.AcceptPhysicallyChallenged,
+			PreferredCommunities:       pp.PreferredCommunities,
+			PreferredMaritalStatus:     pp.PreferredMaritalStatus,
+			PreferredProfessions:       pp.PreferredProfessions,
+			PreferredProfessionTypes:   pp.PreferredProfessionTypes,
+			PreferredEducationLevels:   pp.PreferredEducationLevels,
+			PreferredHomeDistricts:     pp.PreferredHomeDistricts,
+		},
+	}
+}
+
+
+
+
 
 ////////////////////////////// Record Match Action //////////////////////////////
 
@@ -349,4 +376,56 @@ func MapGetProfilesByMatchActionResponse(resp *userpbv1.GetProfilesByMatchAction
 		Profiles:   profiles,
 		Pagination: pagination,
 	}
+}
+
+
+////////////////////////////// Get User Details By Profile ID //////////////////////////////
+
+func MapGetUserDetailsByProfileIDRequest(req dto.GetUserDetailsByProfileIDRequest) *userpbv1.GetUserDetailsByProfileIDRequest {
+	return &userpbv1.GetUserDetailsByProfileIDRequest{
+		TargetProfileId:  req.TargetProfileID,
+		RequestedByAdmin: req.RequestedByAdmin,
+	}
+}
+
+func MapGetUserDetailsByProfileIDResponse(resp *userpbv1.GetUserDetailsByProfileIDResponse) *dto.GetUserDetailsByProfileIDResponse {
+	p := resp.GetProfile()
+	pp := resp.GetPartnerPreferences()
+
+	out := &dto.GetUserDetailsByProfileIDResponse{
+		AdditionalPhotoURLs: resp.AdditionalPhotoUrls,
+	}
+
+	if p != nil {
+		out.Profile = dto.UserProfileRecommendation{
+			ID:                p.Id,
+			FullName:          p.FullName,
+			ProfilePictureURL: p.ProfilePictureUrl,
+			Age:               int(p.Age),
+			HeightCm:          int(p.HeightCm),
+			MaritalStatus:     p.MaritalStatus,
+			Profession:        p.Profession,
+			HomeDistrict:      p.HomeDistrict,
+		}
+	}
+
+	if pp != nil {
+		out.PartnerPreferences = dto.PartnerPreferenceResponse{
+			MinAgeYears:                int(pp.MinAgeYears),
+			MaxAgeYears:                int(pp.MaxAgeYears),
+			MinHeightCM:                int(pp.MinHeightCm),
+			MaxHeightCM:                int(pp.MaxHeightCm),
+			AcceptPhysicallyChallenged: pp.AcceptPhysicallyChallenged,
+			PreferredCommunities:       pp.PreferredCommunities,
+			PreferredMaritalStatus:     pp.PreferredMaritalStatus,
+			PreferredProfessions:       pp.PreferredProfessions,
+			PreferredProfessionTypes:   pp.PreferredProfessionTypes,
+			PreferredEducationLevels:   pp.PreferredEducationLevels,
+			PreferredHomeDistricts:     pp.PreferredHomeDistricts,
+		}
+	} else {
+		out.PartnerPreferences = dto.PartnerPreferenceResponse{}
+	}
+
+	return out
 }

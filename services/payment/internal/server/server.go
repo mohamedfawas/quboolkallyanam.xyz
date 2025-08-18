@@ -107,7 +107,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	txManager := postgres.NewTransactionManager(pgClient)
 
 	///////////////////////// EVENT PUBLISHER INITIALIZATION /////////////////////////
-	eventPublisher := messageBrokerAdapters.NewEventPublisher(messagingClient)
+	eventPublisher := messageBrokerAdapters.NewEventPublisher(messagingClient, rootLogger)
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	paymentUC := paymentUsecase.NewPaymentUsecase(
@@ -121,7 +121,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	subscriptionUC := subscriptionUsecase.NewSubscriptionUsecase(subscriptionPlansRepo, subscriptionsRepo)
 
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
-	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC, subscriptionUC)
+	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC, subscriptionUC, rootLogger)
 	paymentpbv1.RegisterPaymentServiceServer(grpcServer, paymentHandler)
 	
 

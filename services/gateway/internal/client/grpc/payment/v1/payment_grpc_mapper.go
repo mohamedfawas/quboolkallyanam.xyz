@@ -167,3 +167,23 @@ func MapGetPaymentHistoryResponse(resp *paymentpbv1.GetPaymentHistoryResponse) [
 
 	return paymentHistory
 }
+
+// /////////////////////// Get Completed Payment Details //////////////////////////////
+func MapGetCompletedPaymentDetailsResponse(resp *paymentpbv1.GetCompletedPaymentDetailsResponse) *dto.GetCompletedPaymentDetailsResponse {
+	out := &dto.GetCompletedPaymentDetailsResponse{}
+	for _, p := range resp.Payments {
+		out.Payments = append(out.Payments, dto.CompletedPaymentDetail{
+			ID:              p.Id,
+			UserID:          p.UserId,
+			PlanID:          p.PlanId,
+			RazorpayOrderID: p.RazorpayOrderId,
+			Amount:          p.Amount,
+			Currency:        p.Currency,
+			Status:          p.Status,
+			PaymentMethod:   p.PaymentMethod,
+			CreatedAt:       p.CreatedAt.AsTime(),
+			UpdatedAt:       p.UpdatedAt.AsTime(),
+		})
+	}
+	return out
+}

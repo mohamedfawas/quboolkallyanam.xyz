@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pointerutil"
@@ -38,7 +38,7 @@ func (h *UserHandler) GetProfilesByMatchAction(
 
 	profiles, pagination, err := h.matchMakingUsecase.GetProfilesByMatchAction(ctx, userIDUUID, req.Action, limit, offset)
 	if err != nil {
-		if !appErrors.IsAppError(err) {
+		if !apperrors.IsAppError(err) {
 			log.Error("Failed to get profiles by match action", zap.Error(err))
 		}
 		return nil, err

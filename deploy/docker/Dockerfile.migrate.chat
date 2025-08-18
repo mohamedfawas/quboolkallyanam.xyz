@@ -1,0 +1,24 @@
+# Downloader stage: fetch golang-migrate CLI
+FROM alpine:3.20 AS downloader
+RUN apk add --no-cache ca-certificates curl
+WORKDIR /tmp
+ENV MIGRATE_VERSION=v4.17.1
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz \
+  | tar xz && mv migrate /usr/local/bin/migrate
+
+# Runtime stage: minimal shell for env expansion, includes CA certs
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates
+WORKDIR /app
+
+# Copy migrate binary and only the chat migrations
+COPY --from=downloader /usr/local/bin/migrate /usr/local/bin/migrate
+COPY services/chat/migrations/postgres ./migrations
+
+# Example (override at runtime): postgres://USER:PASS@HOST:5432/qubool_kallyanam_chat?sslmode=disable
+ENV POSTGRES_DSN=""
+# Optionally override the action with MIGRATE_CMD (e.g., "down 1", "version")
+ENV MIGRATE_CMD="up"
+
+# Run migrations; override POSTGRES_DSN and/or MIGRATE_CMD at runtime
+ENTRYPOINT ["sh", "-c", "migrate -path=/app/migrations -database \"$POSTGRES_DSN\" ${MIGRATE_CMD}"]

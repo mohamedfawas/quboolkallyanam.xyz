@@ -2,27 +2,25 @@ package payments
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"gorm.io/gorm"
-
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 )
 
 func (u *paymentUsecase) CreatePaymentOrder(ctx context.Context, userID string, planID string) (*entity.PaymentOrderResponse, error) {
 	plan, err := u.subscriptionPlanRepository.GetPlanByID(ctx, planID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, appErrors.ErrSubscriptionPlanNotFound
-		}
 		return nil, err
 	}
 
+	if plan == nil {
+		return nil, apperrors.ErrSubscriptionPlanNotFound
+	}
+
 	if !plan.IsActive {
-		return nil, appErrors.ErrSubscriptionPlanNotActive
+		return nil, apperrors.ErrSubscriptionPlanNotActive
 	}
 
 	razorpayOrderID, err := u.razorpayService.CreateOrder(plan.Amount, constants.PaymentCurrencyINR)

@@ -38,3 +38,30 @@ func (p *eventPublisher) PublishUserProfileUpdated(
 
 	return nil
 }
+
+func (p *eventPublisher) PublishUserInterestSent(
+	ctx context.Context,
+	event userevents.UserInterestSentEvent) error {
+
+	if err := p.messagingClient.Publish(constants.EventUserInterestSent, event); err != nil {
+		p.logger.Error("failed to publish user interest sent event",
+			zap.String(constants.UserIDS, event.ReceiverEmail),
+			zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+func (p *eventPublisher) PublishMutualMatchCreated(
+	ctx context.Context,
+	event userevents.MutualMatchCreatedEvent) error {
+
+	if err := p.messagingClient.Publish(constants.EventMutualMatchCreated, event); err != nil {
+		p.logger.Error("failed to publish mutual match created event",
+			zap.String(constants.UserIDS, event.User1Email),
+			zap.String(constants.UserIDS, event.User2Email),
+			zap.Error(err))
+		return err
+	}
+	return nil
+}

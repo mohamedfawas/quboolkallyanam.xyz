@@ -20,4 +20,6 @@ type PaymentClient interface {
 	GetActiveSubscriptionPlans(ctx context.Context) ([]*dto.SubscriptionPlan, error)
 	GetActiveSubscriptionByUserID(ctx context.Context) (*dto.ActiveSubscription, error)
 	GetPaymentHistory(ctx context.Context) ([]*dto.GetPaymentHistoryResponse, error)
+	GetCompletedPaymentDetails(ctx context.Context,
+		req dto.GetCompletedPaymentDetailsRequest) (*dto.GetCompletedPaymentDetailsResponse, error)
 }

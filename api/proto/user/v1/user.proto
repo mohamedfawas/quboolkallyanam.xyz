@@ -22,11 +22,14 @@ service UserService {
 
     // Partner preferences management
     rpc UpdateUserPartnerPreferences(UpdateUserPartnerPreferencesRequest) returns (UpdateUserPartnerPreferencesResponse);
-    
+    rpc GetUserPartnerPreferences(GetUserPartnerPreferencesRequest) returns (GetUserPartnerPreferencesResponse);
     // Match making
     rpc RecordMatchAction(RecordMatchActionRequest) returns (RecordMatchActionResponse);
     rpc GetMatchRecommendations(GetMatchRecommendationsRequest) returns (GetMatchRecommendationsResponse);
     rpc GetProfilesByMatchAction(GetProfilesByMatchActionRequest) returns (GetProfilesByMatchActionResponse);
+
+    // User details management
+    rpc GetUserDetailsByProfileID(GetUserDetailsByProfileIDRequest) returns (GetUserDetailsByProfileIDResponse);
 }
 
 message UpdateUserProfileRequest {
@@ -139,6 +142,27 @@ message UpdateUserPartnerPreferencesResponse {
     google.protobuf.BoolValue success = 1;
 }
 
+message GetUserPartnerPreferencesRequest {}
+message GetUserPartnerPreferencesResponse {
+    PartnerPreference partner_preferences = 1;
+}
+
+message PartnerPreference {
+
+    int32 min_age_years = 1;
+    int32 max_age_years = 2;
+    int32 min_height_cm = 3;
+    int32 max_height_cm = 4;
+    bool accept_physically_challenged = 5;
+
+    repeated string preferred_communities = 6;
+    repeated string preferred_marital_status = 7;
+    repeated string preferred_professions = 8;
+    repeated string preferred_profession_types = 9;
+    repeated string preferred_education_levels = 10;
+    repeated string preferred_home_districts = 11;
+}
+
 message RecordMatchActionRequest {
     string action = 1;
     int64 target_profile_id = 2;
@@ -187,3 +211,14 @@ message GetProfilesByMatchActionResponse {
     PaginationInfo pagination = 2;
 }
 
+message GetUserDetailsByProfileIDRequest {
+	int64 target_profile_id = 1;
+	bool requested_by_admin = 2;
+}
+
+
+message GetUserDetailsByProfileIDResponse {
+	UserProfileRecommendation profile = 1;
+	PartnerPreference partner_preferences = 2;
+	repeated string additional_photo_urls = 3;
+}

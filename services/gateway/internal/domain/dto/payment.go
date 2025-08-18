@@ -126,3 +126,26 @@ type GetPaymentHistoryResponse struct {
 	PaymentMethod   string    `json:"payment_method"`
 	CreatedAt       time.Time `json:"created_at"`
 }
+
+
+type GetCompletedPaymentDetailsRequest struct {
+	Page  int32 `json:"page" binding:"required,min=1"`
+	Limit int32 `json:"limit" binding:"required,min=1,max=50"`
+}
+
+type CompletedPaymentDetail struct {
+	ID              int64     `json:"id"`
+	UserID          string    `json:"user_id"`
+	PlanID          string    `json:"plan_id"`
+	RazorpayOrderID string    `json:"razorpay_order_id"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	Status          string    `json:"status"`
+	PaymentMethod   string    `json:"payment_method"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type GetCompletedPaymentDetailsResponse struct {
+	Payments []CompletedPaymentDetail `json:"payments"`
+}

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/ageutil"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/pagination"
@@ -32,7 +32,7 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 	}
 
 	if userProfile == nil {
-		return nil, nil, appError.ErrUserNotFound
+		return nil, nil, apperrors.ErrUserNotFound
 	}
 
 	partnerPreference, err := u.partnerPreferencesRepository.GetPartnerPreferencesByUserProfileID(ctx, userProfile.ID)
@@ -41,7 +41,7 @@ func (u *matchMakingUsecase) RecommendUserProfiles(
 	}
 
 	if partnerPreference == nil {
-		return nil, nil, appError.ErrPartnerPreferencesNotFound
+		return nil, nil, apperrors.ErrPartnerPreferencesNotFound
 	}
 
 	excludedIDs, err := u.profileMatchRepository.GetMatchedProfileIDs(ctx, userID)

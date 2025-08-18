@@ -118,7 +118,16 @@ func (h *ChatHandler) authenticateWebSocket(c *gin.Context) (string, error) {
 	return userID, nil
 }
 
-
+// @Summary Chat WebSocket
+// @Description Upgrade to WebSocket for real-time chat. Requires Authorization: Bearer <token> and premium role.
+// @Tags Chat
+// @Produce json
+// @Param Authorization header string true "Bearer access token"
+// @Success 101 {string} string "Switching Protocols"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 403 {object} dto.ForbiddenError "Forbidden - requires premium"
+// @Router /api/v1/chat/ws [get]
+// @Security BearerAuth
 func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 	requestID, exists := c.Get(constants.ContextKeyRequestID)
 	if !exists {

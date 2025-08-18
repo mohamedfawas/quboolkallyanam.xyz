@@ -29,9 +29,11 @@ const (
 	UserService_DeleteAdditionalPhoto_FullMethodName        = "/user.v1.UserService/DeleteAdditionalPhoto"
 	UserService_GetAdditionalPhotos_FullMethodName          = "/user.v1.UserService/GetAdditionalPhotos"
 	UserService_UpdateUserPartnerPreferences_FullMethodName = "/user.v1.UserService/UpdateUserPartnerPreferences"
+	UserService_GetUserPartnerPreferences_FullMethodName    = "/user.v1.UserService/GetUserPartnerPreferences"
 	UserService_RecordMatchAction_FullMethodName            = "/user.v1.UserService/RecordMatchAction"
 	UserService_GetMatchRecommendations_FullMethodName      = "/user.v1.UserService/GetMatchRecommendations"
 	UserService_GetProfilesByMatchAction_FullMethodName     = "/user.v1.UserService/GetProfilesByMatchAction"
+	UserService_GetUserDetailsByProfileID_FullMethodName    = "/user.v1.UserService/GetUserDetailsByProfileID"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -51,10 +53,13 @@ type UserServiceClient interface {
 	GetAdditionalPhotos(ctx context.Context, in *GetAdditionalPhotosRequest, opts ...grpc.CallOption) (*GetAdditionalPhotosResponse, error)
 	// Partner preferences management
 	UpdateUserPartnerPreferences(ctx context.Context, in *UpdateUserPartnerPreferencesRequest, opts ...grpc.CallOption) (*UpdateUserPartnerPreferencesResponse, error)
+	GetUserPartnerPreferences(ctx context.Context, in *GetUserPartnerPreferencesRequest, opts ...grpc.CallOption) (*GetUserPartnerPreferencesResponse, error)
 	// Match making
 	RecordMatchAction(ctx context.Context, in *RecordMatchActionRequest, opts ...grpc.CallOption) (*RecordMatchActionResponse, error)
 	GetMatchRecommendations(ctx context.Context, in *GetMatchRecommendationsRequest, opts ...grpc.CallOption) (*GetMatchRecommendationsResponse, error)
 	GetProfilesByMatchAction(ctx context.Context, in *GetProfilesByMatchActionRequest, opts ...grpc.CallOption) (*GetProfilesByMatchActionResponse, error)
+	// User details management
+	GetUserDetailsByProfileID(ctx context.Context, in *GetUserDetailsByProfileIDRequest, opts ...grpc.CallOption) (*GetUserDetailsByProfileIDResponse, error)
 }
 
 type userServiceClient struct {
@@ -165,6 +170,16 @@ func (c *userServiceClient) UpdateUserPartnerPreferences(ctx context.Context, in
 	return out, nil
 }
 
+func (c *userServiceClient) GetUserPartnerPreferences(ctx context.Context, in *GetUserPartnerPreferencesRequest, opts ...grpc.CallOption) (*GetUserPartnerPreferencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserPartnerPreferencesResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserPartnerPreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) RecordMatchAction(ctx context.Context, in *RecordMatchActionRequest, opts ...grpc.CallOption) (*RecordMatchActionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RecordMatchActionResponse)
@@ -195,6 +210,16 @@ func (c *userServiceClient) GetProfilesByMatchAction(ctx context.Context, in *Ge
 	return out, nil
 }
 
+func (c *userServiceClient) GetUserDetailsByProfileID(ctx context.Context, in *GetUserDetailsByProfileIDRequest, opts ...grpc.CallOption) (*GetUserDetailsByProfileIDResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserDetailsByProfileIDResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserDetailsByProfileID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -212,10 +237,13 @@ type UserServiceServer interface {
 	GetAdditionalPhotos(context.Context, *GetAdditionalPhotosRequest) (*GetAdditionalPhotosResponse, error)
 	// Partner preferences management
 	UpdateUserPartnerPreferences(context.Context, *UpdateUserPartnerPreferencesRequest) (*UpdateUserPartnerPreferencesResponse, error)
+	GetUserPartnerPreferences(context.Context, *GetUserPartnerPreferencesRequest) (*GetUserPartnerPreferencesResponse, error)
 	// Match making
 	RecordMatchAction(context.Context, *RecordMatchActionRequest) (*RecordMatchActionResponse, error)
 	GetMatchRecommendations(context.Context, *GetMatchRecommendationsRequest) (*GetMatchRecommendationsResponse, error)
 	GetProfilesByMatchAction(context.Context, *GetProfilesByMatchActionRequest) (*GetProfilesByMatchActionResponse, error)
+	// User details management
+	GetUserDetailsByProfileID(context.Context, *GetUserDetailsByProfileIDRequest) (*GetUserDetailsByProfileIDResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -256,6 +284,9 @@ func (UnimplementedUserServiceServer) GetAdditionalPhotos(context.Context, *GetA
 func (UnimplementedUserServiceServer) UpdateUserPartnerPreferences(context.Context, *UpdateUserPartnerPreferencesRequest) (*UpdateUserPartnerPreferencesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserPartnerPreferences not implemented")
 }
+func (UnimplementedUserServiceServer) GetUserPartnerPreferences(context.Context, *GetUserPartnerPreferencesRequest) (*GetUserPartnerPreferencesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserPartnerPreferences not implemented")
+}
 func (UnimplementedUserServiceServer) RecordMatchAction(context.Context, *RecordMatchActionRequest) (*RecordMatchActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RecordMatchAction not implemented")
 }
@@ -264,6 +295,9 @@ func (UnimplementedUserServiceServer) GetMatchRecommendations(context.Context, *
 }
 func (UnimplementedUserServiceServer) GetProfilesByMatchAction(context.Context, *GetProfilesByMatchActionRequest) (*GetProfilesByMatchActionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfilesByMatchAction not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserDetailsByProfileID(context.Context, *GetUserDetailsByProfileIDRequest) (*GetUserDetailsByProfileIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserDetailsByProfileID not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -466,6 +500,24 @@ func _UserService_UpdateUserPartnerPreferences_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUserPartnerPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserPartnerPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserPartnerPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserPartnerPreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserPartnerPreferences(ctx, req.(*GetUserPartnerPreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_RecordMatchAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RecordMatchActionRequest)
 	if err := dec(in); err != nil {
@@ -520,6 +572,24 @@ func _UserService_GetProfilesByMatchAction_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUserDetailsByProfileID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserDetailsByProfileIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserDetailsByProfileID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserDetailsByProfileID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserDetailsByProfileID(ctx, req.(*GetUserDetailsByProfileIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -568,6 +638,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_UpdateUserPartnerPreferences_Handler,
 		},
 		{
+			MethodName: "GetUserPartnerPreferences",
+			Handler:    _UserService_GetUserPartnerPreferences_Handler,
+		},
+		{
 			MethodName: "RecordMatchAction",
 			Handler:    _UserService_RecordMatchAction_Handler,
 		},
@@ -578,6 +652,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProfilesByMatchAction",
 			Handler:    _UserService_GetProfilesByMatchAction_Handler,
+		},
+		{
+			MethodName: "GetUserDetailsByProfileID",
+			Handler:    _UserService_GetUserDetailsByProfileID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

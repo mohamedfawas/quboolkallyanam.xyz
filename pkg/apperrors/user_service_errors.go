@@ -87,6 +87,18 @@ var (
 		HTTPStatusCode: http.StatusBadRequest,
 		GRPCStatusCode: codes.InvalidArgument,
 		PublicMsg:      "Age should be between 18 and 100 years and max age should be greater than min age"}
+	ErrUserProfileNotCompleted = &AppError{
+		Err:            errors.New("user profile not completed"),
+		Code:           "USER_PROFILE_NOT_COMPLETED",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "User profile is not completed. Please complete your profile first."}
+	ErrSameGenderProfileAccessDenied = &AppError{
+		Err:            errors.New("same gender profile access denied"),
+		Code:           "SAME_GENDER_PROFILE_ACCESS_DENIED",
+		HTTPStatusCode: http.StatusForbidden,
+		GRPCStatusCode: codes.PermissionDenied,
+		PublicMsg:      "You cannot access the profile."}
 )
 
 // Partner Preferences errors
@@ -114,4 +126,10 @@ var (
 		HTTPStatusCode: http.StatusBadRequest,
 		GRPCStatusCode: codes.InvalidArgument,
 		PublicMsg:      "The selected match action is not recognized. Please try again."}
+	ErrInvalidTargetProfileID = &AppError{
+		Err:            errors.New("invalid target profile ID"),
+		Code:           "INVALID_TARGET_PROFILE_ID",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "The selected target profile ID does not exist. Please try again."}
 )

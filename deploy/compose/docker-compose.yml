@@ -1,0 +1,267 @@
+version: "3.9"
+
+services:
+  # Core infra
+  postgres:
+    image: postgres:16-alpine
+    container_name: qk-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: qk-redis
+    command: ["redis-server", "--requirepass", "redispass"]
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: qk-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # management UI
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7
+    container_name: qk-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  gcs:
+    image: fsouza/fake-gcs-server:latest
+    container_name: qk-gcs
+    command: ["-scheme", "http", "-port", "4443", "-backend", "memory", "-external-url", "http://gcs:4443"]
+    ports:
+      - "4443:4443"
+
+  # DB migrations (run once)
+  migrate_auth:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.migrate.auth
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_auth?sslmode=disable
+      MIGRATE_CMD: up
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  migrate_user:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.migrate.user
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_user?sslmode=disable
+      MIGRATE_CMD: up
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  migrate_chat:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.migrate.chat
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_chat?sslmode=disable
+      MIGRATE_CMD: up
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  migrate_payment:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.migrate.payment
+    environment:
+      POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_payment?sslmode=disable
+      MIGRATE_CMD: up
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # Gateway first (others share its net namespace so localhost:<port> works)
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.gateway
+    container_name: qk-gateway
+    environment:
+      # HTTP
+      HTTP_PORT: "8080"
+      # gRPC ports (gateway code uses localhost:<port>)
+      SERVICES_AUTH_PORT: "50051"
+      SERVICES_ADMIN_PORT: "50052"   # reserved in config
+      SERVICES_USER_PORT: "50053"
+      SERVICES_CHAT_PORT: "50054"
+      SERVICES_PAYMENT_PORT: "50055"
+      # JWT/dev
+      AUTH_JWT_SECRET_KEY: "dev-secret"
+      AUTH_JWT_ACCESS_TOKEN_MINUTES: "15"
+      AUTH_JWT_REFRESH_TOKEN_DAYS: "7"
+      AUTH_JWT_ISSUER: "qubool-kallyanam"
+      BASE_URL: "http://localhost:8080"
+      DEFAULT_TIMEZONE: "Asia/Kolkata"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      gcs:
+        condition: service_started
+
+  # Services share gateway's network namespace → localhost:<port> resolves inside gateway
+  auth:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.auth
+    container_name: qk-auth
+    network_mode: "service:gateway"
+    environment:
+      GRPC_PORT: "50051"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DBNAME: qubool_kallyanam_auth
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: redispass
+      AUTH_JWT_SECRET_KEY: "dev-secret"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migrate_auth:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  user:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.user
+    container_name: qk-user
+    network_mode: "service:gateway"
+    environment:
+      GRPC_PORT: "50053"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DBNAME: qubool_kallyanam_user
+      POSTGRES_SSLMODE: disable
+      POSTGRES_TIMEZONE: UTC
+      RABBITMQ_DSN: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_EXCHANGE_NAME: qubool_kallyanam_events
+      MEDIA_STORAGE_BUCKET: qubool-kallyanam-media
+      MEDIA_STORAGE_ENDPOINT: http://gcs:4443
+      MEDIA_STORAGE_URL_EXPIRY: 15m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      gcs:
+        condition: service_started
+      migrate_user:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  chat:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.chat
+    container_name: qk-chat
+    network_mode: "service:gateway"
+    environment:
+      CHAT_GRPC_PORT: "50054"
+      CHAT_POSTGRES_HOST: postgres
+      CHAT_POSTGRES_PORT: "5432"
+      CHAT_POSTGRES_USER: postgres
+      CHAT_POSTGRES_PASSWORD: postgres
+      CHAT_POSTGRES_DBNAME: qubool_kallyanam_chat
+      CHAT_POSTGRES_SSLMODE: disable
+      CHAT_POSTGRES_TIMEZONE: UTC
+      CHAT_MONGODB_URI: mongodb://mongo:27017
+      CHAT_MONGODB_DATABASE: quboolKallyanam
+      CHAT_RABBITMQ_DSN: amqp://guest:guest@rabbitmq:5672/
+      CHAT_RABBITMQ_EXCHANGE_NAME: qubool_kallyanam_events
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      migrate_chat:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  payment:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.payment
+    container_name: qk-payment
+    network_mode: "service:gateway"
+    environment:
+      GRPC_PORT: "50055"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DBNAME: qubool_kallyanam_payment
+      POSTGRES_SSLMODE: disable
+      POSTGRES_TIMEZONE: UTC
+      RABBITMQ_DSN: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_EXCHANGE_NAME: qubool_kallyanam_events
+      RAZORPAY_KEY_ID: your-key-id
+      RAZORPAY_KEY_SECRET: your-key-secret
+      EMAIL_SMTP_HOST: smtp.gmail.com
+      EMAIL_SMTP_PORT: "587"
+      EMAIL_SMTP_USERNAME: ""
+      EMAIL_SMTP_PASSWORD: ""
+      EMAIL_FROM_EMAIL: noreply@qubool-kallyanam.xyz
+      EMAIL_FROM_NAME: "Qubool Kallyanam"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      migrate_payment:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mongo-data:

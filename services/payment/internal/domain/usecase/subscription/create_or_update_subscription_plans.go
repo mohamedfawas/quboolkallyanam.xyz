@@ -2,10 +2,9 @@ package subscription
 
 import (
 	"context"
-	"log"
 	"time"
-	appError "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
-	validation "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 )
 
@@ -13,30 +12,29 @@ func (s *subscriptionUsecase) CreateOrUpdateSubscriptionPlans(ctx context.Contex
 	req entity.UpdateSubscriptionPlanRequest) error {
 
 	if !validation.IsValidSubscriptionPlanID(req.ID) {
-		return appError.ErrInvalidSubscriptionPlanID
+		return apperrors.ErrInvalidSubscriptionPlanID
 	}
 
 	existingPlan, err := s.subscriptionPlansRepository.GetPlanByID(ctx, req.ID)
 	if err != nil {
-		log.Printf("error getting subscription plan by id: %v", err)
 		return err
 	}
 
 	if existingPlan == nil {
 		if req.DurationDays == nil || req.Amount == nil || req.Currency == nil {
-			return appError.ErrMissingRequiredFields
+			return apperrors.ErrMissingRequiredFields
 		}
 
 		if !validation.IsValidSubscriptionPlanDurationDays(*req.DurationDays) {
-			return appError.ErrInvalidSubscriptionPlanDurationDays
+			return apperrors.ErrInvalidSubscriptionPlanDurationDays
 		}
 
 		if !validation.IsValidSubscriptionPlanAmount(*req.Amount) {
-			return appError.ErrInvalidSubscriptionPlanAmount
+			return apperrors.ErrInvalidSubscriptionPlanAmount
 		}
 
 		if !validation.IsValidSubscriptionPlanCurrency(*req.Currency) {
-			return appError.ErrInvalidCurrency
+			return apperrors.ErrInvalidCurrency
 		}
 
 		description := ""
@@ -64,21 +62,21 @@ func (s *subscriptionUsecase) CreateOrUpdateSubscriptionPlans(ctx context.Contex
 
 	if req.DurationDays != nil {
 		if !validation.IsValidSubscriptionPlanDurationDays(*req.DurationDays) {
-			return appError.ErrInvalidSubscriptionPlanDurationDays
+			return apperrors.ErrInvalidSubscriptionPlanDurationDays
 		}
 		existingPlan.DurationDays = *req.DurationDays
 	}
 
 	if req.Amount != nil {
 		if !validation.IsValidSubscriptionPlanAmount(*req.Amount) {
-			return appError.ErrInvalidSubscriptionPlanAmount
+			return apperrors.ErrInvalidSubscriptionPlanAmount
 		}
 		existingPlan.Amount = *req.Amount
 	}
 
 	if req.Currency != nil {
 		if !validation.IsValidSubscriptionPlanCurrency(*req.Currency) {
-			return appError.ErrInvalidCurrency
+			return apperrors.ErrInvalidCurrency
 		}
 		existingPlan.Currency = *req.Currency
 	}

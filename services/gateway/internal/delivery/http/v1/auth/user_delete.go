@@ -7,6 +7,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/metrics"
 	"go.uber.org/zap"
 )
 
@@ -49,6 +50,7 @@ func (h *AuthHandler) UserDelete(c *gin.Context) {
 		return
 	}
 
+	metrics.UsersDeletedTotal.Inc()
 	log.Info("User deleted successfully")
 	apiresponse.Success(c, "User deleted successfully", nil)
 }

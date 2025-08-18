@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"errors"
-	"log"
 
 	"gorm.io/gorm"
 
@@ -26,7 +25,6 @@ func (r *subscriptionPlansRepository) GetPlanByID(ctx context.Context, planID st
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		log.Printf("GetPlanByID error in subscription plans repository: %v", err)
 		return nil, err
 	}
 	return &plan, nil
@@ -38,7 +36,6 @@ func (r *subscriptionPlansRepository) GetPlanByIDTx(ctx context.Context, tx *gor
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		log.Printf("GetPlanByIDTx error in subscription plans repository: %v", err)
 		return nil, err
 	}
 	return &plan, nil
@@ -46,7 +43,6 @@ func (r *subscriptionPlansRepository) GetPlanByIDTx(ctx context.Context, tx *gor
 
 func (r *subscriptionPlansRepository) CreatePlan(ctx context.Context, plan entity.SubscriptionPlan) error {
 	if err := r.db.GormDB.WithContext(ctx).Create(&plan).Error; err != nil {
-		log.Printf("CreatePlan error in subscription plans repository: %v", err)
 		return err
 	}
 	return nil
@@ -55,17 +51,14 @@ func (r *subscriptionPlansRepository) CreatePlan(ctx context.Context, plan entit
 
 func (r *subscriptionPlansRepository) UpdatePlan(ctx context.Context, planID string, plan entity.SubscriptionPlan) error {
 	if err := r.db.GormDB.WithContext(ctx).Where("id = ?", planID).Updates(&plan).Error; err != nil {
-		log.Printf("UpdatePlan error in subscription plans repository: %v", err)
 		return err
 	}
 	return nil
 }
 
-
 func (r *subscriptionPlansRepository) GetActivePlans(ctx context.Context) ([]*entity.SubscriptionPlan, error) {
 	var plans []*entity.SubscriptionPlan
 	if err := r.db.GormDB.WithContext(ctx).Where("is_active = ?", true).Find(&plans).Error; err != nil {
-		log.Printf("GetActivePlans error in subscription plans repository: %v", err)
 		return nil, err
 	}
 	return plans, nil

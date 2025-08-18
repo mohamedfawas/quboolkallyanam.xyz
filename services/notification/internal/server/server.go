@@ -84,7 +84,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	notificationUsecase := usecase.NewNotificationUsecase(emailAdapter)
 
 	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
-	eventHandler := eventHandlers.NewEventHandler(messagingClient, notificationUsecase)
+	eventHandler := eventHandlers.NewEventHandler(messagingClient, notificationUsecase, rootLogger)
 
 	//////////////////////// SERVER INITIALIZATION /////////////////////////
 	server := &Server{

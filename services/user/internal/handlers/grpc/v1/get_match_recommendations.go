@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	userpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/user/v1"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
@@ -40,7 +40,7 @@ func (h *UserHandler) GetMatchRecommendations(
 
 	profiles, pagination, err := h.matchMakingUsecase.RecommendUserProfiles(ctx, userIDUUID, limit, offset)
 	if err != nil {
-		if !appErrors.IsAppError(err) {
+		if !apperrors.IsAppError(err) {
 			log.Error("Failed to get match recommendations", zap.Error(err))
 		}
 		return nil, err

@@ -179,7 +179,7 @@ func (s *Server) initUsecases() error {
 
 func (s *Server) initHandlers() error {
 	s.authHandler = authHandler.NewAuthHandler(s.authUsecase, *s.config, s.logger)
-	s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase)
+	s.paymentHandler = paymentHandler.NewPaymentHandler(s.paymentUsecase, s.logger)
 	s.chatHandler = chatHandler.NewChatHandler(s.chatUsecase, s.logger, s.jwtManager)
 	s.userHandler = userHandler.NewUserHandler(s.userUsecase, s.logger)
 

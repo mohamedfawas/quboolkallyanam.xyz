@@ -10,6 +10,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
+	"github.com/lib/pq"
 )
 
 func (u *userProfileUsecase) UpdateUserPartnerPreferences(
@@ -53,59 +54,107 @@ func (u *userProfileUsecase) createPartnerPreferences(
 	req entity.UpdateUserPartnerPreferencesRequest) error {
 
 	preferences := &entity.PartnerPreference{
-		UserProfileID:              userProfileID,
-		AcceptPhysicallyChallenged: *req.AcceptPhysicallyChallenged,
+		UserProfileID: userProfileID,
 	}
 
-	if validation.IsValidAgeRange(int(*req.MinAgeYears), int(*req.MaxAgeYears)) {
-		preferences.MinAgeYears = int16(*req.MinAgeYears)
-		preferences.MaxAgeYears = int16(*req.MaxAgeYears)
+	if req.AcceptPhysicallyChallenged != nil {
+		preferences.AcceptPhysicallyChallenged = *req.AcceptPhysicallyChallenged
 	} else {
-		return appError.ErrInvalidAgeRange
+		preferences.AcceptPhysicallyChallenged = false
 	}
 
-	if validation.IsValidHeightRange(int(*req.MinHeightCM), int(*req.MaxHeightCM)) {
-		preferences.MinHeightCm = int16(*req.MinHeightCM)
-		preferences.MaxHeightCm = int16(*req.MaxHeightCM)
+	if req.MinAgeYears != nil && req.MaxAgeYears != nil {
+		if validation.IsValidAgeRange(int(*req.MinAgeYears), int(*req.MaxAgeYears)) {
+			preferences.MinAgeYears = int16(*req.MinAgeYears)
+			preferences.MaxAgeYears = int16(*req.MaxAgeYears)
+		} else {
+			return appError.ErrInvalidAgeRange
+		}
 	} else {
-		return appError.ErrInvalidHeightRange
+		preferences.MinAgeYears = 18
+		preferences.MaxAgeYears = 100
 	}
 
-	communities, err := validation.ParsePreferredCommunities(*req.PreferredCommunities)
+	if req.MinHeightCM != nil && req.MaxHeightCM != nil {
+		if validation.IsValidHeightRange(int(*req.MinHeightCM), int(*req.MaxHeightCM)) {
+			preferences.MinHeightCm = int16(*req.MinHeightCM)
+			preferences.MaxHeightCm = int16(*req.MaxHeightCM)
+		} else {
+			return appError.ErrInvalidHeightRange
+		}
+	} else {
+		preferences.MinHeightCm = 130
+		preferences.MaxHeightCm = 220
+	}
+
+	// // Preferred communities
+	communitiesIn := []string{"any"}
+	if req.PreferredCommunities != nil && len(*req.PreferredCommunities) > 0 {
+		communitiesIn = *req.PreferredCommunities
+	}
+	communitiesTyped, err := validation.ParsePreferredCommunities(communitiesIn)
 	if err != nil {
 		return appError.ErrInvalidCommunity
 	}
-	preferences.PreferredCommunities = communities
+	preferences.PreferredCommunities = pq.StringArray(validation.CommunitiesToStrings(communitiesTyped))
 
-	maritalStatuses, err := validation.ParsePreferredMaritalStatuses(*req.PreferredMaritalStatus)
+	// Marital status
+	maritalIn := []string{"any"}
+	if req.PreferredMaritalStatus != nil && len(*req.PreferredMaritalStatus) > 0 {
+		maritalIn = *req.PreferredMaritalStatus
+	}
+	maritalTyped, err := validation.ParsePreferredMaritalStatuses(maritalIn)
 	if err != nil {
 		return appError.ErrInvalidMaritalStatus
 	}
-	preferences.PreferredMaritalStatus = maritalStatuses
+	preferences.PreferredMaritalStatus = pq.StringArray(validation.MaritalStatusesToStrings(maritalTyped))
 
-	professions, err := validation.ParsePreferredProfessions(*req.PreferredProfessions)
+
+	// Professions
+	professionsIn := []string{"any"}
+	if req.PreferredProfessions != nil && len(*req.PreferredProfessions) > 0 {
+		professionsIn = *req.PreferredProfessions
+	}
+	professionsTyped, err := validation.ParsePreferredProfessions(professionsIn)
 	if err != nil {
 		return appError.ErrInvalidProfession
 	}
-	preferences.PreferredProfessions = professions
+	preferences.PreferredProfessions = pq.StringArray(validation.ProfessionsToStrings(professionsTyped))
 
-	professionTypes, err := validation.ParsePreferredProfessionTypes(*req.PreferredProfessionTypes)
+
+	// Profession types
+	profTypesIn := []string{"any"}
+	if req.PreferredProfessionTypes != nil && len(*req.PreferredProfessionTypes) > 0 {
+		profTypesIn = *req.PreferredProfessionTypes
+	}
+	professionTypesTyped, err := validation.ParsePreferredProfessionTypes(profTypesIn)
 	if err != nil {
 		return appError.ErrInvalidProfessionType
 	}
-	preferences.PreferredProfessionTypes = professionTypes
+	preferences.PreferredProfessionTypes = pq.StringArray(validation.ProfessionTypesToStrings(professionTypesTyped))
 
-	educationLevels, err := validation.ParsePreferredEducationLevels(*req.PreferredEducationLevels)
+
+	// Education levels
+	eduIn := []string{"any"}
+	if req.PreferredEducationLevels != nil && len(*req.PreferredEducationLevels) > 0 {
+		eduIn = *req.PreferredEducationLevels
+	}
+	educationLevelsTyped, err := validation.ParsePreferredEducationLevels(eduIn)
 	if err != nil {
 		return appError.ErrInvalidEducationLevel
 	}
-	preferences.PreferredEducationLevels = educationLevels
+	preferences.PreferredEducationLevels = pq.StringArray(validation.EducationLevelsToStrings(educationLevelsTyped))
 
-	homeDistricts, err := validation.ParsePreferredHomeDistricts(*req.PreferredHomeDistricts)
+	// Home districts
+	districtsIn := []string{"any"}
+	if req.PreferredHomeDistricts != nil && len(*req.PreferredHomeDistricts) > 0 {
+		districtsIn = *req.PreferredHomeDistricts
+	}
+	homeDistrictsTyped, err := validation.ParsePreferredHomeDistricts(districtsIn)
 	if err != nil {
 		return appError.ErrInvalidHomeDistrict
 	}
-	preferences.PreferredHomeDistricts = homeDistricts
+	preferences.PreferredHomeDistricts = pq.StringArray(validation.HomeDistrictsToStrings(homeDistrictsTyped))
 
 	now := time.Now().UTC()
 	preferences.CreatedAt = now
@@ -171,52 +220,52 @@ func (u *userProfileUsecase) patchPartnerPreferences(
 		patch["accept_physically_challenged"] = *req.AcceptPhysicallyChallenged
 	}
 
-	if len(*req.PreferredCommunities) > 0 {
-		communities, err := validation.ParsePreferredCommunities(*req.PreferredCommunities)
+	if req.PreferredCommunities != nil && len(*req.PreferredCommunities) > 0 {
+		communitiesTyped, err := validation.ParsePreferredCommunities(*req.PreferredCommunities)
 		if err != nil {
 			return appError.ErrInvalidCommunity
 		}
-		patch["preferred_communities"] = communities
+		patch["preferred_communities"] = pq.StringArray(validation.CommunitiesToStrings(communitiesTyped))
 	}
 
-	if len(*req.PreferredMaritalStatus) > 0 {
-		maritalStatuses, err := validation.ParsePreferredMaritalStatuses(*req.PreferredMaritalStatus)
+	if  req.PreferredMaritalStatus != nil && len(*req.PreferredMaritalStatus) > 0 {
+		maritalTyped, err := validation.ParsePreferredMaritalStatuses(*req.PreferredMaritalStatus)
 		if err != nil {
 			return appError.ErrInvalidMaritalStatus
 		}
-		patch["preferred_marital_status"] = maritalStatuses
+		patch["preferred_marital_status"] = pq.StringArray(validation.MaritalStatusesToStrings(maritalTyped))
 	}
 
-	if len(*req.PreferredProfessions) > 0 {
-		professions, err := validation.ParsePreferredProfessions(*req.PreferredProfessions)
-		if err != nil {
-			return appError.ErrInvalidProfession
-		}
-		patch["preferred_professions"] = professions
+	if req.PreferredProfessions != nil && len(*req.PreferredProfessions) > 0 {
+		professionsTyped, err := validation.ParsePreferredProfessions(*req.PreferredProfessions)
+    if err != nil {
+        return appError.ErrInvalidProfession
+    }
+    patch["preferred_professions"] = pq.StringArray(validation.ProfessionsToStrings(professionsTyped))
 	}
 
-	if len(*req.PreferredProfessionTypes) > 0 {
-		professionTypes, err := validation.ParsePreferredProfessionTypes(*req.PreferredProfessionTypes)
-		if err != nil {
-			return appError.ErrInvalidProfessionType
-		}
-		patch["preferred_profession_types"] = professionTypes
+	if  req.PreferredProfessionTypes != nil && len(*req.PreferredProfessionTypes) > 0 {
+		profTypesTyped, err := validation.ParsePreferredProfessionTypes(*req.PreferredProfessionTypes)
+    if err != nil {
+        return appError.ErrInvalidProfessionType
+    }
+    patch["preferred_profession_types"] = pq.StringArray(validation.ProfessionTypesToStrings(profTypesTyped))
 	}
 
-	if len(*req.PreferredEducationLevels) > 0 {
-		educationLevels, err := validation.ParsePreferredEducationLevels(*req.PreferredEducationLevels)
-		if err != nil {
-			return appError.ErrInvalidEducationLevel
-		}
-		patch["preferred_education_levels"] = educationLevels
+	if req.PreferredEducationLevels != nil && len(*req.PreferredEducationLevels) > 0 {
+		eduTyped, err := validation.ParsePreferredEducationLevels(*req.PreferredEducationLevels)
+    if err != nil {
+        return appError.ErrInvalidEducationLevel
+    }
+    patch["preferred_education_levels"] = pq.StringArray(validation.EducationLevelsToStrings(eduTyped))
 	}
 
-	if len(*req.PreferredHomeDistricts) > 0 {
-		homeDistricts, err := validation.ParsePreferredHomeDistricts(*req.PreferredHomeDistricts)
-		if err != nil {
-			return appError.ErrInvalidHomeDistrict
-		}
-		patch["preferred_home_districts"] = homeDistricts
+	if req.PreferredHomeDistricts != nil && len(*req.PreferredHomeDistricts) > 0 {
+		districtsTyped, err := validation.ParsePreferredHomeDistricts(*req.PreferredHomeDistricts)
+    if err != nil {
+        return appError.ErrInvalidHomeDistrict
+    }
+    patch["preferred_home_districts"] = pq.StringArray(validation.HomeDistrictsToStrings(districtsTyped))
 	}
 
 	if len(patch) > 0 {

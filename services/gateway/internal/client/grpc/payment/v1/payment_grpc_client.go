@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"time"
 
 	"google.golang.org/grpc"
@@ -12,11 +11,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	paymentpbv1 "github.com/mohamedfawas/quboolkallyanam.xyz/api/proto/payment/v1"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/client"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
 )
+
 
 type paymentGRPCClient struct {
 	conn   *grpc.ClientConn
@@ -52,103 +51,150 @@ func NewPaymentGRPCClient(
 }
 
 func (c *paymentGRPCClient) CreatePaymentOrder(ctx context.Context, req dto.PaymentOrderRequest) (*dto.PaymentOrderResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
 
 	grpcReq := MapCreatePaymentOrderRequest(req)
 	grpcResp, err := c.client.CreatePaymentOrder(ctx, grpcReq)
 	if err != nil {
-		log.Printf("CreatePaymentOrder error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapCreatePaymentOrderResponse(grpcResp), nil
 }
 
+
 func (c *paymentGRPCClient) ShowPaymentPage(ctx context.Context, req dto.ShowPaymentPageRequest) (*dto.ShowPaymentPageResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := MapShowPaymentPageRequest(req)
 	grpcResp, err := c.client.ShowPaymentPage(ctx, grpcReq)
 	if err != nil {
-		log.Printf("ShowPaymentPage error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapShowPaymentPageResponse(grpcResp), nil
 }
 
+
 func (c *paymentGRPCClient) VerifyPayment(ctx context.Context, req dto.VerifyPaymentRequest) (*dto.VerifyPaymentResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := MapVerifyPaymentRequest(req)
 	grpcResp, err := c.client.VerifyPayment(ctx, grpcReq)
 	if err != nil {
-		log.Printf("VerifyPayment error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapVerifyPaymentResponse(grpcResp), nil
 }
 
+
 func (c *paymentGRPCClient) CreateOrUpdateSubscriptionPlan(ctx context.Context, req dto.UpdateSubscriptionPlanRequest) (*dto.CreateOrUpdateSubscriptionPlanResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := MapCreateOrUpdateSubscriptionPlanRequest(req)
 	grpcResp, err := c.client.CreateOrUpdateSubscriptionPlan(ctx, grpcReq)
 	if err != nil {
-		log.Printf("CreateOrUpdateSubscriptionPlan error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapCreateOrUpdateSubscriptionPlanResponse(grpcResp), nil
 }
 
+
 func (c *paymentGRPCClient) GetSubscriptionPlan(ctx context.Context, planID string) (*dto.SubscriptionPlan, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := &paymentpbv1.GetSubscriptionPlanRequest{
 		PlanId: planID,
 	}
 	grpcResp, err := c.client.GetSubscriptionPlan(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetSubscriptionPlan error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetSubscriptionPlanResponse(grpcResp), nil
 }
 
 func (c *paymentGRPCClient) GetActiveSubscriptionPlans(ctx context.Context) ([]*dto.SubscriptionPlan, error) {
+	var err error
+	ctx, err = contextutils.PrepareRequestIDForGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	grpcReq := &paymentpbv1.GetActiveSubscriptionPlansRequest{}
 	grpcResp, err := c.client.GetActiveSubscriptionPlans(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetActiveSubscriptionPlans error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetActiveSubscriptionPlansResponse(grpcResp), nil
 }
 
+
 func (c *paymentGRPCClient) GetActiveSubscriptionByUserID(ctx context.Context) (*dto.ActiveSubscription, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
 
 	grpcReq := &paymentpbv1.GetActiveSubscriptionByUserIDRequest{}
 	grpcResp, err := c.client.GetActiveSubscriptionByUserID(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetActiveSubscriptionByUserID error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetActiveSubscriptionByUserIDResponse(grpcResp), nil
 }
 
+
 func (c *paymentGRPCClient) GetPaymentHistory(ctx context.Context) ([]*dto.GetPaymentHistoryResponse, error) {
-	userID, ok := ctx.Value(constants.ContextKeyUserID).(string)
-	if !ok {
-		return nil, fmt.Errorf("user ID not found in context")
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-	ctx = contextutils.SetUserContext(ctx, userID)
 
 	grpcReq := &paymentpbv1.GetPaymentHistoryRequest{}
 	grpcResp, err := c.client.GetPaymentHistory(ctx, grpcReq)
 	if err != nil {
-		log.Printf("GetPaymentHistory error in payment grpc client: %v", err)
 		return nil, err
 	}
 	return MapGetPaymentHistoryResponse(grpcResp), nil
+}
+
+
+func (c *paymentGRPCClient) GetCompletedPaymentDetails(ctx context.Context, req dto.GetCompletedPaymentDetailsRequest) (*dto.GetCompletedPaymentDetailsResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := &paymentpbv1.GetCompletedPaymentDetailsRequest{
+		Page:  req.Page,
+		Limit: req.Limit,
+	}
+	grpcResp, err := c.client.GetCompletedPaymentDetails(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetCompletedPaymentDetailsResponse(grpcResp), nil
 }
 
 func (c *paymentGRPCClient) Close() error {

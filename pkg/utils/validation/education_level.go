@@ -58,3 +58,15 @@ func ParsePreferredEducationLevels(input []string) ([]EducationLevel, error) {
 
 	return out, nil
 }
+
+// used for DB storage
+func EducationLevelsToStrings(in []EducationLevel) []string {
+	if in == nil {
+		return nil
+	}
+	out := make([]string, len(in))
+	for i, v := range in {
+		out[i] = string(v)
+	}
+	return out
+}

@@ -10,7 +10,19 @@ import (
 	"go.uber.org/zap"
 )
 
-
+// @Summary Create conversation
+// @Description Create a new conversation with a matched user
+// @Tags Chat
+// @Accept json
+// @Produce json
+// @Param create_conversation body dto.CreateConversationRequest true "Conversation details"
+// @Success 200 {object} dto.CreateConversationResponse "Conversation created"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 403 {object} dto.ForbiddenError "Forbidden - requires premium"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/chat/conversation [post]
 func (h *ChatHandler) CreateConversation(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {

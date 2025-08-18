@@ -53,3 +53,15 @@ func ParsePreferredMaritalStatuses(input []string) ([]MaritalStatus, error) {
 	}
 	return out, nil
 }
+
+// used for DB storage
+func MaritalStatusesToStrings(in []MaritalStatus) []string {
+	if in == nil {
+		return nil
+	}
+	out := make([]string, len(in))
+	for i, v := range in {
+		out[i] = string(v)
+	}
+	return out
+}

@@ -2,49 +2,42 @@ package payments
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
-	"gorm.io/gorm"
 )
 
 func (u *paymentUsecase) ShowPaymentPage(ctx context.Context, razorpayOrderID string) (*entity.ShowPaymentPageResponse, error) {
 	payment, err := u.paymentRepository.GetPaymentDetailsByRazorpayOrderID(ctx, razorpayOrderID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, appErrors.ErrPaymentNotFound
-		}
-		log.Printf("Error getting payment details by razorpay order id: %v", err)
 		return nil, err
+	}
+	if payment == nil {
+		return nil, apperrors.ErrPaymentNotFound
 	}
 
 	if payment.Status == constants.PaymentStatusCompleted {
-		return nil, appErrors.ErrPaymentAlreadyCompleted
+		return nil, apperrors.ErrPaymentAlreadyCompleted
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	if payment.ExpiresAt.Before(now) {
-		log.Printf("current time: %v", now)
-		log.Printf("Payment expired: %v", payment.ExpiresAt)
-		return nil, appErrors.ErrPaymentExpired
+		return nil, apperrors.ErrPaymentExpired
 	}
 
 	plan, err := u.subscriptionPlanRepository.GetPlanByID(ctx, payment.PlanID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, appErrors.ErrSubscriptionPlanNotFound
-		}
-		log.Printf("Error getting plan by id: %v", err)
 		return nil, err
+	}
+	if plan == nil {
+		return nil, apperrors.ErrSubscriptionPlanNotFound
 	}
 
 	if !plan.IsActive {
-		return nil, appErrors.ErrSubscriptionPlanNotActive
+		return nil, apperrors.ErrSubscriptionPlanNotActive
 	}
 
 	amountInPaise := int64(payment.Amount * 100)

@@ -11,7 +11,6 @@ type Config struct {
 	Environment string          `mapstructure:"environment"`
 	GRPC        GRPCConfig      `mapstructure:"grpc"`
 	Postgres    PostgresConfig  `mapstructure:"postgres"`
-	Email       EmailConfig     `mapstructure:"email"`
 	RabbitMQ    RabbitMQConfig  `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig    `mapstructure:"pubsub"`
 	Firestore   FirestoreConfig `mapstructure:"firestore"`
@@ -30,15 +29,6 @@ type PostgresConfig struct {
 	DBName   string `mapstructure:"dbname"`
 	SSLMode  string `mapstructure:"sslmode"`
 	TimeZone string `mapstructure:"timezone"`
-}
-
-type EmailConfig struct {
-	SMTPHost     string `mapstructure:"smtp_host"`
-	SMTPPort     int    `mapstructure:"smtp_port"`
-	SMTPUsername string `mapstructure:"smtp_username"`
-	SMTPPassword string `mapstructure:"smtp_password"`
-	FromEmail    string `mapstructure:"from_email"`
-	FromName     string `mapstructure:"from_name"`
 }
 
 type RabbitMQConfig struct {
@@ -75,6 +65,7 @@ func LoadConfig(configPath string) (*Config, error) {
 func initViper(path string) *viper.Viper {
 	v := viper.New()
 
+	v.SetEnvPrefix("CHAT")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
@@ -98,12 +89,6 @@ func bindEnvVars(v *viper.Viper) {
 		"postgres.dbname",
 		"postgres.sslmode",
 		"postgres.timezone",
-		"email.smtp_host",
-		"email.smtp_port",
-		"email.smtp_username",
-		"email.smtp_password",
-		"email.from_email",
-		"email.from_name",
 		"rabbitmq.dsn",
 		"rabbitmq.exchange_name",
 		"pubsub.project_id",
@@ -129,13 +114,6 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("postgres.dbname", "qubool_kallyanam_chat")
 	v.SetDefault("postgres.sslmode", "disable")
 	v.SetDefault("postgres.timezone", "UTC")
-
-	v.SetDefault("email.smtp_host", "smtp.gmail.com")
-	v.SetDefault("email.smtp_port", 587)
-	v.SetDefault("email.smtp_username", "")
-	v.SetDefault("email.smtp_password", "")
-	v.SetDefault("email.from_email", "noreply@qubool-kallyanam.xyz")
-	v.SetDefault("email.from_name", "Qubool Kallyanam")
 
 	v.SetDefault("rabbitmq.dsn", "amqp://guest:guest@localhost:5672/")
 	v.SetDefault("rabbitmq.exchange_name", "qubool_kallyanam_events")

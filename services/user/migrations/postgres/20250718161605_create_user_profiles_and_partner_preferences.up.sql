@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS partner_preferences (
 	max_height_cm             SMALLINT            NOT NULL DEFAULT 220,
 
 	-- Simple boolean preferences
-	accept_physically_challenged BOOLEAN      NOT NULL DEFAULT TRUE,
+	accept_physically_challenged BOOLEAN      NOT NULL DEFAULT FALSE,
 	
   preferred_communities        TEXT[]        NOT NULL DEFAULT '{}',
 	preferred_marital_status     TEXT[]        NOT NULL DEFAULT '{}',

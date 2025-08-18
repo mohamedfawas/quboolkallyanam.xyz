@@ -8,4 +8,6 @@ import (
 
 type EventPublisher interface {
 	PublishUserProfileUpdated(ctx context.Context, event userevents.UserProfileUpdatedEvent) error
+	PublishUserInterestSent(ctx context.Context, event userevents.UserInterestSentEvent) error
+	PublishMutualMatchCreated(ctx context.Context, event userevents.MutualMatchCreatedEvent) error
 }

@@ -32,7 +32,7 @@ func (r *profileMatchRepository) GetExistingMatch(
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return &entity.ProfileMatch{}, nil
+			return nil,nil
 		}
 		return nil, err
 	}

@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/security/jwt"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 )
 
 func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
@@ -15,7 +15,6 @@ func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
 		authHeader := c.GetHeader(constants.HeaderAuthorization)
 		if authHeader == "" || !strings.HasPrefix(authHeader, constants.BearerTokenPrefix) {
 			apiresponse.Error(c, apperrors.ErrUnauthorized, nil)
-			// apiresponse.Fail(c, status.Errorf(codes.Unauthenticated, "missing or invalid Authorization header"))
 			c.Abort()
 			return
 		}
@@ -24,7 +23,6 @@ func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
 		userID, role, err := jwtManager.ExtractUserIDAndRole(token)
 		if err != nil {
 			apiresponse.Error(c, apperrors.ErrUnauthorized, nil)
-			// apiresponse.Fail(c, status.Errorf(codes.Unauthenticated, "invalid token: %v", err))
 			c.Abort()
 			return
 		}
@@ -37,35 +35,42 @@ func AuthMiddleware(jwtManager *jwt.JWTManager) gin.HandlerFunc {
 	}
 }
 
-func RequireRole(role string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		val, exists := c.Get(constants.ContextKeyRole)
-		if !exists || val != role {
-			apiresponse.Error(c, apperrors.ErrForbidden, nil)
-			// apiresponse.Fail(c, status.Errorf(codes.PermissionDenied, "insufficient role"))
-			c.Abort()
-			return
-		}
-		userRole := val.(string)
-		if !hasRequiredRole(userRole, role) {
-			apiresponse.Error(c, apperrors.ErrForbidden, nil)
-			// apiresponse.Fail(c, status.Errorf(codes.PermissionDenied, "insufficient role"))
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
+func RequireRole(requiredRole string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        val, exists := c.Get(constants.ContextKeyRole)
+        if !exists {
+            apiresponse.Error(c, apperrors.ErrForbidden, nil)
+            c.Abort()
+            return
+        }
+
+        userRole, ok := val.(string)
+        if !ok {
+            apiresponse.Error(c, apperrors.ErrForbidden, nil)
+            c.Abort()
+            return
+        }
+
+        if !hasRequiredRole(userRole, requiredRole) {
+            apiresponse.Error(c, apperrors.ErrForbidden, nil)
+            c.Abort()
+            return
+        }
+
+        c.Next()
+    }
 }
 
+
 func hasRequiredRole(userRole, requiredRole string) bool {
-	switch requiredRole {
-	case constants.RoleUser:
-		return userRole == constants.RoleUser || userRole == constants.RolePremiumUser
-	case constants.RolePremiumUser:
-		return userRole == constants.RolePremiumUser
-	case constants.RoleAdmin:
-		return userRole == constants.RoleAdmin
-	default:
-		return false
-	}
+    switch requiredRole {
+    case constants.RoleUser:
+        return userRole == constants.RoleUser || userRole == constants.RolePremiumUser
+    case constants.RolePremiumUser:
+        return userRole == constants.RolePremiumUser
+    case constants.RoleAdmin:
+        return userRole == constants.RoleAdmin
+    default:
+        return false
+    }
 }

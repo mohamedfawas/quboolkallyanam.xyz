@@ -39,7 +39,7 @@ func (h *UserHandler) ConfirmProfilePhotoUpload(
 		req.ObjectKey.Value, 
 	)
 	if err != nil {
-		if apperrors.ShouldLogError(err) {
+		if !apperrors.IsAppError(err) {
 			log.Error("Failed to confirm profile photo upload", zap.Error(err))
 		}
 		return nil, err

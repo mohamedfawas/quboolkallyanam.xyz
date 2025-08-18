@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
+	userevents "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/events/user"
 	"gorm.io/gorm"
 )
 
@@ -17,6 +18,14 @@ func (u *matchMakingUsecase) RecordMatchAction(
 	userID uuid.UUID,
 	targetProfileID int64,
 	action string) (bool, error) {
+
+	senderProfile, err := u.userProfileRepository.GetProfileByUserID(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("error retrieving sender profile: %w", err)
+	}
+	if senderProfile == nil {
+		return false, apperrors.ErrUserProfileNotFound
+	}
 
 	targetProfile, err := u.userProfileRepository.GetUserProfileByID(ctx, targetProfileID)
 	if err != nil {
@@ -91,6 +100,19 @@ func (u *matchMakingUsecase) RecordMatchAction(
 		}); txErr != nil {
 			return false, fmt.Errorf("error creating mutual match: %w", txErr)
 		}
+
+		// Publish mutual match event
+		if err := u.eventPublisher.PublishMutualMatchCreated(ctx, userevents.MutualMatchCreatedEvent{
+			User1Email:     senderProfile.Email,
+			User1ProfileID: senderProfile.ID,
+			User1FullName:  senderProfile.FullName,
+			User2Email:     targetProfile.Email,
+			User2ProfileID: targetProfile.ID,
+			User2FullName:  targetProfile.FullName,
+		}); err != nil {
+			// no need to return error here, just log it in event publisher side.
+		}
+
 		return true, nil
 	}
 
@@ -99,21 +121,33 @@ func (u *matchMakingUsecase) RecordMatchAction(
 		return false, err
 	}
 
+	if matchAction == constants.MatchActionLike {
+		// Publish like event
+		if err := u.eventPublisher.PublishUserInterestSent(ctx, userevents.UserInterestSentEvent{
+			ReceiverEmail:   targetProfile.Email,
+			SenderProfileID: senderProfile.ID,
+			SenderName:      senderProfile.FullName,
+		}); err != nil {
+			// no need to return error here, just log it in event publisher side.
+		}
+	}
+
 	return true, nil
 }
 
 // Helper method to upsert profile match action (create new or update existing)
 func (u *matchMakingUsecase) upsertProfileMatchAction(ctx context.Context, tx *gorm.DB, userID, targetUserID uuid.UUID, isLiked bool) error {
-	existingAction, err := u.profileMatchRepository.GetExistingMatch(ctx, userID, targetUserID)
+	existingMatch, err := u.profileMatchRepository.GetExistingMatch(ctx, userID, targetUserID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("error retrieving existing user action: %w", err)
 	}
 
-	if existingAction != nil {
+	if existingMatch != nil {
 		// Update existing action
 		if tx != nil {
 			return u.profileMatchRepository.UpdateMatchActionTx(ctx, tx, userID, targetUserID, isLiked)
 		}
+
 		return u.profileMatchRepository.UpdateMatchAction(ctx, userID, targetUserID, isLiked)
 	} else {
 		// Create new action

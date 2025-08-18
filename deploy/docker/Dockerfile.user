@@ -1,0 +1,39 @@
+# Build stage
+FROM golang:1.23-alpine AS builder
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+
+RUN apk add --no-cache git ca-certificates tzdata
+WORKDIR /src/services/user
+
+# Copy module files first for better caching
+COPY services/user/go.mod services/user/go.sum ./
+
+# Copy local module replacements used by user (via go.mod replace)
+COPY api /src/api
+COPY pkg /src/pkg
+
+# Download dependencies
+RUN go mod download
+
+# Copy the user service source
+COPY services/user /src/services/user
+
+# Build a statically linked binary
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/user ./cmd
+
+# Runtime stage
+FROM gcr.io/distroless/base-debian12:nonroot
+
+WORKDIR /app
+COPY --from=builder /out/user /app/user
+
+# Optional: default config path (viper won't fail if missing)
+ENV CONFIG_PATH=/etc/qubool/user/config.yaml
+
+# Default gRPC port; configurable via env/config
+EXPOSE 50053
+
+USER nonroot:nonroot
+ENTRYPOINT ["/app/user"]

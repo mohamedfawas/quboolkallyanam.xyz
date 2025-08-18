@@ -5,10 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
-	appErrors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/errors"
 	razorpay "github.com/razorpay/razorpay-go"
 )
 
@@ -45,14 +43,12 @@ func (s *Service) CreateOrder(amount float64, currency string) (string, error) {
 
 	resp, err := s.client.Order.Create(data, nil)
 	if err != nil {
-		log.Printf("razorpay: create order failed: %v", err)
-		return "", appErrors.ErrRazorpayOrderCreation
+		return "", fmt.Errorf("razorpay: create order failed: %v", err)
 	}
 
 	id, ok := resp["id"].(string)
 	if !ok {
-		log.Printf("razorpay: invalid order id in response")
-		return "", appErrors.ErrRazorpayOrderCreation
+		return "", fmt.Errorf("razorpay: invalid order id in response")
 	}
 
 	return id, nil
@@ -65,8 +61,7 @@ func (s *Service) VerifySignature(orderID, paymentID, signature string) error {
 	mac.Write([]byte(msg))
 	expected := hex.EncodeToString(mac.Sum(nil))
 	if expected != signature {
-		log.Printf("razorpay: signature mismatch: expected %s, got %s", expected, signature)
-		return appErrors.ErrPaymentSignatureInvalid
+		return fmt.Errorf("razorpay: signature mismatch: expected %s, got %s", expected, signature)
 	}
 	return nil
 }
@@ -77,7 +72,6 @@ func (s *Service) VerifyWebhookSignature(signature string, payload []byte) error
 	mac.Write(payload)
 	expected := hex.EncodeToString(mac.Sum(nil))
 	if expected != signature {
-		log.Printf("razorpay: webhook signature mismatch: expected %s, got %s", expected, signature)
 		return fmt.Errorf("razorpay: webhook signature mismatch")
 	}
 	return nil

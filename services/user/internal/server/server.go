@@ -139,7 +139,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, userImageRepo, partnerPreferencesRepo, eventPublisher, photoStorage, config)
-	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager, photoStorage, config)
+	matchMakingUC := matchmaking.NewMatchMakingUsecase(userProfileRepo, partnerPreferencesRepo, profileMatchRepo, mutualMatchRepo, transactionManager, photoStorage, config, eventPublisher)
 
 	///////////////////////// EVENT HANDLER INITIALIZATION /////////////////////////
 	authEventHandler := eventHandlers.NewAuthEventHandler(messagingClient, userProfileUC, rootLogger)

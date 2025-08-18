@@ -33,7 +33,9 @@ type UserProfileUsecase interface {
 		userID uuid.UUID,
 		operationType string,
 		req entity.UpdateUserPartnerPreferencesRequest) error
-	
+	GetUserPartnerPreferences(ctx context.Context,
+		userID uuid.UUID) (*entity.PartnerPreference, error)
+
 	// ADDITIONAL PHOTOS MANAGEMENT
 	GetAdditionalPhotoUploadURL(ctx context.Context,
 		userID uuid.UUID,
@@ -47,4 +49,10 @@ type UserProfileUsecase interface {
 		displayOrder int32) error
 	GetAdditionalPhotos(ctx context.Context, 
 		userID uuid.UUID) ([]string, error)
+
+	// USER DETAILS MANAGEMENT
+	GetUserDetailsByProfileID(ctx context.Context,
+		requesterUserID uuid.UUID,
+		targetProfileID int64,
+		requestedByAdmin bool) (*entity.UserProfileResponse, *entity.PartnerPreference, []string, error)
 }

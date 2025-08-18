@@ -8,4 +8,6 @@ const (
 	EventUserProfileUpdated  = "user.profile.updated"
 	EventUserAccountDeleted  = "user.account.deleted"
 	EventAdminBlockedUser    = "admin.blocked.user"
+	EventUserInterestSent    = "user.interest.sent"
+	EventMutualMatchCreated  = "mutual.match.created"
 )

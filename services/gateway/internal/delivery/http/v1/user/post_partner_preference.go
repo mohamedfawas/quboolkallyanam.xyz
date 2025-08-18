@@ -10,6 +10,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Create partner preference
+// @Description Create initial partner preference for the authenticated user
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param preference body dto.PartnerPreferenceCreateRequest true "Partner preference payload"
+// @Success 200 {object} dto.UpdateUserProfileResponse "Update result"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/preference [post]
 func (h *UserHandler) PostPartnerPreference(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {
@@ -21,7 +33,7 @@ func (h *UserHandler) PostPartnerPreference(c *gin.Context) {
 		zap.String(constants.ContextKeyRequestID, authCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
 		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
 	)
-	
+
 	var req dto.PartnerPreferenceCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		apiresponse.Error(c, apperrors.ErrBindingJSON, nil)
@@ -41,15 +53,16 @@ func (h *UserHandler) PostPartnerPreference(c *gin.Context) {
 		PreferredEducationLevels:   &req.PreferredEducationLevels,
 		PreferredHomeDistricts:     &req.PreferredHomeDistricts,
 	}
+
 	err = h.userUsecase.UpdateUserPartnerPreferences(authCtx.Ctx, constants.CreateOperationType, request)
 	if err != nil {
-		if !apperrors.IsAppError(err) {
-			log.Error("failed to update partner preference", zap.Error(err))
+		if apperrors.ShouldLogError(err) {
+			log.Error("Failed to create partner preference", zap.Error(err))
 		}
 		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	log.Info("partner preference updated successfully")
+	log.Info("Partner preference created successfully")
 	apiresponse.Success(c, "Partner preference updated successfully", nil)
 }

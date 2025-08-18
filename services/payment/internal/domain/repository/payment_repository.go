@@ -14,4 +14,5 @@ type PaymentsRepository interface {
 	GetPaymentDetailsByRazorpayOrderIDTx(ctx context.Context, tx *gorm.DB, razorpayOrderID string) (*entity.Payment, error)
 	UpdatePaymentTx(ctx context.Context, tx *gorm.DB, payment *entity.Payment) error
 	GetPaymentHistory(ctx context.Context, userID uuid.UUID) ([]*entity.Payment, error)
+	GetCompletedPayments(ctx context.Context, limit, offset int) ([]*entity.Payment, error)
 }

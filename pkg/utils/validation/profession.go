@@ -55,3 +55,15 @@ func ParsePreferredProfessions(input []string) ([]Profession, error) {
 	}
 	return out, nil
 }
+
+// used for DB storage
+func ProfessionsToStrings(in []Profession) []string {
+	if in == nil {
+		return nil
+	}
+	out := make([]string, len(in))
+	for i, v := range in {
+		out[i] = string(v)
+	}
+	return out
+}

@@ -1,66 +1,71 @@
 package user
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/validation"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"go.uber.org/zap"
 )
 
+// @Summary Get passed profiles
+// @Description List profiles that the authenticated user has passed
+// @Tags User
+// @Produce json
+// @Param limit query int false "Items per page (1-50)" minimum(1) maximum(50)
+// @Param offset query int false "Offset (>= 0)" minimum(0)
+// @Success 200 {object} dto.GetProfilesByMatchActionResponse "Profiles list"
+// @Failure 400 {object} dto.BadRequestError "Bad request - validation errors"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/user/matches/passed [get]
 func (h *UserHandler) GetPassedProfiles(c *gin.Context) {
+	authCtx, err := contextutils.ExtractAuthContext(c)
+	if err != nil {
+		apiresponse.Error(c, err, nil)
+		return
+	}
+
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, authCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
+	)
+
 	limitStr := c.DefaultQuery("limit", "10")
 	offsetStr := c.DefaultQuery("offset", "0")
 
-	limit, err := strconv.ParseInt(limitStr, 10, 32)
-	if err != nil {
-		log.Printf("Invalid limit parameter: %v", err)
-		apiresponse.Fail(c, fmt.Errorf("invalid limit parameter: %w", err))
+	limit64, err := strconv.ParseInt(limitStr, 10, 32)
+	if err != nil || limit64 < 1 || limit64 > 50 {
+		apiresponse.Error(c, apperrors.ErrInvalidPaginationLimit, nil)
+		return
+	}
+	offset64, err := strconv.ParseInt(offsetStr, 10, 32)
+	if err != nil || offset64 < 0 {
+		apiresponse.Error(c, apperrors.ErrInvalidPaginationPage, nil)
 		return
 	}
 
-	offset, err := strconv.ParseInt(offsetStr, 10, 32)
-	if err != nil {
-		log.Printf("Invalid offset parameter: %v", err)
-		apiresponse.Fail(c, fmt.Errorf("invalid offset parameter: %w", err))
-		return
-	}
-
-	if limit <= 0 || limit > 50 {
-		apiresponse.Fail(c, fmt.Errorf("limit must be between 1 and 50"))
-		return
-	}
-
-	if offset < 0 {
-		apiresponse.Fail(c, fmt.Errorf("offset must be non-negative"))
-		return
-	}
-
-	userID, exists := c.Get(constants.ContextKeyUserID)
-	if !exists {
-		apiresponse.Fail(c, fmt.Errorf("user ID not found in context"))
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), constants.ContextKeyUserID, userID)
-
-	request := dto.GetProfilesByMatchActionRequest{
+	req := dto.GetProfilesByMatchActionRequest{
 		Action: validation.MatchMakingOptionPassed,
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Limit:  int32(limit64),
+		Offset: int32(offset64),
 	}
 
-	response, err := h.userUsecase.GetProfilesByMatchAction(ctx, request)
+	resp, err := h.userUsecase.GetProfilesByMatchAction(authCtx.Ctx, req)
 	if err != nil {
-		log.Printf("Failed to get passed profiles: %v", err)
-		apiresponse.Fail(c, err)
+		if apperrors.ShouldLogError(err) {
+			log.Error("Failed to get passed profiles", zap.Error(err))
+		}
+		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	apiresponse.Success(c, "Passed profiles retrieved successfully", response)
+	log.Info("Passed profiles retrieved successfully")
+	apiresponse.Success(c, "Passed profiles retrieved successfully", resp)
 }

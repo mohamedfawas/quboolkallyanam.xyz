@@ -13,7 +13,21 @@ import (
 )
 
 
-
+// @Summary Get messages by conversation ID
+// @Description List messages for a conversation
+// @Tags Chat
+// @Produce json
+// @Param conversation_id path string true "Conversation ID"
+// @Param limit query int false "Page size" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} dto.PublicGetMessagesByConversationIdResponse "Messages list"
+// @Failure 400 {object} dto.BadRequestError "Bad request"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 403 {object} dto.ForbiddenError "Forbidden - requires premium"
+// @Failure 404 {object} dto.NotFoundError "Conversation not found"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/chat/conversation/{conversation_id}/messages [get]
 func (h *ChatHandler) GetMessagesByConversationId(c *gin.Context) {
 	authCtx, err := contextutils.ExtractAuthContext(c)
 	if err != nil {

@@ -12,4 +12,5 @@ type PaymentUsecase interface {
 	ShowPaymentPage(ctx context.Context, razorpayOrderID string) (*entity.ShowPaymentPageResponse, error)
 	VerifyPayment(ctx context.Context, req *entity.VerifyPaymentRequest) (*entity.VerifyPaymentResponse, error)
 	GetPaymentHistory(ctx context.Context, userID uuid.UUID) ([]*entity.GetPaymentHistoryResponse, error)
+	GetCompletedPaymentDetails(ctx context.Context, page, limit int) ([]*entity.Payment, error)
 }

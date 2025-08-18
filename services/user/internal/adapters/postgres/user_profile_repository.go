@@ -10,6 +10,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/domain/repository"
 	"gorm.io/gorm"
+	"github.com/lib/pq"
 )
 
 type userProfileRepository struct {
@@ -177,29 +178,29 @@ func (r *userProfileRepository) applyPreferencesFilters(
 	}
 
 	// Community filtering, if "any" value is there, it will be the only value present there
-	if preferences.PreferredCommunities[0] != validation.CommunityAny {
-		query = query.Where("community IN ?", preferences.PreferredCommunities)
-	}
+	if len(preferences.PreferredCommunities) > 0 && preferences.PreferredCommunities[0] != string(validation.CommunityAny) {
+        query = query.Where("community = ANY(?)", pq.Array(preferences.PreferredCommunities))
+    }
 
-	if preferences.PreferredMaritalStatus[0] != validation.MaritalStatusAny {
-		query = query.Where("marital_status IN ?", preferences.PreferredMaritalStatus)
-	}
+	if len(preferences.PreferredMaritalStatus) > 0 && preferences.PreferredMaritalStatus[0] != string(validation.MaritalStatusAny) {
+        query = query.Where("marital_status = ANY(?)", pq.Array(preferences.PreferredMaritalStatus))
+    }
 
-	if preferences.PreferredProfessions[0] != validation.ProfessionAny {
-		query = query.Where("profession IN ?", preferences.PreferredProfessions)
-	}
+	if len(preferences.PreferredProfessions) > 0 && preferences.PreferredProfessions[0] != string(validation.ProfessionAny) {
+        query = query.Where("profession = ANY(?)", pq.Array(preferences.PreferredProfessions))
+    }
 
-	if preferences.PreferredProfessionTypes[0] != validation.ProfessionTypeAny {
-		query = query.Where("profession_type IN ?", preferences.PreferredProfessionTypes)
-	}
+	if len(preferences.PreferredProfessionTypes) > 0 && preferences.PreferredProfessionTypes[0] != string(validation.ProfessionTypeAny) {
+        query = query.Where("profession_type = ANY(?)", pq.Array(preferences.PreferredProfessionTypes))
+    }
 
-	if preferences.PreferredEducationLevels[0] != validation.EducationLevelAny {
-		query = query.Where("highest_education_level IN ?", preferences.PreferredEducationLevels)
-	}
+	if len(preferences.PreferredEducationLevels) > 0 && preferences.PreferredEducationLevels[0] != string(validation.EducationLevelAny) {
+        query = query.Where("highest_education_level = ANY(?)", pq.Array(preferences.PreferredEducationLevels))
+    }
 
-	if preferences.PreferredHomeDistricts[0] != validation.HomeDistrictAny {
-		query = query.Where("home_district IN ?", preferences.PreferredHomeDistricts)
-	}
-
+	if len(preferences.PreferredHomeDistricts) > 0 && preferences.PreferredHomeDistricts[0] != string(validation.HomeDistrictAny) {
+        query = query.Where("home_district = ANY(?)", pq.Array(preferences.PreferredHomeDistricts))
+    }
+	
 	return query
 }

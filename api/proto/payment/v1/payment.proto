@@ -16,6 +16,7 @@ service PaymentService {
     rpc GetActiveSubscriptionPlans(GetActiveSubscriptionPlansRequest) returns (GetActiveSubscriptionPlansResponse);
     rpc GetActiveSubscriptionByUserID(GetActiveSubscriptionByUserIDRequest) returns (GetActiveSubscriptionByUserIDResponse);
     rpc GetPaymentHistory(GetPaymentHistoryRequest) returns (GetPaymentHistoryResponse);
+    rpc GetCompletedPaymentDetails(GetCompletedPaymentDetailsRequest) returns (GetCompletedPaymentDetailsResponse);
 }
 
 message CreatePaymentOrderRequest {
@@ -128,4 +129,27 @@ message PaymentHistoryItem {
     string status = 6;
     string payment_method = 7;
     google.protobuf.Timestamp created_at = 8;
+}
+
+
+message GetCompletedPaymentDetailsRequest {
+    int32 page = 1;
+    int32 limit = 2;
+}
+
+message CompletedPaymentDetail {
+    int64 id = 1;
+    string user_id = 2;
+    string plan_id = 3;
+    string razorpay_order_id = 4;
+    double amount = 5;
+    string currency = 6;
+    string status = 7;
+    string payment_method = 8;
+    google.protobuf.Timestamp created_at = 9;
+    google.protobuf.Timestamp updated_at = 10;
+}
+
+message GetCompletedPaymentDetailsResponse {
+    repeated CompletedPaymentDetail payments = 1;
 }

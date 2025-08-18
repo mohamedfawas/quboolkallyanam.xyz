@@ -78,4 +78,11 @@ var (
 		GRPCStatusCode: codes.InvalidArgument,
 		PublicMsg:      "Missing required fields.",
 	}
+	ErrInvalidInput = &AppError{
+		Err:            errors.New("invalid input"),
+		Code:           "INVALID_INPUT",
+		HTTPStatusCode: http.StatusBadRequest,
+		GRPCStatusCode: codes.InvalidArgument,
+		PublicMsg:      "Invalid input.",
+	}
 )

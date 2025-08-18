@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"errors"
-	"log"
 
 	"gorm.io/gorm"
 
@@ -34,7 +33,6 @@ func (r *subscriptionsRepository) GetActiveSubscriptionByUserID(ctx context.Cont
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		log.Printf("GetActiveSubscriptionByUserID error in subscriptions repository: %v", err)
 		return nil, err
 	}
 
@@ -51,7 +49,6 @@ func (r *subscriptionsRepository) GetActiveSubscriptionByUserIDTx(ctx context.Co
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		log.Printf("GetActiveSubscriptionByUserIDTx error in subscriptions repository: %v", err)
 		return nil, err
 	}
 

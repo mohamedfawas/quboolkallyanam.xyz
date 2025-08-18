@@ -153,6 +153,24 @@ type UpdateUserPartnerPreferencesResponse struct {
 	Success bool `json:"success"`
 }
 
+type PartnerPreferenceResponse struct {
+	MinAgeYears                int      `json:"min_age_years"`
+	MaxAgeYears                int      `json:"max_age_years"`
+	MinHeightCM                int      `json:"min_height_cm"`
+	MaxHeightCM                int      `json:"max_height_cm"`
+	AcceptPhysicallyChallenged bool     `json:"accept_physically_challenged"`
+	PreferredCommunities       []string `json:"preferred_communities"`
+	PreferredMaritalStatus     []string `json:"preferred_marital_status"`
+	PreferredProfessions       []string `json:"preferred_professions"`
+	PreferredProfessionTypes   []string `json:"preferred_profession_types"`
+	PreferredEducationLevels   []string `json:"preferred_education_levels"`
+	PreferredHomeDistricts     []string `json:"preferred_home_districts"`
+}
+
+type GetUserPartnerPreferencesResponse struct {
+	PartnerPreferences PartnerPreferenceResponse `json:"partner_preferences"`
+}
+
 type UpdateUserProfileResponse struct {
 	Success bool `json:"success"`
 }
@@ -194,4 +212,17 @@ type PaginationInfo struct {
 	Limit      int   `json:"limit"`
 	Offset     int   `json:"offset"`
 	HasMore    bool  `json:"has_more"`
+}
+
+
+/////////////////// USER DETAILS MANAGEMENT /////////////////////
+type GetUserDetailsByProfileIDRequest struct {
+	TargetProfileID int64 `json:"target_profile_id"`
+	RequestedByAdmin bool `json:"requested_by_admin"`
+}
+
+type GetUserDetailsByProfileIDResponse struct {
+	Profile UserProfileRecommendation `json:"profile"`
+	PartnerPreferences PartnerPreferenceResponse `json:"partner_preferences"`
+	AdditionalPhotoURLs []string `json:"additional_photo_urls"`
 }

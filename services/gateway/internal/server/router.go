@@ -11,7 +11,14 @@ import (
 )
 
 func (s *Server) setupRoutes(router *gin.Engine) {
+	middleware.RegisterMetrics()
 	router.Use(middleware.RequestIDMiddleware())
+	// Prometheus middleware SHOULD NOT register collectors; it should only observe them.
+    router.Use(middleware.PrometheusMiddleware())
+
+	// Wrap the http.Handler returned by MetricsHandler()
+	router.GET("/metrics", gin.WrapH(middleware.MetricsHandler()))
+	
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	v1 := router.Group("/api/v1")
 
@@ -88,6 +95,10 @@ func (s *Server) registerPaymentRoutes(v1 *gin.RouterGroup, router *gin.Engine) 
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.paymentHandler.GetPaymentHistory)
+		apiPayment.GET("/admin/completed-payments",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleAdmin),
+			s.paymentHandler.GetCompletedPaymentDetails)
 	}
 
 	// ============= PAYMENT WEB PAGES (Public) =============
@@ -116,6 +127,17 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.GetUserProfile)
+
+		// user full details retrieve (profile,partner pre, images)
+		user.GET("/profiles/:profile_id", 
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetUserDetailsByProfileIDForUser)
+		user.GET("/profile-details/:profile_id", // 
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleAdmin),
+			s.userHandler.GetUserDetailsByProfileIDForAdmin)
+
 		user.POST("/profile/profile-photo",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
@@ -152,6 +174,10 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.PatchPartnerPreference)
+		user.GET("/preference",
+			middleware.AuthMiddleware(s.jwtManager),
+			middleware.RequireRole(constants.RoleUser),
+			s.userHandler.GetPartnerPreference)
 		user.GET("/recommendations",
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
@@ -176,6 +202,8 @@ func (s *Server) registerUserRoutes(v1 *gin.RouterGroup) {
 			middleware.AuthMiddleware(s.jwtManager),
 			middleware.RequireRole(constants.RoleUser),
 			s.userHandler.GetMutuallyMatchedProfiles)
+		
+		
 	}
 }
 

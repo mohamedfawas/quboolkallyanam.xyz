@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/entity"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/payment/internal/domain/repository"
@@ -63,5 +64,20 @@ func (r *paymentsRepository) GetPaymentHistory(ctx context.Context, userID uuid.
 		return nil, err
 	}
 
+	return payments, nil
+}
+
+
+func (r *paymentsRepository) GetCompletedPayments(ctx context.Context, limit, offset int) ([]*entity.Payment, error) {
+	var payments []*entity.Payment
+	err := r.db.GormDB.WithContext(ctx).
+		Where("status = ?", constants.PaymentStatusCompleted).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&payments).Error
+	if err != nil {
+		return nil, err
+	}
 	return payments, nil
 }

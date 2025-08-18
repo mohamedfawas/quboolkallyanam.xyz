@@ -8,6 +8,7 @@ go 1.23.4
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/lib/pq v1.10.9
 	github.com/mohamedfawas/quboolkallyanam.xyz/api v0.0.0-00010101000000-000000000000
 	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250803051243-5b12aa6abe6c
 	github.com/spf13/viper v1.20.1

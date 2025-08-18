@@ -7,6 +7,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/metrics"
 	"go.uber.org/zap"
 )
 
@@ -50,6 +51,7 @@ func (h *AuthHandler) AdminUnBlockUser(c *gin.Context) {
 		return
 	}
 
+	metrics.AdminUserUnblockedTotal.Inc()
 	log.Info("User unblock request processed successfully",
 		zap.String("field", req.Field),
 		zap.String("value", req.Value),

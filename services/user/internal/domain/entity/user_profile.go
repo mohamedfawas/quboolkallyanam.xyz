@@ -20,12 +20,12 @@ type UserProfile struct {
 	PhysicallyChallenged bool      `json:"physically_challenged" gorm:"not null;default:false"`
 	ProfileCompleted     bool      `json:"profile_completed" gorm:"not null;default:false"`
 
-	Community             validation.Community      `json:"community" gorm:"size:255"`
-	MaritalStatus         validation.MaritalStatus  `json:"marital_status" gorm:"size:255"`
-	Profession            validation.Profession     `json:"profession" gorm:"size:255"`
-	ProfessionType        validation.ProfessionType `json:"profession_type" gorm:"size:255"`
-	HighestEducationLevel validation.EducationLevel `json:"highest_education_level" gorm:"size:255"`
-	HomeDistrict          validation.HomeDistrict   `json:"home_district" gorm:"size:255"`
+	Community             validation.Community      `json:"community" gorm:"type:varchar(255)"`
+	MaritalStatus         validation.MaritalStatus  `json:"marital_status" gorm:"type:varchar(255)"`
+	Profession            validation.Profession     `json:"profession" gorm:"type:varchar(255)"`
+	ProfessionType        validation.ProfessionType `json:"profession_type" gorm:"type:varchar(255)"`
+	HighestEducationLevel validation.EducationLevel `json:"highest_education_level" gorm:"type:varchar(255)"`
+	HomeDistrict          validation.HomeDistrict   `json:"home_district" gorm:"type:varchar(255)"`
 
 	ProfileImageKey string         `json:"profile_image_key" gorm:"size:255"`
 	LastLogin       time.Time      `json:"last_login" gorm:"not null;default:CURRENT_TIMESTAMP"`

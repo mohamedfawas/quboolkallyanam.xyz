@@ -206,6 +206,21 @@ func (c *userGRPCClient) UpdateUserPartnerPreferences(
 	return nil
 }
 
+func (c *userGRPCClient) GetUserPartnerPreferences(ctx context.Context) (*dto.GetUserPartnerPreferencesResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.client.GetUserPartnerPreferences(ctx, &userpbv1.GetUserPartnerPreferencesRequest{})
+	if err != nil {
+		return nil, err
+	}
+	return MapGetUserPartnerPreferencesResponse(resp), nil
+}
+
+
 /////////////////// MATCH MAKING ///////////////////
 func (c *userGRPCClient) RecordMatchAction(ctx context.Context, req dto.RecordMatchActionRequest) (*dto.RecordMatchActionResponse, error) {
 	var err error
@@ -250,6 +265,22 @@ func (c *userGRPCClient) GetProfilesByMatchAction(ctx context.Context, req dto.G
 		return nil, err
 	}
 	return MapGetProfilesByMatchActionResponse(resp), nil
+}
+
+
+func (c *userGRPCClient) GetUserDetailsByProfileID(ctx context.Context, req dto.GetUserDetailsByProfileIDRequest) (*dto.GetUserDetailsByProfileIDResponse, error) {
+	var err error
+	ctx, err = contextutils.PrepareGrpcContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	grpcReq := MapGetUserDetailsByProfileIDRequest(req)
+	resp, err := c.client.GetUserDetailsByProfileID(ctx, grpcReq)
+	if err != nil {
+		return nil, err
+	}
+	return MapGetUserDetailsByProfileIDResponse(resp), nil
 }
 
 func (c *userGRPCClient) Close() error {

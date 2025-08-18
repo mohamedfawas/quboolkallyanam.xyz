@@ -1,31 +1,45 @@
 package payment
 
 import (
-	"context"
-	"fmt"
-	"log"
-
 	"github.com/gin-gonic/gin"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
-	apiresponse "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/apiresponse"
+	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/services/gateway/internal/domain/dto"
+	"go.uber.org/zap"
 )
 
+// @Summary Create subscription plan
+// @Description Create a new subscription plan (admin only)
+// @Tags Payment
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateSubscriptionPlanRequest true "Create subscription plan"
+// @Success 200 {object} dto.CreateOrUpdateSubscriptionPlanResponse "Plan created"
+// @Failure 400 {object} dto.BadRequestError "Bad request"
+// @Failure 401 {object} dto.UnauthorizedError "Unauthorized"
+// @Failure 403 {object} dto.ForbiddenError "Forbidden"
+// @Failure 500 {object} dto.InternalServerError "Internal server error"
+// @Security BearerAuth
+// @Router /api/v1/payment/subscription-plan [post]
 func (h *PaymentHandler) CreateSubscriptionPlan(c *gin.Context) {
+	authCtx, err := contextutils.ExtractAuthContext(c)
+	if err != nil {
+		h.logger.Error("Failed to extract auth context", zap.Error(err))
+		apiresponse.Error(c, err, nil)
+		return
+	}
+	log := h.logger.With(
+		zap.String(constants.ContextKeyRequestID, authCtx.Ctx.Value(constants.ContextKeyRequestID).(string)),
+		zap.String(constants.ContextKeyUserID, authCtx.Ctx.Value(constants.ContextKeyUserID).(string)),
+	)
+
 	var req dto.CreateSubscriptionPlanRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("Invalid request body: %v", err)
-		apiresponse.Fail(c, fmt.Errorf("invalid request body: %w", err))
+		apiresponse.Error(c, apperrors.ErrBindingJSON, nil)
 		return
 	}
-
-	userID, exists := c.Get(constants.ContextKeyUserID)
-	if !exists {
-		apiresponse.Fail(c, fmt.Errorf("user ID not found in context"))
-		return
-	}
-
-	ctx := context.WithValue(c.Request.Context(), constants.ContextKeyUserID, userID)
 
 	updateReq := dto.UpdateSubscriptionPlanRequest{
 		ID:           req.ID,
@@ -36,12 +50,15 @@ func (h *PaymentHandler) CreateSubscriptionPlan(c *gin.Context) {
 		IsActive:     &req.IsActive,
 	}
 
-	response, err := h.paymentUsecase.CreateOrUpdateSubscriptionPlan(ctx, updateReq)
+	resp, err := h.paymentUsecase.CreateOrUpdateSubscriptionPlan(authCtx.Ctx, updateReq)
 	if err != nil {
-		log.Printf("Failed to create subscription plan: %v", err)
-		apiresponse.Fail(c, err)
+		if apperrors.ShouldLogError(err) {
+			log.Error("Failed to create subscription plan", zap.Error(err))
+		}
+		apiresponse.Error(c, err, nil)
 		return
 	}
 
-	apiresponse.Success(c, "Subscription plan created successfully", response)
+	log.Info("Subscription plan created successfully", zap.String("plan_id", req.ID))
+	apiresponse.Success(c, "Subscription plan created successfully", resp)
 }

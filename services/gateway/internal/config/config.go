@@ -62,6 +62,7 @@ func LoadConfig(configPath string) (*Config, error) {
 func initViper(path string) *viper.Viper {
 	v := viper.New()
 
+	v.SetEnvPrefix("GATEWAY")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
