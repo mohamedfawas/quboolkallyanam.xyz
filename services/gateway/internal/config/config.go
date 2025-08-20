@@ -26,7 +26,6 @@ type HTTPConfig struct {
 
 type ServicesConfig struct {
 	AuthServicePort    string `mapstructure:"auth_port"`
-	AdminServicePort   string `mapstructure:"admin_port"`
 	UserServicePort    string `mapstructure:"user_port"`
 	ChatServicePort    string `mapstructure:"chat_port"`
 	PaymentServicePort string `mapstructure:"payment_port"`
@@ -83,7 +82,6 @@ func bindEnvVars(v *viper.Viper) {
 		"http.write_timeout",
 		"http.idle_timeout",
 		"services.auth_port",
-		"services.admin_port",
 		"services.user_port",
 		"services.chat_port",
 		"services.payment_port",
@@ -109,10 +107,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("http.idle_timeout", 60)
 
 	v.SetDefault("services.auth_port", "50051")
-	v.SetDefault("services.admin_port", "50052")
-	v.SetDefault("services.user_port", "50053")
-	v.SetDefault("services.chat_port", "50054")
-	v.SetDefault("services.payment_port", "50055")
+	v.SetDefault("services.user_port", "50052")
+	v.SetDefault("services.chat_port", "50053")
+	v.SetDefault("services.payment_port", "50054")
 
 	v.SetDefault("auth.jwt.secret_key", "your-256-bit-secret-replace-in-production")
 	v.SetDefault("auth.jwt.access_token_minutes", 15)

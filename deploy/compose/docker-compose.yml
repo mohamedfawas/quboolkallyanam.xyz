@@ -1,10 +1,8 @@
-version: "3.9"
-
 services:
   # Core infra
   postgres:
-    image: postgres:16-alpine
-    container_name: qk-postgres
+    image: postgres:17.6-alpine
+    container_name: qubool-kallyanam-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -19,45 +17,58 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 20s
 
   redis:
-    image: redis:7-alpine
-    container_name: qk-redis
-    command: ["redis-server", "--requirepass", "redispass"]
+    image: redis:8.2.0-alpine
+    container_name: qubool-kallyanam-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
   rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: qk-rabbitmq
+    image: rabbitmq:4.1.3-management-alpine
+    container_name: qubool-kallyanam-rabbitmq
     ports:
-      - "5672:5672"
+      - "5672:5672" # AMQP
       - "15672:15672" # management UI
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 20s
 
   mongo:
-    image: mongo:7
-    container_name: qk-mongo
+    image: mongo:7.0.14
+    container_name: qubool-kallyanam-mongo
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
-  gcs:
-    image: fsouza/fake-gcs-server:latest
-    container_name: qk-gcs
-    command: ["-scheme", "http", "-port", "4443", "-backend", "memory", "-external-url", "http://gcs:4443"]
-    ports:
-      - "4443:4443"
+  # gcs: # used this while development for testing in development.
+  #   image: fsouza/fake-gcs-server:latest
+  #   container_name: qubool-kallyanam-gcs
+  #   command: ["-scheme", "http", "-port", "4443", "-backend", "memory", "-external-url", "http://gcs:4443"]
+  #   ports:
+  #     - "4443:4443"
 
   # DB migrations (run once)
   migrate_auth:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.migrate.auth
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_auth?sslmode=disable
@@ -69,7 +80,7 @@ services:
 
   migrate_user:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.migrate.user
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_user?sslmode=disable
@@ -81,7 +92,7 @@ services:
 
   migrate_chat:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.migrate.chat
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_chat?sslmode=disable
@@ -93,7 +104,7 @@ services:
 
   migrate_payment:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.migrate.payment
     environment:
       POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/qubool_kallyanam_payment?sslmode=disable
@@ -103,28 +114,30 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # Gateway first (others share its net namespace so localhost:<port> works)
+  # Gateway 
   gateway:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.gateway
-    container_name: qk-gateway
+    container_name: qubool-kallyanam-gateway
+    env_file:
+      - ../../.env
     environment:
       # HTTP
-      HTTP_PORT: "8080"
-      # gRPC ports (gateway code uses localhost:<port>)
-      SERVICES_AUTH_PORT: "50051"
-      SERVICES_ADMIN_PORT: "50052"   # reserved in config
-      SERVICES_USER_PORT: "50053"
-      SERVICES_CHAT_PORT: "50054"
-      SERVICES_PAYMENT_PORT: "50055"
-      # JWT/dev
-      AUTH_JWT_SECRET_KEY: "dev-secret"
-      AUTH_JWT_ACCESS_TOKEN_MINUTES: "15"
-      AUTH_JWT_REFRESH_TOKEN_DAYS: "7"
-      AUTH_JWT_ISSUER: "qubool-kallyanam"
-      BASE_URL: "http://localhost:8080"
-      DEFAULT_TIMEZONE: "Asia/Kolkata"
+      GATEWAY_HTTP_PORT: ${GATEWAY_HTTP_PORT}
+      # gRPC service ports (gateway config expects only ports)
+      GATEWAY_SERVICES_AUTH_PORT: ${GATEWAY_SERVICES_AUTH_PORT}
+      GATEWAY_SERVICES_USER_PORT: ${GATEWAY_SERVICES_USER_PORT}
+      GATEWAY_SERVICES_CHAT_PORT: ${GATEWAY_SERVICES_CHAT_PORT}
+      GATEWAY_SERVICES_PAYMENT_PORT: ${GATEWAY_SERVICES_PAYMENT_PORT}
+      # Auth / JWT
+      GATEWAY_AUTH_JWT_SECRET_KEY: ${GATEWAY_AUTH_JWT_SECRET_KEY}
+      GATEWAY_AUTH_JWT_ACCESS_TOKEN_MINUTES: ${GATEWAY_AUTH_JWT_ACCESS_TOKEN_MINUTES}
+      GATEWAY_AUTH_JWT_REFRESH_TOKEN_DAYS: ${GATEWAY_AUTH_JWT_REFRESH_TOKEN_DAYS}
+      GATEWAY_AUTH_JWT_ISSUER: ${GATEWAY_AUTH_JWT_ISSUER}
+      # Base / timezone
+      GATEWAY_BASE_URL: ${GATEWAY_BASE_URL}
+      GATEWAY_DEFAULT_TIMEZONE: ${GATEWAY_DEFAULT_TIMEZONE}
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -137,27 +150,66 @@ services:
         condition: service_healthy
       mongo:
         condition: service_started
-      gcs:
+      auth:
+        condition: service_started
+      user:
+        condition: service_started
+      chat:
+        condition: service_started
+      payment:
         condition: service_started
 
-  # Services share gateway's network namespace → localhost:<port> resolves inside gateway
+  # Services 
   auth:
     build:
-      context: ..
+      context: ../.. 
       dockerfile: deploy/docker/Dockerfile.auth
-    container_name: qk-auth
-    network_mode: "service:gateway"
+    container_name: qubool-kallyanam-auth
+    env_file:
+      - ../../.env
     environment:
-      GRPC_PORT: "50051"
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DBNAME: qubool_kallyanam_auth
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: redispass
-      AUTH_JWT_SECRET_KEY: "dev-secret"
+      # Environment
+      AUTH_ENVIRONMENT: ${AUTH_ENVIRONMENT}
+      # GRPC
+      AUTH_GRPC_PORT: ${AUTH_GRPC_PORT}
+
+      # Postgres
+      AUTH_POSTGRES_HOST: ${AUTH_POSTGRES_HOST}
+      AUTH_POSTGRES_PORT: ${AUTH_POSTGRES_PORT}
+      AUTH_POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      AUTH_POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      AUTH_POSTGRES_DBNAME: ${AUTH_POSTGRES_DBNAME}
+      AUTH_POSTGRES_SSLMODE: ${AUTH_POSTGRES_SSLMODE}
+      AUTH_POSTGRES_TIMEZONE: ${AUTH_POSTGRES_TIMEZONE}
+
+      # Redis
+      AUTH_REDIS_URL: ${AUTH_REDIS_URL}
+      AUTH_REDIS_HOST: ${AUTH_REDIS_HOST}
+      AUTH_REDIS_PORT: ${AUTH_REDIS_PORT}
+      AUTH_REDIS_PASSWORD: ${AUTH_REDIS_PASSWORD}
+      AUTH_REDIS_DB: ${AUTH_REDIS_DB}
+
+      # Admin
+      AUTH_ADMIN_DEFAULT_ADMIN_EMAIL: ${AUTH_ADMIN_DEFAULT_ADMIN_EMAIL}
+      AUTH_ADMIN_DEFAULT_ADMIN_PASSWORD: ${AUTH_ADMIN_DEFAULT_ADMIN_PASSWORD}
+
+      # RabbitMQ
+      AUTH_RABBITMQ_DSN: ${AUTH_RABBITMQ_DSN}
+      AUTH_RABBITMQ_EXCHANGE_NAME: ${AUTH_RABBITMQ_EXCHANGE_NAME}
+
+      # PubSub
+      AUTH_PUBSUB_PROJECT_ID: ${AUTH_PUBSUB_PROJECT_ID}
+
+      # Auth specific
+      AUTH_AUTH_PENDING_REGISTRATION_EXPIRY_HOURS: ${AUTH_AUTH_PENDING_REGISTRATION_EXPIRY_HOURS}
+      AUTH_AUTH_OTP_EXPIRY_MINUTES: ${AUTH_AUTH_OTP_EXPIRY_MINUTES}
+      AUTH_AUTH_JWT_SECRET_KEY: ${AUTH_AUTH_JWT_SECRET_KEY}
+      AUTH_AUTH_JWT_ACCESS_TOKEN_MINUTES: ${AUTH_AUTH_JWT_ACCESS_TOKEN_MINUTES}
+      AUTH_AUTH_JWT_REFRESH_TOKEN_DAYS: ${AUTH_AUTH_JWT_REFRESH_TOKEN_DAYS}
+      AUTH_AUTH_JWT_ISSUER: ${AUTH_AUTH_JWT_ISSUER}
+
+    networks:
+      - qubool-kallyanam-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -169,24 +221,40 @@ services:
 
   user:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.user
-    container_name: qk-user
-    network_mode: "service:gateway"
+    container_name: qubool-kallyanam-user
+    env_file:
+      - ../../.env
     environment:
-      GRPC_PORT: "50053"
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DBNAME: qubool_kallyanam_user
-      POSTGRES_SSLMODE: disable
-      POSTGRES_TIMEZONE: UTC
-      RABBITMQ_DSN: amqp://guest:guest@rabbitmq:5672/
-      RABBITMQ_EXCHANGE_NAME: qubool_kallyanam_events
-      MEDIA_STORAGE_BUCKET: qubool-kallyanam-media
-      MEDIA_STORAGE_ENDPOINT: http://gcs:4443
-      MEDIA_STORAGE_URL_EXPIRY: 15m
+      # Environment
+      USER_ENVIRONMENT: ${USER_ENVIRONMENT}
+      # GRPC
+      USER_GRPC_PORT: ${USER_GRPC_PORT}
+
+      # Postgres 
+      USER_POSTGRES_HOST: ${USER_POSTGRES_HOST}
+      USER_POSTGRES_PORT: ${USER_POSTGRES_PORT}
+      USER_POSTGRES_USER: ${USER_POSTGRES_USER}
+      USER_POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+      USER_POSTGRES_DBNAME: ${USER_POSTGRES_DBNAME}
+      USER_POSTGRES_SSLMODE: ${USER_POSTGRES_SSLMODE}
+      USER_POSTGRES_TIMEZONE: ${USER_POSTGRES_TIMEZONE}
+
+      # RabbitMQ
+      USER_RABBITMQ_DSN: ${USER_RABBITMQ_DSN}
+      USER_RABBITMQ_EXCHANGE_NAME: ${USER_RABBITMQ_EXCHANGE_NAME}
+
+      # PubSub
+      USER_PUBSUB_PROJECT_ID: ${USER_PUBSUB_PROJECT_ID}
+
+      # Media Storage
+      USER_MEDIA_STORAGE_BUCKET: ${USER_MEDIA_STORAGE_BUCKET}
+      USER_MEDIA_STORAGE_URL_EXPIRY: ${USER_MEDIA_STORAGE_URL_EXPIRY}
+      USER_MEDIA_STORAGE_SIGNER_EMAIL: ${USER_MEDIA_STORAGE_SIGNER_EMAIL}
+
+    networks:
+      - qubool-kallyanam-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -200,23 +268,37 @@ services:
 
   chat:
     build:
-      context: ..
+      context: ../..
       dockerfile: deploy/docker/Dockerfile.chat
-    container_name: qk-chat
-    network_mode: "service:gateway"
+    container_name: qubool-kallyanam-chat
+    env_file:
+      - ../../.env
     environment:
-      CHAT_GRPC_PORT: "50054"
-      CHAT_POSTGRES_HOST: postgres
-      CHAT_POSTGRES_PORT: "5432"
-      CHAT_POSTGRES_USER: postgres
-      CHAT_POSTGRES_PASSWORD: postgres
-      CHAT_POSTGRES_DBNAME: qubool_kallyanam_chat
-      CHAT_POSTGRES_SSLMODE: disable
-      CHAT_POSTGRES_TIMEZONE: UTC
-      CHAT_MONGODB_URI: mongodb://mongo:27017
-      CHAT_MONGODB_DATABASE: quboolKallyanam
-      CHAT_RABBITMQ_DSN: amqp://guest:guest@rabbitmq:5672/
-      CHAT_RABBITMQ_EXCHANGE_NAME: qubool_kallyanam_events
+      # Environment
+      CHAT_ENVIRONMENT: ${CHAT_ENVIRONMENT}
+      # gRPC
+      CHAT_GRPC_PORT: ${CHAT_GRPC_PORT}
+      # Postgres (use service name 'postgres' when running in same compose)
+      CHAT_POSTGRES_HOST: ${CHAT_POSTGRES_HOST}
+      CHAT_POSTGRES_PORT: ${CHAT_POSTGRES_PORT}
+      CHAT_POSTGRES_USER: ${CHAT_POSTGRES_USER}
+      CHAT_POSTGRES_PASSWORD: ${CHAT_POSTGRES_PASSWORD}
+      CHAT_POSTGRES_DBNAME: ${CHAT_POSTGRES_DBNAME}
+      CHAT_POSTGRES_SSLMODE: ${CHAT_POSTGRES_SSLMODE}
+      CHAT_POSTGRES_TIMEZONE: ${CHAT_POSTGRES_TIMEZONE}
+
+
+      # MongoDB
+      CHAT_MONGODB_URI: ${CHAT_MONGODB_URI}
+      CHAT_MONGODB_DATABASE: ${CHAT_MONGODB_DATABASE}
+      CHAT_MONGODB_TIMEOUT: ${CHAT_MONGODB_TIMEOUT}
+
+      # RabbitMQ
+      CHAT_RABBITMQ_DSN: ${CHAT_RABBITMQ_DSN}
+      CHAT_RABBITMQ_EXCHANGE_NAME: ${CHAT_RABBITMQ_EXCHANGE_NAME}
+
+    networks:
+      - qubool-kallyanam-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -230,29 +312,39 @@ services:
 
   payment:
     build:
-      context: ..
+      context: ../..  
       dockerfile: deploy/docker/Dockerfile.payment
-    container_name: qk-payment
-    network_mode: "service:gateway"
+    container_name: qubool-kallyanam -payment
+    env_file:
+      - ../../.env
     environment:
-      GRPC_PORT: "50055"
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DBNAME: qubool_kallyanam_payment
-      POSTGRES_SSLMODE: disable
-      POSTGRES_TIMEZONE: UTC
-      RABBITMQ_DSN: amqp://guest:guest@rabbitmq:5672/
-      RABBITMQ_EXCHANGE_NAME: qubool_kallyanam_events
-      RAZORPAY_KEY_ID: your-key-id
-      RAZORPAY_KEY_SECRET: your-key-secret
-      EMAIL_SMTP_HOST: smtp.gmail.com
-      EMAIL_SMTP_PORT: "587"
-      EMAIL_SMTP_USERNAME: ""
-      EMAIL_SMTP_PASSWORD: ""
-      EMAIL_FROM_EMAIL: noreply@qubool-kallyanam.xyz
-      EMAIL_FROM_NAME: "Qubool Kallyanam"
+      # Environment
+      PAYMENT_ENVIRONMENT: ${PAYMENT_ENVIRONMENT}
+      # gRPC
+      PAYMENT_GRPC_PORT: ${PAYMENT_GRPC_PORT}
+
+      # Postgres (use service name 'postgres' for intra-compose resolution)
+      PAYMENT_POSTGRES_HOST: ${PAYMENT_POSTGRES_HOST}
+      PAYMENT_POSTGRES_PORT: ${PAYMENT_POSTGRES_PORT}
+      PAYMENT_POSTGRES_USER: ${PAYMENT_POSTGRES_USER}
+      PAYMENT_POSTGRES_PASSWORD: ${PAYMENT_POSTGRES_PASSWORD}
+      PAYMENT_POSTGRES_DBNAME: ${PAYMENT_POSTGRES_DBNAME}
+      PAYMENT_POSTGRES_SSLMODE: ${PAYMENT_POSTGRES_SSLMODE}
+      PAYMENT_POSTGRES_TIMEZONE: ${PAYMENT_POSTGRES_TIMEZONE}
+
+      # RabbitMQ
+      PAYMENT_RABBITMQ_DSN: ${PAYMENT_RABBITMQ_DSN}
+      PAYMENT_RABBITMQ_EXCHANGE_NAME: ${PAYMENT_RABBITMQ_EXCHANGE_NAME}
+
+      # PubSub
+      PAYMENT_PUBSUB_PROJECT_ID: ${PAYMENT_PUBSUB_PROJECT_ID}
+
+      # Razorpay 
+      PAYMENT_RAZORPAY_KEY_ID: ${PAYMENT_RAZORPAY_KEY_ID}
+      PAYMENT_RAZORPAY_KEY_SECRET: ${PAYMENT_RAZORPAY_KEY_SECRET}
+
+    networks:
+      - qubool-kallyanam-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -262,6 +354,38 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  notification:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.notification
+    container_name: qubool-kallyanam-notification
+    env_file:
+      - ../../.env
+    environment:
+      NOTIFICATION_ENVIRONMENT: ${NOTIFICATION_ENVIRONMENT}
+      # RabbitMQ
+      NOTIFICATION_RABBITMQ_DSN: ${NOTIFICATION_RABBITMQ_DSN}
+      NOTIFICATION_RABBITMQ_EXCHANGE_NAME: ${NOTIFICATION_RABBITMQ_EXCHANGE_NAME}
+      # PubSub
+      NOTIFICATION_PUBSUB_PROJECT_ID: ${NOTIFICATION_PUBSUB_PROJECT_ID}
+      # SMTP
+      NOTIFICATION_EMAIL_SMTP_HOST: ${NOTIFICATION_EMAIL_SMTP_HOST}
+      NOTIFICATION_EMAIL_SMTP_PORT: ${NOTIFICATION_EMAIL_SMTP_PORT}
+      NOTIFICATION_EMAIL_SMTP_USERNAME: ${NOTIFICATION_EMAIL_SMTP_USERNAME}
+      NOTIFICATION_EMAIL_SMTP_PASSWORD: ${NOTIFICATION_EMAIL_SMTP_PASSWORD}
+      NOTIFICATION_EMAIL_FROM_EMAIL: ${NOTIFICATION_EMAIL_FROM_EMAIL}
+      NOTIFICATION_EMAIL_FROM_NAME: ${NOTIFICATION_EMAIL_FROM_NAME}
+    networks:
+      - qubool-kallyanam-network
+  depends_on:
+    rabbitmq:
+      condition: service_healthy
+  restart: unless-stopped
+
 volumes:
   pgdata:
   mongo-data:
+
+networks:
+  qubool-kallyanam-network:
+    driver: bridge

@@ -32,6 +32,7 @@ type PostgresConfig struct {
 }
 
 type RedisConfig struct {
+	RedisURL string `mapstructure:"redis_url"`
 	Host     string `mapstructure:"host"`
 	Port     int    `mapstructure:"port"`
 	Password string `mapstructure:"password"`
@@ -110,6 +111,7 @@ func bindEnvVars(v *viper.Viper) {
 		"postgres.dbname",
 		"postgres.sslmode",
 		"postgres.timezone",
+		"redis.redis_url",
 		"redis.host",
 		"redis.port",
 		"redis.password",
@@ -145,6 +147,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("postgres.sslmode", "disable")
 	v.SetDefault("postgres.timezone", "UTC")
 
+	v.SetDefault("redis.redis_url", "")
 	v.SetDefault("redis.host", "localhost")
 	v.SetDefault("redis.port", 6379)
 	v.SetDefault("redis.password", "")

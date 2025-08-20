@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	RedisURL string // used for upstash redis
 	Host     string
 	Port     int
 	Password string
@@ -20,12 +21,27 @@ type Client struct {
 }
 
 func NewClient(cfg Config) (*Client, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		Password: cfg.Password,
-		DB:       cfg.DB,
-	})
+	var opts *redis.Options
+	var err error
 
+	if cfg.RedisURL != "" {
+		// Upstash / cloud redis case
+		opts, err = redis.ParseURL(cfg.RedisURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse redis url: %w", err)
+		}
+	} else {
+		// Local Redis case
+		opts = &redis.Options{
+			Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+			Password: cfg.Password,
+			DB:       cfg.DB,
+		}
+	}
+
+	client := redis.NewClient(opts)
+
+	// Health check
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

@@ -96,7 +96,7 @@ func bindEnvVars(v *viper.Viper) {
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("environment", "development")
 
-	v.SetDefault("grpc.port", 50055)
+	v.SetDefault("grpc.port", 50054)
 
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)

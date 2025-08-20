@@ -13,7 +13,6 @@ type Config struct {
 	Postgres    PostgresConfig  `mapstructure:"postgres"`
 	RabbitMQ    RabbitMQConfig  `mapstructure:"rabbitmq"`
 	PubSub      PubSubConfig    `mapstructure:"pubsub"`
-	Firestore   FirestoreConfig `mapstructure:"firestore"`
 	MongoDB     MongoDBConfig   `mapstructure:"mongodb"`
 }
 
@@ -37,10 +36,6 @@ type RabbitMQConfig struct {
 }
 
 type PubSubConfig struct {
-	ProjectID string `mapstructure:"project_id"`
-}
-
-type FirestoreConfig struct {
 	ProjectID string `mapstructure:"project_id"`
 }
 
@@ -92,7 +87,6 @@ func bindEnvVars(v *viper.Viper) {
 		"rabbitmq.dsn",
 		"rabbitmq.exchange_name",
 		"pubsub.project_id",
-		"firestore.project_id",
 		"mongodb.uri",
 		"mongodb.database",
 		"mongodb.timeout",
@@ -105,7 +99,7 @@ func bindEnvVars(v *viper.Viper) {
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("environment", "development")
 
-	v.SetDefault("grpc.port", 50054)
+	v.SetDefault("grpc.port", 50053)
 
 	v.SetDefault("postgres.host", "localhost")
 	v.SetDefault("postgres.port", 5432)
@@ -119,8 +113,6 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rabbitmq.exchange_name", "qubool_kallyanam_events")
 
 	v.SetDefault("pubsub.project_id", "qubool-kallyanam-events")
-
-	v.SetDefault("firestore.project_id", "qubool-kallyanam-chat")
 
 	v.SetDefault("mongodb.uri", "mongodb://localhost:27017")
 	v.SetDefault("mongodb.database", "quboolKallyanam")

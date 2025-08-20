@@ -83,41 +83,21 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		rootLogger.Info("Connected to RabbitMQ ")
 	}
 	///////////////////////// GCS STORE INITIALIZATION /////////////////////////
-	var gcsStore *gcsstore.GCSStore
-	if config.Environment == constants.EnvProduction {
-		prodConfig := gcsstore.MediaStorageConfig{
-			Bucket:          config.MediaStorage.Bucket,
-			CredentialsFile: config.MediaStorage.CredentialsFile,
-			SignerEmail:     config.MediaStorage.SignerEmail,
-			PrivateKeyPath:  config.MediaStorage.PrivateKeyPath,
-			URLExpiry:       config.MediaStorage.URLExpiry,
-			Endpoint:        "",
-		}
-		gcsStore, err = gcsstore.NewGCSStore(ctx, prodConfig)
-		if err != nil {
-			pgClient.Close()
-			if messagingClient != nil {
-				messagingClient.Close()
-			}
-			return nil, fmt.Errorf("failed to create GCS store: %w", err)
-		}
-		rootLogger.Info("Connected to GCS with production config")
-	} else {
-		devConfig := gcsstore.MediaStorageConfig{
-			Bucket:    config.MediaStorage.Bucket,
-			URLExpiry: config.MediaStorage.URLExpiry,
-			Endpoint:  config.MediaStorage.Endpoint,
-		}
-		gcsStore, err = gcsstore.NewGCSStore(ctx, devConfig)
-		if err != nil {
-			pgClient.Close()
-			if messagingClient != nil {
-				messagingClient.Close()
-			}
-			return nil, fmt.Errorf("failed to create GCS store: %w", err)
-		}
-		rootLogger.Info("Connected to GCS with development config")
+	gcsConfig := gcsstore.MediaStorageConfig{
+		Bucket:      config.MediaStorage.Bucket,
+		URLExpiry:   config.MediaStorage.URLExpiry,
+		SignerEmail: config.MediaStorage.SignerEmail, 
 	}
+
+	gcsStore, err := gcsstore.NewGCSStore(ctx, gcsConfig)
+	if err != nil {
+		pgClient.Close()
+		if messagingClient != nil {
+			messagingClient.Close()
+		}
+		return nil, fmt.Errorf("failed to create GCS store: %w", err)
+	}
+	rootLogger.Info("Connected to GCS")
 	///////////////////////// GRPC SERVER INITIALIZATION /////////////////////////
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
@@ -135,7 +115,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	eventPublisher := messageBrokerAdapter.NewEventPublisher(messagingClient, rootLogger)
 
 	///////////////////////// MEDIA STORAGE INITIALIZATION /////////////////////////
-	photoStorage := gcs.NewPhotoStorageAdapter(gcsStore, config.MediaStorage.Endpoint, config.MediaStorage.Bucket)
+	photoStorage := gcs.NewPhotoStorageAdapter(gcsStore, config.MediaStorage.Bucket)
 
 	///////////////////////// USE CASES INITIALIZATION /////////////////////////
 	userProfileUC := userProfileUsecaseImpl.NewUserProfileUsecase(userProfileRepo, userImageRepo, partnerPreferencesRepo, eventPublisher, photoStorage, config)
