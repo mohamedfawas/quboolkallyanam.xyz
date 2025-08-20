@@ -1,39 +1,52 @@
-# Build stage
-FROM golang:1.23-alpine AS builder
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
+# ---- builder ----
+FROM golang:1.23.4 AS builder
 
-RUN apk add --no-cache git ca-certificates tzdata
+# reproducible/static binary flags
+ARG CGO_ENABLED=0
+ENV CGO_ENABLED=${CGO_ENABLED} GOOS=linux GOARCH=amd64
+
+WORKDIR /src
+
+# Install git + ca-certificates so go can fetch modules and TLS works if needed
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Copy go.mod (and go.sum if present) from user module first for caching
+COPY services/user/go.mod services/user/go.sum* ./services/user/
+
+# Copy user service source
+COPY services/user ./services/user
+
+# Copy api module
+COPY api/ ./api
+
+# Copy pkg directory code
+COPY pkg ./pkg
+
+# go build expects to run from the module directory
 WORKDIR /src/services/user
 
-# Copy module files first for better caching
-COPY services/user/go.mod services/user/go.sum ./
-
-# Copy local module replacements used by user (via go.mod replace)
-COPY api /src/api
-COPY pkg /src/pkg
-
-# Download dependencies
+# resolve modules
 RUN go mod download
 
-# Copy the user service source
-COPY services/user /src/services/user
+# Build binary. Main assumed at services/user/cmd
+RUN go build -ldflags="-s -w" -o /user-service ./cmd
 
-# Build a statically linked binary
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -trimpath -ldflags="-s -w" -o /out/user ./cmd
 
-# Runtime stage
-FROM gcr.io/distroless/base-debian12:nonroot
+# ---- runtime (minimal, non-root) ----
+# We'll use distroless nonroot for a small, secure runtime image.
+FROM gcr.io/distroless/static:nonroot AS runtime
 
-WORKDIR /app
-COPY --from=builder /out/user /app/user
+# copy CA certs for outbound TLS (some clients require them)
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-# Optional: default config path (viper won't fail if missing)
-ENV CONFIG_PATH=/etc/qubool/user/config.yaml
+# copy binary
+COPY --from=builder /user-service /user-service
 
-# Default gRPC port; configurable via env/config
-EXPOSE 50053
+# exposed default gRPC port from your config.go
+EXPOSE 50052
 
-USER nonroot:nonroot
-ENTRYPOINT ["/app/user"]
+# Run as nonroot user provided by distroless image
+USER nonroot
+
+# Run
+ENTRYPOINT ["/user-service"]

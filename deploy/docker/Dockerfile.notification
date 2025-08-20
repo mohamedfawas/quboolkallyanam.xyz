@@ -1,35 +1,46 @@
-# Build stage
-FROM golang:1.23-alpine AS builder
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
+# ---- builder ----
+FROM golang:1.23.4 AS builder
 
-RUN apk add --no-cache git ca-certificates tzdata
+# reproducible/static binary flags
+ARG CGO_ENABLED=0
+ENV CGO_ENABLED=${CGO_ENABLED} GOOS=linux GOARCH=amd64
+
+WORKDIR /src
+
+# Install git + ca-certificates so go can fetch modules and TLS works if needed
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Copy go.mod (and go.sum if present) from notification module first for caching
+COPY services/notification/go.mod services/notification/go.sum* ./services/notification/
+
+# Copy notification service source
+COPY services/notification ./services/notification
+
+# Copy pkg directory (your go.mod uses replace to ../../pkg)
+COPY pkg ./pkg
+
+# go build expects to run from the module directory
 WORKDIR /src/services/notification
 
-# Copy module files first for better caching
-COPY services/notification/go.mod services/notification/go.sum ./
-
-# Copy local module replacements used by notification (via go.mod replace)
-COPY pkg /src/pkg
-
-# Download dependencies
+# resolve modules
 RUN go mod download
 
-# Copy the notification service source
-COPY services/notification /src/services/notification
+# Build binary. Main assumed at services/notification/cmd
+RUN go build -ldflags="-s -w" -o /notification-service ./cmd
 
-# Build a statically linked binary
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-	go build -trimpath -ldflags="-s -w" -o /out/notification ./cmd
 
-# Runtime stage
-FROM gcr.io/distroless/base-debian12:nonroot
+# ---- runtime (minimal, non-root) ----
+FROM gcr.io/distroless/static:nonroot AS runtime
 
-WORKDIR /app
-COPY --from=builder /out/notification /app/notification
+# copy CA certs for outbound TLS (some clients require them)
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-# Optional: default config path (viper won't fail if missing)
-ENV CONFIG_PATH=/etc/qubool/notification/config.yaml
+# copy binary
+COPY --from=builder /notification-service /notification-service
 
-USER nonroot:nonroot
-ENTRYPOINT ["/app/notification"]
+# Run as nonroot user provided by distroless image
+USER nonroot
+
+# Run
+ENTRYPOINT ["/notification-service"]
+	

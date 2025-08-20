@@ -1,24 +1,30 @@
-# Downloader stage: fetch golang-migrate CLI
-FROM alpine:3.20 AS downloader
-RUN apk add --no-cache ca-certificates curl
-WORKDIR /tmp
-ENV MIGRATE_VERSION=v4.17.1
-RUN curl -L https://github.com/golang-migrate/migrate/releases/download/${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz \
-  | tar xz && mv migrate /usr/local/bin/migrate
+# ---- builder: download migrate CLI ----
+FROM alpine:3.20 AS builder
 
-# Runtime stage: minimal shell for env expansion, includes CA certs
+RUN apk add --no-cache curl ca-certificates tar \
+  && curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.1/migrate.linux-amd64.tar.gz \
+    | tar xz -C /usr/local/bin \
+  && chmod +x /usr/local/bin/migrate
+
+# ---- runtime: minimal Alpine ----
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates
+
+RUN apk add --no-cache ca-certificates bash
+
 WORKDIR /app
 
 # Copy migrate binary and only the payment migrations
-COPY --from=downloader /usr/local/bin/migrate /usr/local/bin/migrate
+COPY --from=builder /usr/local/bin/migrate /usr/local/bin/migrate
 COPY services/payment/migrations/postgres ./migrations
 
-# Example (override at runtime): postgres://USER:PASS@HOST:5432/qubool_kallyanam_payment?sslmode=disable
+# Create non-root user for better security
+RUN adduser -D -u 1000 nonroot
+USER nonroot
+
+# Env vars (override at runtime)
 ENV POSTGRES_DSN=""
-# Optionally override the action with MIGRATE_CMD (e.g., "down 1", "version")
 ENV MIGRATE_CMD="up"
 
-# Run migrations; override POSTGRES_DSN and/or MIGRATE_CMD at runtime
-ENTRYPOINT ["sh", "-c", "migrate -path=/app/migrations -database \"$POSTGRES_DSN\" ${MIGRATE_CMD}"]
+# Default entrypoint (developer friendly)
+ENTRYPOINT ["bash", "-c", "migrate -path=/app/migrations -database \"$POSTGRES_DSN\" $MIGRATE_CMD"]
+  
