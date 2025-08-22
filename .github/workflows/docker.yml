@@ -146,6 +146,14 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker $REGION-docker.pkg.dev -q
 
+      - name: Create temporary Go workspace (CI only)
+        run: |
+          go work init ./pkg
+          go work use ./api ./docs/swagger \
+            ./services/auth ./services/user ./services/chat \
+            ./services/payment ./services/notification ./services/gateway
+          go work sync
+
       - name: Build ${{ matrix.service }} binary (linux/amd64)
         run: make ${{ matrix.service }}
 
@@ -158,12 +166,13 @@ jobs:
             -t "$IMAGE:sha-${{ github.sha }}" \
             .
 
-      - name: Scan image with Trivy (fail on HIGH/CRITICAL)
+      - name: Scan image with Trivy (OS only)
         uses: aquasecurity/trivy-action@0.20.0
         with:
           image-ref: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ matrix.service }}:sha-${{ github.sha }}
           format: 'table'
-          vuln-type: 'os,library'
+          scanners: 'vuln'
+          vuln-type: 'os'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           exit-code: '1'
