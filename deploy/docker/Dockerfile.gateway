@@ -1,56 +1,11 @@
-# ---- builder ----
-FROM golang:1.23.4 AS builder
+# syntax=docker/dockerfile:1.8
+FROM gcr.io/distroless/static:nonroot
 
-# reproducible/static binary flags
-ARG CGO_ENABLED=0
-ENV CGO_ENABLED=${CGO_ENABLED} GOOS=linux GOARCH=amd64
+COPY --chmod=0755 deploy/docker/artifacts/gateway-service /gateway-service
 
-WORKDIR /src
-
-# Install git + ca-certificates so go can fetch modules and TLS works if needed
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
-
-# Copy go.mod (and go.sum if present) from gateway module first for caching
-COPY services/gateway/go.mod services/gateway/go.sum* ./services/gateway/
-
-# Copy gateway service source
-COPY services/gateway ./services/gateway
-
-# Copy api, pkg and docs/swagger modules used by gateway
-COPY api/ ./api
-COPY pkg/ ./pkg
-COPY docs/swagger/ ./docs/swagger
-
-# go build expects to run from the module directory
-WORKDIR /src/services/gateway
-
-# resolve modules
-RUN go mod download
-
-# Build binary. Main assumed at services/gateway/cmd
-RUN go build -ldflags="-s -w" -o /gateway-service ./cmd
-
-
-# ---- runtime (minimal, non-root) ----
-FROM gcr.io/distroless/static:nonroot AS runtime
-
-# copy CA certs for outbound TLS (some clients require them)
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-# copy binary
-COPY --from=builder /gateway-service /gateway-service
-
-# copy templates used by the gateway web handler
-# (keeps the same location as your original runtime: /app/internal/web/templates)
 WORKDIR /app
-COPY --from=builder /src/services/gateway/internal/web/templates /app/internal/web/templates
+COPY services/gateway/internal/web/templates /app/internal/web/templates
 
-
-# Default HTTP port; configurable via env/config (your config.go default is "8080")
 EXPOSE 8080
-
-# Run as nonroot user provided by distroless image
 USER nonroot
-
-# Run
 ENTRYPOINT ["/gateway-service"]

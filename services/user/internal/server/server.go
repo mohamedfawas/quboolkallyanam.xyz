@@ -23,11 +23,14 @@ import (
 	grpcHandlerv1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/user/internal/handlers/grpc/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	health "google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type Server struct {
 	config          *config.Config
 	grpcServer      *grpc.Server
+	healthSrv       *health.Server
 	pgClient        *postgres.Client
 	messagingClient messageBroker.Client
 	gcsStore        *gcsstore.GCSStore
@@ -63,7 +66,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
-		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
+		messagingClient, err = pubsub.NewClient(serverCtx, config.PubSub.ProjectID)
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
@@ -103,6 +106,12 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
 	)
 
+	///////////////////////// HEALTH SERVER INITIALIZATION /////////////////////////
+	// create and register simple standard gRPC health server
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthSrv)
+	rootLogger.Info("grpc health server created and registered")
+
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProfileRepo := postgresAdapters.NewUserProfileRepository(pgClient)
 	userImageRepo := postgresAdapters.NewUserImageRepository(pgClient)
@@ -135,9 +144,13 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		}
 	}()
 
+	// mark healthy once all deps initialized successfully
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+
 	server := &Server{
 		config:          config,
 		grpcServer:      grpcServer,
+		healthSrv:       healthSrv,
 		pgClient:        pgClient,
 		messagingClient: messagingClient,
 		gcsStore:        gcsStore,
@@ -159,6 +172,11 @@ func (s *Server) Start() error {
 
 func (s *Server) Stop() {
 	s.cancel()
+	// mark not-serving so readiness probe fails quickly
+	if s.healthSrv != nil {
+		s.healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+	}
+
 	s.grpcServer.GracefulStop()
 
 	// Close GCS store

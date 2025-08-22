@@ -16,6 +16,18 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 	// Prometheus middleware SHOULD NOT register collectors; it should only observe them.
     router.Use(middleware.PrometheusMiddleware())
 
+	router.GET("/healthz", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
+
+	router.GET("/readyz", func(c *gin.Context) {
+		if !s.isReady() {
+			c.String(503, "not ready")
+			return
+		}
+		c.String(200, "ready")
+	})
+
 	// Wrap the http.Handler returned by MetricsHandler()
 	router.GET("/metrics", gin.WrapH(middleware.MetricsHandler()))
 	

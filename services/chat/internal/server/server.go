@@ -9,6 +9,7 @@ import (
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/mongodb"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/database/postgres"
+	interceptors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/pubsub"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker/rabbitmq"
@@ -19,14 +20,16 @@ import (
 	userProjectionUsecaseImpl "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/domain/usecase/user_projection"
 	eventHandlers "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/handlers/event"
 	v1 "github.com/mohamedfawas/quboolkallyanam.xyz/services/chat/internal/handlers/grpc/v1"
-	interceptors "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/grpc/interceptors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	health "google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type Server struct {
 	config          *config.Config
 	grpcServer      *grpc.Server
+	healthSrv       *health.Server
 	pgClient        *postgres.Client
 	mongoClient     *mongodb.Client
 	messagingClient messageBroker.Client
@@ -59,7 +62,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	)
 
 	///////////////////////// MONGODB INITIALIZATION /////////////////////////
-	mongoClient, err := mongodb.NewClient(ctx, mongodb.Config{
+	mongoClient, err := mongodb.NewClient(serverCtx, mongodb.Config{
 		URI:      config.MongoDB.URI,
 		Database: config.MongoDB.Database,
 		Timeout:  config.MongoDB.Timeout,
@@ -73,9 +76,10 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	///////////////////////// MESSAGING CLIENT INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
-		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
+		messagingClient, err = pubsub.NewClient(serverCtx, config.PubSub.ProjectID)
 		if err != nil {
 			// Clean up existing connections before returning error
+			pgClient.Close()
 			mongoClient.Close()
 			return nil, fmt.Errorf("failed to create pubsub client: %w", err)
 		}
@@ -87,6 +91,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		})
 		if err != nil {
 			// Clean up existing connections before returning error
+			pgClient.Close()
 			mongoClient.Close()
 			return nil, fmt.Errorf("failed to create rabbitmq client: %w", err)
 		}
@@ -97,6 +102,12 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryErrorInterceptor()),
 	)
+
+	///////////////////////// HEALTH SERVER INITIALIZATION /////////////////////////
+	// create and register simple standard gRPC health server
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthSrv)
+	rootLogger.Info("grpc health server created and registered")
 
 	///////////////////////// REPOSITORIES INITIALIZATION /////////////////////////
 	userProjectionRepo := postgresAdapters.NewUserProjectionRepository(pgClient)
@@ -121,9 +132,13 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 		}
 	}()
 
+	// mark healthy once all deps initialized successfully
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+
 	server := &Server{
 		config:          config,
 		grpcServer:      grpcServer,
+		healthSrv:       healthSrv,
 		pgClient:        pgClient,
 		mongoClient:     mongoClient,
 		messagingClient: messagingClient,
@@ -146,6 +161,11 @@ func (s *Server) Start() error {
 
 func (s *Server) Stop() {
 	s.cancel()
+	// mark not-serving so readiness probe fails quickly
+	if s.healthSrv != nil {
+		s.healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+	}
+
 	s.grpcServer.GracefulStop()
 
 	// Close messaging client first

@@ -1,0 +1,192 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: ['main']
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  set-env:
+    name: Select environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.pick.outputs.environment }}
+    steps:
+      - id: pick
+        run: |
+          if [[ "${GITHUB_REF}" == refs/heads/main || "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+  changes:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    needs: [set-env]
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout (full history for diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Paths filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          # Compare against main by default
+          base: 'refs/heads/main'
+          filters: |
+            all:
+              - 'pkg/**'
+              - 'api/**'
+              - 'deploy/**'
+              - 'Makefile'
+            auth:
+              - 'services/auth/**'
+              - 'deploy/docker/Dockerfile.auth'
+            user:
+              - 'services/user/**'
+              - 'deploy/docker/Dockerfile.user'
+            chat:
+              - 'services/chat/**'
+              - 'deploy/docker/Dockerfile.chat'
+            payment:
+              - 'services/payment/**'
+              - 'deploy/docker/Dockerfile.payment'
+            notification:
+              - 'services/notification/**'
+              - 'deploy/docker/Dockerfile.notification'
+            gateway:
+              - 'services/gateway/**'
+              - 'deploy/docker/Dockerfile.gateway'
+
+      - id: set-matrix
+        name: Build service matrix
+        run: |
+          # Build everything on tag builds
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            services='["auth","user","chat","payment","notification","gateway"]'
+            echo "matrix={\"service\":${services}}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ steps.filter.outputs.all }}" == "true" ]]; then
+            services='["auth","user","chat","payment","notification","gateway"]'
+          else
+            items=()
+            [[ "${{ steps.filter.outputs.auth }}" == "true" ]] && items+=('"auth"')
+            [[ "${{ steps.filter.outputs.user }}" == "true" ]] && items+=('"user"')
+            [[ "${{ steps.filter.outputs.chat }}" == "true" ]] && items+=('"chat"')
+            [[ "${{ steps.filter.outputs.payment }}" == "true" ]] && items+=('"payment"')
+            [[ "${{ steps.filter.outputs.notification }}" == "true" ]] && items+=('"notification"')
+            [[ "${{ steps.filter.outputs.gateway }}" == "true" ]] && items+=('"gateway"')
+            if [[ ${#items[@]} -eq 0 ]]; then
+              services='[]'
+            else
+              services="[${items[*]}]"
+            fi
+          fi
+          echo "matrix={\"service\":${services}}" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    name: Build, Scan, Push (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs: [set-env, changes]
+    if: ${{ needs.changes.outputs.matrix != '{"service":[]}' }}
+    environment: ${{ needs.set-env.outputs.environment }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go with module caching
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.4'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            pkg/go.sum
+            api/go.sum
+            docs/swagger/go.sum
+            services/**/go.sum
+
+      - name: Authenticate to Google Cloud (OIDC)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/889059323165/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-ci@qubool-kallyanam.iam.gserviceaccount.com
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resolve environment variables (with defaults)
+        run: |
+          # Prefer environment "Variables" (GitHub → Environments → production/staging)
+          # Fall back to sensible defaults if not set.
+          if [[ -z "${{ vars.REGION }}" ]]; then echo "REGION=asia-south1" >> $GITHUB_ENV; else echo "REGION=${{ vars.REGION }}" >> $GITHUB_ENV; fi
+          if [[ -z "${{ vars.PROJECT_ID }}" ]]; then echo "PROJECT_ID=qubool-kallyanam" >> $GITHUB_ENV; else echo "PROJECT_ID=${{ vars.PROJECT_ID }}" >> $GITHUB_ENV; fi
+          if [[ -z "${{ vars.REPOSITORY }}" ]]; then echo "REPOSITORY=qubool-kallyanam-docker" >> $GITHUB_ENV; else echo "REPOSITORY=${{ vars.REPOSITORY }}" >> $GITHUB_ENV; fi
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker $REGION-docker.pkg.dev -q
+
+      - name: Build ${{ matrix.service }} binary (linux/amd64)
+        run: make ${{ matrix.service }}
+
+      - name: Build container image
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ matrix.service }}
+        run: |
+          docker build \
+            -f deploy/docker/Dockerfile.${{ matrix.service }} \
+            -t "$IMAGE:sha-${{ github.sha }}" \
+            .
+
+      - name: Scan image with Trivy (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ matrix.service }}:sha-${{ github.sha }}
+          format: 'table'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+          timeout: '10m'
+
+      - name: Push SHA tag
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ matrix.service }}
+        run: docker push "$IMAGE:sha-${{ github.sha }}"
+
+      - name: Tag and push latest on main
+        if: github.ref == 'refs/heads/main'
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ matrix.service }}
+        run: |
+          docker tag "$IMAGE:sha-${{ github.sha }}" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
+
+      - name: Tag and push release version on tag refs
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ matrix.service }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          docker tag "$IMAGE:sha-${{ github.sha }}" "$IMAGE:${VERSION}"
+          docker push "$IMAGE:${VERSION}"

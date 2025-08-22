@@ -30,11 +30,14 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	health "google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type Server struct {
 	config          *config.Config
 	grpcServer      *grpc.Server
+	healthSrv       *health.Server
 	pgClient        *postgres.Client
 	messagingClient messageBroker.Client
 	razorpayService *razorpay.Service
@@ -70,8 +73,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	///////////////////////// MESSAGING INITIALIZATION /////////////////////////
 	var messagingClient messageBroker.Client
 	if config.Environment == constants.EnvProduction {
-		ctx := context.Background()
-		messagingClient, err = pubsub.NewClient(ctx, config.PubSub.ProjectID)
+		messagingClient, err = pubsub.NewClient(serverCtx, config.PubSub.ProjectID)
 		if err != nil {
 			// Clean up existing connections before returning error
 			pgClient.Close()
@@ -95,6 +97,12 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		interceptors.UnaryErrorInterceptor(),
 	))
+
+	///////////////////////// HEALTH SERVER INITIALIZATION /////////////////////////
+	// create and register simple standard gRPC health server
+	healthSrv := health.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthSrv)
+	rootLogger.Info("grpc health server created and registered")
 
 	///////////////////////// RAZORPAY SERVICE INITIALIZATION /////////////////////////
 	razorpayService := razorpay.NewService(config.Razorpay.KeyID, config.Razorpay.KeySecret)
@@ -123,11 +131,14 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 	///////////////////////// GRPC HANDLER INITIALIZATION /////////////////////////
 	paymentHandler := grpcHandlerv1.NewPaymentHandler(paymentUC, subscriptionUC, rootLogger)
 	paymentpbv1.RegisterPaymentServiceServer(grpcServer, paymentHandler)
-	
+
+	// mark healthy once all deps initialized successfully
+	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
 	server := &Server{
 		config:          config,
 		grpcServer:      grpcServer,
+		healthSrv:       healthSrv,
 		pgClient:        pgClient,
 		messagingClient: messagingClient,
 		razorpayService: razorpayService,
@@ -150,6 +161,11 @@ func (s *Server) Start() error {
 
 func (s *Server) Stop() {
 	s.cancel()
+	// mark not-serving so readiness probe fails quickly
+	if s.healthSrv != nil {
+		s.healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+	}
+
 	s.grpcServer.GracefulStop()
 
 	// Close messaging client first

@@ -1,46 +1,7 @@
-# ---- builder ----
-FROM golang:1.23.4 AS builder
+# syntax=docker/dockerfile:1.8
+FROM gcr.io/distroless/static:nonroot
 
-# reproducible/static binary flags
-ARG CGO_ENABLED=0
-ENV CGO_ENABLED=${CGO_ENABLED} GOOS=linux GOARCH=amd64
+COPY --chmod=0755 deploy/docker/artifacts/notification-service /notification-service
 
-WORKDIR /src
-
-# Install git + ca-certificates so go can fetch modules and TLS works if needed
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
-
-# Copy go.mod (and go.sum if present) from notification module first for caching
-COPY services/notification/go.mod services/notification/go.sum* ./services/notification/
-
-# Copy notification service source
-COPY services/notification ./services/notification
-
-# Copy pkg directory (your go.mod uses replace to ../../pkg)
-COPY pkg ./pkg
-
-# go build expects to run from the module directory
-WORKDIR /src/services/notification
-
-# resolve modules
-RUN go mod download
-
-# Build binary. Main assumed at services/notification/cmd
-RUN go build -ldflags="-s -w" -o /notification-service ./cmd
-
-
-# ---- runtime (minimal, non-root) ----
-FROM gcr.io/distroless/static:nonroot AS runtime
-
-# copy CA certs for outbound TLS (some clients require them)
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-# copy binary
-COPY --from=builder /notification-service /notification-service
-
-# Run as nonroot user provided by distroless image
 USER nonroot
-
-# Run
 ENTRYPOINT ["/notification-service"]
-	

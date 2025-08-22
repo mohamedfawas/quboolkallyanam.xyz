@@ -115,6 +115,6 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("pubsub.project_id", "qubool-kallyanam-events")
 
 	v.SetDefault("mongodb.uri", "mongodb://localhost:27017")
-	v.SetDefault("mongodb.database", "quboolKallyanam")
+	v.SetDefault("mongodb.database", "quboolkallayanam_chat_mongo")
 	v.SetDefault("mongodb.timeout", 10*time.Second)
 }

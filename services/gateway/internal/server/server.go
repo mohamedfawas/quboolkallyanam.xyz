@@ -190,6 +190,15 @@ func (s *Server) Start() error {
 	return s.httpServer.ListenAndServe()
 }
 
+
+// used for health check, ensures all clients are initialized
+func (s *Server) isReady() bool {
+	return s.authClient != nil &&
+		s.paymentClient != nil &&
+		s.chatClient != nil &&
+		s.userClient != nil
+}
+
 func (s *Server) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

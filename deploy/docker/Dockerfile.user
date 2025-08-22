@@ -1,52 +1,10 @@
-# ---- builder ----
-FROM golang:1.23.4 AS builder
+# syntax=docker/dockerfile:1.8
+FROM gcr.io/distroless/static:nonroot
 
-# reproducible/static binary flags
-ARG CGO_ENABLED=0
-ENV CGO_ENABLED=${CGO_ENABLED} GOOS=linux GOARCH=amd64
+# Copy the compiled binary from CI artifacts into the container
+COPY --chmod=0755 deploy/docker/artifacts/user-service /user-service
 
-WORKDIR /src
-
-# Install git + ca-certificates so go can fetch modules and TLS works if needed
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
-
-# Copy go.mod (and go.sum if present) from user module first for caching
-COPY services/user/go.mod services/user/go.sum* ./services/user/
-
-# Copy user service source
-COPY services/user ./services/user
-
-# Copy api module
-COPY api/ ./api
-
-# Copy pkg directory code
-COPY pkg ./pkg
-
-# go build expects to run from the module directory
-WORKDIR /src/services/user
-
-# resolve modules
-RUN go mod download
-
-# Build binary. Main assumed at services/user/cmd
-RUN go build -ldflags="-s -w" -o /user-service ./cmd
-
-
-# ---- runtime (minimal, non-root) ----
-# We'll use distroless nonroot for a small, secure runtime image.
-FROM gcr.io/distroless/static:nonroot AS runtime
-
-# copy CA certs for outbound TLS (some clients require them)
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-# copy binary
-COPY --from=builder /user-service /user-service
-
-# exposed default gRPC port from your config.go
 EXPOSE 50052
-
-# Run as nonroot user provided by distroless image
 USER nonroot
 
-# Run
 ENTRYPOINT ["/user-service"]

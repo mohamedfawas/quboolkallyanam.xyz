@@ -1,0 +1,62 @@
+# -------------------------------
+# Git
+# -------------------------------
+.git
+.gitignore
+
+# -------------------------------
+# OS / Editor / IDE junk
+# -------------------------------
+*.DS_Store
+*.swp
+*.swo
+*.tmp
+*.log
+.vscode/
+.idea/
+.cache/
+
+# -------------------------------
+# Go build artifacts
+# -------------------------------
+**/bin/
+**/dist/
+**/out/
+**/cover/
+*.test
+
+# -------------------------------
+# Dependency folders (ignored by default)
+# -------------------------------
+**/vendor/
+node_modules/
+
+# -------------------------------
+# Docs & configs not needed in container
+# -------------------------------
+README.md
+LICENSE
+docs/
+!docs/swagger/**
+
+# -------------------------------
+# Deployment configs not needed inside containers
+# (your Dockerfiles will still be used via -f flag)
+# -------------------------------
+deploy/compose/
+deploy/k8s/
+
+# Keep only dockerfiles (negation must come after the exclude)
+!deploy/docker/**
+
+# If your DB init scripts are needed in the build context (or you
+# want them to be packaged into images) allow them explicitly:
+!deploy/compose/initdb/**
+!deploy/compose/docker-compose.yml
+
+# -------------------------------
+# Environment file: keep out of build context by default (good for secrets)
+# -------------------------------
+.env
+
+# end
