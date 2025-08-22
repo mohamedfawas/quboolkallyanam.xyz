@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/mohamedfawas/quboolkallyanam.xyz/api v0.0.0-00010101000000-000000000000
 	github.com/mohamedfawas/quboolkallyanam.xyz/docs/swagger v0.0.0-00010101000000-000000000000
-	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250820035256-36225a53cadc
+	github.com/mohamedfawas/quboolkallyanam.xyz/pkg v0.0.0-20250822120823-91898777214d
 	github.com/prometheus/client_golang v1.23.0
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
