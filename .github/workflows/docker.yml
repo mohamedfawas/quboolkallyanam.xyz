@@ -156,6 +156,8 @@ jobs:
           go list -deps ./... > /dev/null
 
       - name: Build ${{ matrix.service }} binary (linux/amd64)
+        env:
+          GOPRIVATE: github.com/mohamedfawas/*
         run: make ${{ matrix.service }}
 
       - name: Build container image
