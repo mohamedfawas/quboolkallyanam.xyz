@@ -150,7 +150,10 @@ jobs:
       - name: Prepare module deps
         run: |
           cd services/${{ matrix.service }}
-          go mod tidy -compat=1.23
+          go env -w GOPRIVATE=github.com/mohamedfawas/*
+          go mod download all
+          # warm the build cache deterministically
+          go list -deps ./... > /dev/null
 
       - name: Build ${{ matrix.service }} binary (linux/amd64)
         env:
