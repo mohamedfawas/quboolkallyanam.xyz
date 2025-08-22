@@ -154,8 +154,11 @@ jobs:
             ./services/auth ./services/user ./services/chat \
             ./services/payment ./services/notification ./services/gateway
           go work sync
+          echo "GOWORK=$GITHUB_WORKSPACE/go.work" >> $GITHUB_ENV 
 
       - name: Build ${{ matrix.service }} binary (linux/amd64)
+        env:
+          GOWORK: ${{ env.GOWORK }}
         run: make ${{ matrix.service }}
 
       - name: Build container image
