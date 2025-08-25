@@ -79,11 +79,11 @@ jobs:
           chmod +x /usr/local/bin/cloud-sql-proxy
           /usr/local/bin/cloud-sql-proxy --version || true
 
-      - name: Start Cloud SQL Auth Proxy (private IP)
+      - name: Start Cloud SQL Auth Proxy (public endpoint via proxy)
         env:
           CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
         run: |
-          /usr/local/bin/cloud-sql-proxy --quiet --private-ip --port 5432 "$CLOUDSQL_INSTANCE" &
+          /usr/local/bin/cloud-sql-proxy --quiet --port 5432 "$CLOUDSQL_INSTANCE" &
           for i in {1..30}; do
             (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break || sleep 1
           done
