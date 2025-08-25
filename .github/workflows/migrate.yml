@@ -28,6 +28,10 @@ concurrency:
   group: migrate-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  GOOSE_VERSION: v3.22.1
+  CLOUDSQL_PROXY_VERSION: v2.11.4
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -48,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    environment: production   # requires approval before running
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,17 +68,25 @@ jobs:
 
       - name: Install goose and Cloud SQL Auth Proxy
         run: |
-          curl -sSL https://github.com/pressly/goose/releases/download/v3.22.1/goose_Linux_x86_64.tar.gz \
-            | sudo tar -xz -C /usr/local/bin goose
-          curl -sSL https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.11.4/cloud-sql-proxy.linux.amd64 \
-            -o cloud-sql-proxy
-          chmod +x cloud-sql-proxy
+          set -euo pipefail
+          # goose
+          curl -fsSL -o /tmp/goose.tgz \
+            https://github.com/pressly/goose/releases/download/${GOOSE_VERSION}/goose_Linux_x86_64.tar.gz
+          tar -xzf /tmp/goose.tgz -C /usr/local/bin goose
+          chmod +x /usr/local/bin/goose
+          goose -version
+
+          # Cloud SQL Auth Proxy
+          curl -fsSL -o /usr/local/bin/cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${CLOUDSQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64
+          chmod +x /usr/local/bin/cloud-sql-proxy
+          /usr/local/bin/cloud-sql-proxy --version || true
 
       - name: Start Cloud SQL Auth Proxy
         env:
           CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
         run: |
-          ./cloud-sql-proxy --quiet --port 5432 "$CLOUDSQL_INSTANCE" &
+          /usr/local/bin/cloud-sql-proxy --quiet --port 5432 "$CLOUDSQL_INSTANCE" &
           for i in {1..30}; do
             (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break || sleep 1
           done
