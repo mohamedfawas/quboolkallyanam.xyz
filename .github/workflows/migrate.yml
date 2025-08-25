@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GOOSE_PKG: github.com/pressly/goose/v3/cmd/goose@v3.22.1
+  GOOSE_PKG: github.com/pressly/goose/v3/cmd/goose@v3.24.3
   CLOUDSQL_PROXY_VERSION: v2.18.1
 
 jobs:
@@ -74,12 +74,9 @@ jobs:
       - name: Install goose (pinned) and Cloud SQL Auth Proxy
         run: |
           set -euo pipefail
-          # goose (pinned)
           go install "$GOOSE_PKG"
           echo "$HOME/go/bin" >> "$GITHUB_PATH"
           goose -version
-
-          # Cloud SQL Auth Proxy (host binary; uses ADC from auth step)
           curl -fsSL -o /usr/local/bin/cloud-sql-proxy \
             https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${CLOUDSQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64
           chmod +x /usr/local/bin/cloud-sql-proxy
@@ -89,7 +86,7 @@ jobs:
         env:
           CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
         run: |
-          /usr/local/bin/cloud-sql-proxy --quiet --port 5432 "$CLOUDSQL_INSTANCE" &
+          /usr/local/bin/cloud-sql-proxy --quiet --private-ip --port 5432 "$CLOUDSQL_INSTANCE" &
           for i in {1..30}; do
             (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break || sleep 1
           done
@@ -119,6 +116,7 @@ jobs:
             echo "No migrations directory found at $DIR; skipping."
             exit 0
           fi
+          goose -dir "$DIR" status || true
           DSN="host=127.0.0.1 port=5432 user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${DB} sslmode=disable TimeZone=${POSTGRES_TIMEZONE}"
           echo "Running '$ACTION' for $SERVICE ($DB)"
           case "$ACTION" in
