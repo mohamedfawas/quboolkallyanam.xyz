@@ -29,8 +29,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GOOSE_VERSION: v3.22.1
-  CLOUDSQL_PROXY_VERSION: v2.11.4
+  GOOSE_PKG: github.com/pressly/goose/v3/cmd/goose@v3.22.1
+  CLOUDSQL_PROXY_VERSION: v2.18.1
 
 jobs:
   plan:
@@ -66,17 +66,20 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install goose and Cloud SQL Auth Proxy
+      - name: Setup Go (for goose)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install goose (pinned) and Cloud SQL Auth Proxy
         run: |
           set -euo pipefail
-          # goose
-          curl -fsSL -o /tmp/goose.tgz \
-            https://github.com/pressly/goose/releases/download/${GOOSE_VERSION}/goose_Linux_x86_64.tar.gz
-          tar -xzf /tmp/goose.tgz -C /usr/local/bin goose
-          chmod +x /usr/local/bin/goose
+          # goose (pinned)
+          go install "$GOOSE_PKG"
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
           goose -version
 
-          # Cloud SQL Auth Proxy
+          # Cloud SQL Auth Proxy (host binary; uses ADC from auth step)
           curl -fsSL -o /usr/local/bin/cloud-sql-proxy \
             https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${CLOUDSQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64
           chmod +x /usr/local/bin/cloud-sql-proxy
@@ -105,7 +108,6 @@ jobs:
           PAYMENT_DB: ${{ vars.PAYMENT_POSTGRES_DBNAME }}
         run: |
           set -euo pipefail
-
           case "$SERVICE" in
             auth)    DB="$AUTH_DB";    DIR="services/auth/migrations/postgres" ;;
             user)    DB="$USER_DB";    DIR="services/user/migrations/postgres" ;;
@@ -113,14 +115,11 @@ jobs:
             payment) DB="$PAYMENT_DB"; DIR="services/payment/migrations/postgres" ;;
             *) echo "Unknown service $SERVICE"; exit 1 ;;
           esac
-
           if [[ ! -d "$DIR" ]]; then
             echo "No migrations directory found at $DIR; skipping."
             exit 0
           fi
-
           DSN="host=127.0.0.1 port=5432 user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${DB} sslmode=disable TimeZone=${POSTGRES_TIMEZONE}"
-
           echo "Running '$ACTION' for $SERVICE ($DB)"
           case "$ACTION" in
             up) goose -dir "$DIR" postgres "$DSN" up -v ;;
