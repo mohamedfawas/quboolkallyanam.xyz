@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qubool-kallyanam-gateway
+  namespace: qubool-kallyanam
+  labels:
+    app.kubernetes.io/name: qubool-kallyanam-gateway
+    app.kubernetes.io/part-of: qubool-kallyanam
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels: { app.kubernetes.io/name: qubool-kallyanam-gateway }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qubool-kallyanam-gateway
+        app.kubernetes.io/part-of: qubool-kallyanam
+    spec:
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: qubool-kallyanam-gateway
+          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: gateway-config }
+          env:
+            # Ports from shared source
+            - name: GATEWAY_SERVICES_AUTH_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: AUTH_GRPC_PORT } }
+            - name: GATEWAY_SERVICES_USER_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: USER_GRPC_PORT } }
+            - name: GATEWAY_SERVICES_CHAT_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: CHAT_GRPC_PORT } }
+            - name: GATEWAY_SERVICES_PAYMENT_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: PAYMENT_GRPC_PORT } }
+            # Shared JWT (secret + non-secret)
+            - name: GATEWAY_AUTH_JWT_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: common-secret, key: JWT_SECRET } }
+            - name: GATEWAY_AUTH_JWT_ACCESS_TOKEN_MINUTES
+              valueFrom: { configMapKeyRef: { name: shared-config, key: JWT_ACCESS_TOKEN_MINUTES } }
+            - name: GATEWAY_AUTH_JWT_REFRESH_TOKEN_DAYS
+              valueFrom: { configMapKeyRef: { name: shared-config, key: JWT_REFRESH_TOKEN_DAYS } }
+            - name: GATEWAY_AUTH_JWT_ISSUER
+              valueFrom: { configMapKeyRef: { name: shared-config, key: JWT_ISSUER } }
+            # Shared timezone
+            - name: GATEWAY_DEFAULT_TIMEZONE
+              valueFrom: { configMapKeyRef: { name: shared-config, key: DEFAULT_TIMEZONE } }
+            - name: GATEWAY_ENVIRONMENT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: ENVIRONMENT } }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8080 }
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qubool-kallyanam-user
+  namespace: qubool-kallyanam
+  labels:
+    app.kubernetes.io/name: qubool-kallyanam-user
+    app.kubernetes.io/part-of: qubool-kallyanam
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels: { app.kubernetes.io/name: qubool-kallyanam-user }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qubool-kallyanam-user
+        app.kubernetes.io/part-of: qubool-kallyanam
+    spec:
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: qubool-kallyanam-user
+          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/user:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: grpc, containerPort: 50061 }]
+          envFrom:
+            - configMapRef: { name: user-config }
+          env:
+            - name: USER_GRPC_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: USER_GRPC_PORT } }
+            - name: USER_ENVIRONMENT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: ENVIRONMENT } }
+
+            # Postgres 
+            - name: USER_POSTGRES_HOST
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_HOST } }
+            - name: USER_POSTGRES_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_PORT } }
+            - name: USER_POSTGRES_USER
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_USER } }
+            - name: USER_POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: common-secret, key: POSTGRES_PASSWORD } }
+            - name: USER_POSTGRES_SSLMODE
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_SSLMODE } }
+            - name: USER_POSTGRES_TIMEZONE
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_TIMEZONE } }
+
+            # RabbitMQ
+            - name: USER_RABBITMQ_EXCHANGE_NAME
+              valueFrom: { configMapKeyRef: { name: shared-config, key: RABBITMQ_EXCHANGE_NAME } }
+            - name: USER_RABBITMQ_DSN
+              valueFrom: { secretKeyRef: { name: common-secret, key: RABBITMQ_DSN } }
+
+            # PubSub
+            - name: USER_PUBSUB_PROJECT_ID
+              valueFrom: { configMapKeyRef: { name: shared-config, key: PUBSUB_PROJECT_ID } }
+          readinessProbe:
+            grpc: { port: 50061 }
+            initialDelaySeconds: 5
+          livenessProbe:
+            grpc: { port: 50061 }
+            initialDelaySeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }

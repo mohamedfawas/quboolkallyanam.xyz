@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qubool-kallyanam-payment
+  namespace: qubool-kallyanam
+  labels:
+    app.kubernetes.io/name: qubool-kallyanam-payment
+    app.kubernetes.io/part-of: qubool-kallyanam
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels: { app.kubernetes.io/name: qubool-kallyanam-payment }
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qubool-kallyanam-payment
+        app.kubernetes.io/part-of: qubool-kallyanam
+    spec:
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: qubool-kallyanam-payment
+          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/payment:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: grpc, containerPort: 50081 }]
+          envFrom:
+            - configMapRef: { name: payment-config }
+            - secretRef: { name: payment-secret }
+          env:
+            - name: PAYMENT_GRPC_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: PAYMENT_GRPC_PORT } }
+            - name: PAYMENT_ENVIRONMENT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: ENVIRONMENT } }
+
+            # Postgres
+            - name: PAYMENT_POSTGRES_HOST
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_HOST } }
+            - name: PAYMENT_POSTGRES_PORT
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_PORT } }
+            - name: PAYMENT_POSTGRES_USER
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_USER } }
+            - name: PAYMENT_POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: common-secret, key: POSTGRES_PASSWORD } }
+            - name: PAYMENT_POSTGRES_SSLMODE
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_SSLMODE } }
+            - name: PAYMENT_POSTGRES_TIMEZONE
+              valueFrom: { configMapKeyRef: { name: shared-config, key: POSTGRES_TIMEZONE } }
+
+            # RabbitMQ
+            - name: PAYMENT_RABBITMQ_EXCHANGE_NAME
+              valueFrom: { configMapKeyRef: { name: shared-config, key: RABBITMQ_EXCHANGE_NAME } }
+            - name: PAYMENT_RABBITMQ_DSN
+              valueFrom: { secretKeyRef: { name: common-secret, key: RABBITMQ_DSN } }
+
+            # PubSub
+            - name: PAYMENT_PUBSUB_PROJECT_ID
+              valueFrom: { configMapKeyRef: { name: shared-config, key: PUBSUB_PROJECT_ID } }
+
+            # Razorpay
+            - name: PAYMENT_RAZORPAY_KEY_ID
+              valueFrom: { secretKeyRef: { name: payment-secret, key: RAZORPAY_KEY_ID } }
+            - name: PAYMENT_RAZORPAY_KEY_SECRET
+              valueFrom: { secretKeyRef: { name: payment-secret, key: RAZORPAY_KEY_SECRET } }
+
+          readinessProbe:
+            grpc: { port: 50081 }
+            initialDelaySeconds: 5
+          livenessProbe:
+            grpc: { port: 50081 }
+            initialDelaySeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }

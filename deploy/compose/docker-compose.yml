@@ -189,7 +189,7 @@ services:
       AUTH_POSTGRES_TIMEZONE: ${POSTGRES_TIMEZONE}
 
       # Redis
-      AUTH_REDIS_URL: ${REDIS_URL}
+      AUTH_REDIS_REDIS_URL: ${REDIS_URL}
       AUTH_REDIS_HOST: ${REDIS_HOST}
       AUTH_REDIS_PORT: ${REDIS_PORT}
       AUTH_REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -303,6 +303,8 @@ services:
       CHAT_RABBITMQ_DSN: ${RABBITMQ_DSN}
       CHAT_RABBITMQ_EXCHANGE_NAME: ${RABBITMQ_EXCHANGE_NAME}
 
+      # PubSub
+      CHAT_PUBSUB_PROJECT_ID: ${PUBSUB_PROJECT_ID}
     networks:
       - qubool-kallyanam-network
     depends_on:

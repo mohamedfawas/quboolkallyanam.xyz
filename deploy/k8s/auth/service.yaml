@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qubool-kallyanam-auth
+  namespace: qubool-kallyanam
+  labels:
+    app.kubernetes.io/name: qubool-kallyanam-auth
+    app.kubernetes.io/part-of: qubool-kallyanam
+spec:
+  selector:
+    app.kubernetes.io/name: qubool-kallyanam-auth
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+  type: ClusterIP

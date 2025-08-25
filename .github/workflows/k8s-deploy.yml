@@ -1,0 +1,201 @@
+# name: K8s Deploy (Config + Secrets)
+
+# on:
+#   workflow_dispatch: {}
+
+# permissions:
+#   contents: read
+#   id-token: write
+
+# concurrency:
+#   group: k8s-${{ github.ref }}
+#   cancel-in-progress: true
+
+# jobs:
+#   sync-config-and-secrets:
+#     name: Apply ConfigMaps and Secrets
+#     runs-on: ubuntu-latest
+#     environment: production
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Authenticate to Google Cloud (OIDC)
+#         uses: google-github-actions/auth@v2
+#         with:
+#           workload_identity_provider: projects/889059323165/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+#           service_account: github-ci@qubool-kallyanam.iam.gserviceaccount.com
+
+#       - name: Setup gcloud
+#         uses: google-github-actions/setup-gcloud@v2
+
+#       - name: Get GKE credentials
+#         env:
+#           PROJECT_ID: ${{ vars.PROJECT_ID || 'qubool-kallyanam' }}
+#           GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
+#           GKE_REGION: ${{ vars.GKE_REGION }}
+#         run: |
+#           kubectl create namespace qubool-kallyanam --dry-run=client -o yaml | kubectl apply -f -
+#           gcloud container clusters get-credentials "$GKE_CLUSTER" --region "$GKE_REGION" --project "$PROJECT_ID"
+
+#       - name: Sync ConfigMaps (from GitHub Variables; mirrors .env.example)
+#         env:
+#           NS: qubool-kallyanam
+#           # ---------- Global ----------
+#           ENVIRONMENT: ${{ vars.ENVIRONMENT }}
+#           DEFAULT_TIMEZONE: ${{ vars.DEFAULT_TIMEZONE }}
+#           # ---------- Gateway ----------
+#           GATEWAY_HTTP_PORT: ${{ vars.GATEWAY_HTTP_PORT }}
+#           GATEWAY_BASE_URL: ${{ vars.GATEWAY_BASE_URL }}
+#           # ---------- Postgres (shared) ----------
+#           POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+#           POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+#           POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+#           POSTGRES_SSLMODE: ${{ vars.POSTGRES_SSLMODE }}
+#           POSTGRES_TIMEZONE: ${{ vars.POSTGRES_TIMEZONE }}
+#           # Per-service DB names
+#           AUTH_POSTGRES_DBNAME: ${{ vars.AUTH_POSTGRES_DBNAME }}
+#           USER_POSTGRES_DBNAME: ${{ vars.USER_POSTGRES_DBNAME }}
+#           CHAT_POSTGRES_DBNAME: ${{ vars.CHAT_POSTGRES_DBNAME }}
+#           PAYMENT_POSTGRES_DBNAME: ${{ vars.PAYMENT_POSTGRES_DBNAME }}
+#           # ---------- Redis (non-secret parts; optional for Upstash) ----------
+#           REDIS_HOST: ${{ vars.REDIS_HOST }}
+#           REDIS_PORT: ${{ vars.REDIS_PORT }}
+#           # ---------- RabbitMQ ----------
+#           RABBITMQ_EXCHANGE_NAME: ${{ vars.RABBITMQ_EXCHANGE_NAME }}
+#           # ---------- Pub/Sub ----------
+#           PUBSUB_PROJECT_ID: ${{ vars.PUBSUB_PROJECT_ID }}
+#           # ---------- JWT (non-secret fields) ----------
+#           JWT_ACCESS_TOKEN_MINUTES: ${{ vars.JWT_ACCESS_TOKEN_MINUTES }}
+#           JWT_REFRESH_TOKEN_DAYS: ${{ vars.JWT_REFRESH_TOKEN_DAYS }}
+#           JWT_ISSUER: ${{ vars.JWT_ISSUER }}
+#           # ---------- gRPC ports ----------
+#           AUTH_GRPC_PORT: ${{ vars.AUTH_GRPC_PORT }}
+#           USER_GRPC_PORT: ${{ vars.USER_GRPC_PORT }}
+#           CHAT_GRPC_PORT: ${{ vars.CHAT_GRPC_PORT }}
+#           PAYMENT_GRPC_PORT: ${{ vars.PAYMENT_GRPC_PORT }}
+#           # ---------- Mongo ----------
+#           MONGODB_TIMEOUT: ${{ vars.MONGODB_TIMEOUT }}
+#           CHAT_MONGODB_DATABASE: ${{ vars.CHAT_MONGODB_DATABASE }}
+#           # ---------- Auth service ----------
+#           AUTH_AUTH_PENDING_REGISTRATION_EXPIRY_HOURS: ${{ vars.AUTH_AUTH_PENDING_REGISTRATION_EXPIRY_HOURS }}
+#           AUTH_AUTH_OTP_EXPIRY_MINUTES: ${{ vars.AUTH_AUTH_OTP_EXPIRY_MINUTES }}
+#           AUTH_REDIS_DB: ${{ vars.AUTH_REDIS_DB }}
+#           # ---------- User service ----------
+#           USER_MEDIA_STORAGE_BUCKET: ${{ vars.USER_MEDIA_STORAGE_BUCKET }}
+#           USER_MEDIA_STORAGE_URL_EXPIRY: ${{ vars.USER_MEDIA_STORAGE_URL_EXPIRY }}
+#           USER_MEDIA_STORAGE_SIGNER_EMAIL: ${{ vars.USER_MEDIA_STORAGE_SIGNER_EMAIL }}
+#           # ---------- Notification (non-secret) ----------
+#           NOTIFICATION_EMAIL_SMTP_HOST: ${{ vars.NOTIFICATION_EMAIL_SMTP_HOST }}
+#           NOTIFICATION_EMAIL_SMTP_PORT: ${{ vars.NOTIFICATION_EMAIL_SMTP_PORT }}
+#           NOTIFICATION_EMAIL_FROM_EMAIL: ${{ vars.NOTIFICATION_EMAIL_FROM_EMAIL }}
+#           NOTIFICATION_EMAIL_FROM_NAME: ${{ vars.NOTIFICATION_EMAIL_FROM_NAME }}
+#         run: |
+#           set -euo pipefail
+#           # Shared ConfigMap
+#           kubectl -n "$NS" create configmap shared-config \
+#             --from-literal=DEFAULT_TIMEZONE="$DEFAULT_TIMEZONE" \
+#             --from-literal=ENVIRONMENT="$ENVIRONMENT" \
+#             --from-literal=POSTGRES_HOST="$POSTGRES_HOST" \
+#             --from-literal=POSTGRES_PORT="$POSTGRES_PORT" \
+#             --from-literal=POSTGRES_USER="$POSTGRES_USER" \
+#             --from-literal=POSTGRES_SSLMODE="$POSTGRES_SSLMODE" \
+#             --from-literal=POSTGRES_TIMEZONE="$POSTGRES_TIMEZONE" \
+#             --from-literal=RABBITMQ_EXCHANGE_NAME="$RABBITMQ_EXCHANGE_NAME" \
+#             --from-literal=PUBSUB_PROJECT_ID="$PUBSUB_PROJECT_ID" \
+#             --from-literal=REDIS_HOST="$REDIS_HOST" \
+#             --from-literal=REDIS_PORT="$REDIS_PORT" \
+#             --from-literal=MONGODB_TIMEOUT="$MONGODB_TIMEOUT" \
+#             --from-literal=AUTH_GRPC_PORT="$AUTH_GRPC_PORT" \
+#             --from-literal=USER_GRPC_PORT="$USER_GRPC_PORT" \
+#             --from-literal=CHAT_GRPC_PORT="$CHAT_GRPC_PORT" \
+#             --from-literal=PAYMENT_GRPC_PORT="$PAYMENT_GRPC_PORT" \
+#             --from-literal=JWT_ACCESS_TOKEN_MINUTES="$JWT_ACCESS_TOKEN_MINUTES" \
+#             --from-literal=JWT_REFRESH_TOKEN_DAYS="$JWT_REFRESH_TOKEN_DAYS" \
+#             --from-literal=JWT_ISSUER="$JWT_ISSUER" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Gateway ConfigMap
+#           kubectl -n "$NS" create configmap gateway-config \
+#             --from-literal=GATEWAY_HTTP_PORT="$GATEWAY_HTTP_PORT" \
+#             --from-literal=GATEWAY_BASE_URL="$GATEWAY_BASE_URL" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Auth ConfigMap
+#           kubectl -n "$NS" create configmap auth-config \
+#             --from-literal=AUTH_POSTGRES_DBNAME="$AUTH_POSTGRES_DBNAME" \
+#             --from-literal=AUTH_REDIS_DB="$AUTH_REDIS_DB" \
+#             --from-literal=AUTH_AUTH_PENDING_REGISTRATION_EXPIRY_HOURS="$AUTH_AUTH_PENDING_REGISTRATION_EXPIRY_HOURS" \
+#             --from-literal=AUTH_AUTH_OTP_EXPIRY_MINUTES="$AUTH_AUTH_OTP_EXPIRY_MINUTES" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # User ConfigMap
+#           kubectl -n "$NS" create configmap user-config \
+#             --from-literal=USER_POSTGRES_DBNAME="$USER_POSTGRES_DBNAME" \
+#             --from-literal=USER_MEDIA_STORAGE_BUCKET="$USER_MEDIA_STORAGE_BUCKET" \
+#             --from-literal=USER_MEDIA_STORAGE_URL_EXPIRY="$USER_MEDIA_STORAGE_URL_EXPIRY" \
+#             --from-literal=USER_MEDIA_STORAGE_SIGNER_EMAIL="$USER_MEDIA_STORAGE_SIGNER_EMAIL" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Chat ConfigMap
+#           kubectl -n "$NS" create configmap chat-config \
+#             --from-literal=CHAT_POSTGRES_DBNAME="$CHAT_POSTGRES_DBNAME" \
+#             --from-literal=CHAT_MONGODB_DATABASE="$CHAT_MONGODB_DATABASE" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Payment ConfigMap
+#           kubectl -n "$NS" create configmap payment-config \
+#             --from-literal=PAYMENT_POSTGRES_DBNAME="$PAYMENT_POSTGRES_DBNAME" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Notification ConfigMap (non-secret)
+#           kubectl -n "$NS" create configmap notification-config \
+#             --from-literal=NOTIFICATION_EMAIL_SMTP_HOST="$NOTIFICATION_EMAIL_SMTP_HOST" \
+#             --from-literal=NOTIFICATION_EMAIL_SMTP_PORT="$NOTIFICATION_EMAIL_SMTP_PORT" \
+#             --from-literal=NOTIFICATION_EMAIL_FROM_EMAIL="$NOTIFICATION_EMAIL_FROM_EMAIL" \
+#             --from-literal=NOTIFICATION_EMAIL_FROM_NAME="$NOTIFICATION_EMAIL_FROM_NAME" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#       - name: Sync Secrets (from GitHub Secrets; mirrors .env.example)
+#         env:
+#           NS: qubool-kallyanam
+#           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+#           REDIS_URL: ${{ secrets.REDIS_URL }}
+#           RABBITMQ_DSN: ${{ secrets.RABBITMQ_DSN }}
+#           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+#           MONGODB_URI: ${{ secrets.MONGODB_URI }}
+#           AUTH_ADMIN_DEFAULT_ADMIN_EMAIL: ${{ secrets.AUTH_ADMIN_DEFAULT_ADMIN_EMAIL }}
+#           AUTH_ADMIN_DEFAULT_ADMIN_PASSWORD: ${{ secrets.AUTH_ADMIN_DEFAULT_ADMIN_PASSWORD }}
+#           USER_MEDIA_STORAGE_SIGNER_EMAIL: ${{ secrets.USER_MEDIA_STORAGE_SIGNER_EMAIL }}
+#           PAYMENT_RAZORPAY_KEY_ID: ${{ secrets.PAYMENT_RAZORPAY_KEY_ID }}
+#           PAYMENT_RAZORPAY_KEY_SECRET: ${{ secrets.PAYMENT_RAZORPAY_KEY_SECRET }}
+#           NOTIFICATION_EMAIL_SMTP_USERNAME: ${{ secrets.NOTIFICATION_EMAIL_SMTP_USERNAME }}
+#           NOTIFICATION_EMAIL_SMTP_PASSWORD: ${{ secrets.NOTIFICATION_EMAIL_SMTP_PASSWORD }}
+#         run: |
+#           set -euo pipefail
+#           # Shared secret used by several services
+#           kubectl -n "$NS" create secret generic common-secret \
+#             --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+#             --from-literal=RABBITMQ_DSN="$RABBITMQ_DSN" \
+#             --from-literal=JWT_SECRET="$JWT_SECRET_KEY" \
+#             --from-literal=MONGODB_URI="$MONGODB_URI" \
+#             --from-literal=REDIS_URL="$REDIS_URL" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Auth bootstrap secrets
+#           kubectl -n "$NS" create secret generic auth-secret \
+#             --from-literal=AUTH_ADMIN_DEFAULT_ADMIN_EMAIL="$AUTH_ADMIN_DEFAULT_ADMIN_EMAIL" \
+#             --from-literal=AUTH_ADMIN_DEFAULT_ADMIN_PASSWORD="$AUTH_ADMIN_DEFAULT_ADMIN_PASSWORD" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Payment secrets
+#           kubectl -n "$NS" create secret generic payment-secret \
+#             --from-literal=PAYMENT_RAZORPAY_KEY_ID="$PAYMENT_RAZORPAY_KEY_ID" \
+#             --from-literal=PAYMENT_RAZORPAY_KEY_SECRET="$PAYMENT_RAZORPAY_KEY_SECRET" \
+#             --dry-run=client -o yaml | kubectl apply -f -
+
+#           # Notification SMTP creds
+#           kubectl -n "$NS" create secret generic notification-secret \
+#             --from-literal=NOTIFICATION_EMAIL_SMTP_USERNAME="$NOTIFICATION_EMAIL_SMTP_USERNAME" \
+#             --from-literal=NOTIFICATION_EMAIL_SMTP_PASSWORD="$NOTIFICATION_EMAIL_SMTP_PASSWORD" \
+#             --dry-run=client -o yaml | kubectl apply -f -
