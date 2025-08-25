@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GOOSE_PKG: github.com/pressly/goose/v3/cmd/goose@v3.24.3
+  MIGRATE_VERSION: v4.17.1
   CLOUDSQL_PROXY_VERSION: v2.18.1
 
 jobs:
@@ -66,23 +66,20 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Setup Go (for goose)
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Install goose (pinned) and Cloud SQL Auth Proxy
+      - name: Install migrate CLI and Cloud SQL Auth Proxy
         run: |
           set -euo pipefail
-          go install "$GOOSE_PKG"
-          echo "$HOME/go/bin" >> "$GITHUB_PATH"
-          goose -version
+          curl -fsSL -o /tmp/migrate.tgz \
+            https://github.com/golang-migrate/migrate/releases/download/${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz
+          tar -xzf /tmp/migrate.tgz -C /usr/local/bin migrate
+          /usr/local/bin/migrate -version || true
+
           curl -fsSL -o /usr/local/bin/cloud-sql-proxy \
             https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${CLOUDSQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64
           chmod +x /usr/local/bin/cloud-sql-proxy
           /usr/local/bin/cloud-sql-proxy --version || true
 
-      - name: Start Cloud SQL Auth Proxy
+      - name: Start Cloud SQL Auth Proxy (private IP)
         env:
           CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
         run: |
@@ -98,13 +95,13 @@ jobs:
           TARGET_VERSION: ${{ inputs.version }}
           POSTGRES_USER: ${{ vars.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_TIMEZONE: ${{ vars.POSTGRES_TIMEZONE }}
           AUTH_DB: ${{ vars.AUTH_POSTGRES_DBNAME }}
           USER_DB: ${{ vars.USER_POSTGRES_DBNAME }}
           CHAT_DB: ${{ vars.CHAT_POSTGRES_DBNAME }}
           PAYMENT_DB: ${{ vars.PAYMENT_POSTGRES_DBNAME }}
         run: |
           set -euo pipefail
+
           case "$SERVICE" in
             auth)    DB="$AUTH_DB";    DIR="services/auth/migrations/postgres" ;;
             user)    DB="$USER_DB";    DIR="services/user/migrations/postgres" ;;
@@ -112,21 +109,35 @@ jobs:
             payment) DB="$PAYMENT_DB"; DIR="services/payment/migrations/postgres" ;;
             *) echo "Unknown service $SERVICE"; exit 1 ;;
           esac
+
           if [[ ! -d "$DIR" ]]; then
             echo "No migrations directory found at $DIR; skipping."
             exit 0
           fi
-          goose -dir "$DIR" status || true
-          DSN="host=127.0.0.1 port=5432 user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${DB} sslmode=disable TimeZone=${POSTGRES_TIMEZONE}"
+
+          DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${DB}?sslmode=disable"
+
+          echo "Current version before:"
+          migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose version || true
+
           echo "Running '$ACTION' for $SERVICE ($DB)"
           case "$ACTION" in
-            up) goose -dir "$DIR" postgres "$DSN" up -v ;;
-            down-one) goose -dir "$DIR" postgres "$DSN" down -v ;;
+            up)
+              migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose up
+              ;;
+            down-one)
+              migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose down 1
+              ;;
             down-to-version)
               if [[ -z "${TARGET_VERSION:-}" ]]; then
                 echo "version input is required for down-to-version"; exit 2
               fi
-              goose -dir "$DIR" postgres "$DSN" down-to "$TARGET_VERSION" -v
+              migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose goto "$TARGET_VERSION"
               ;;
-            *) echo "Unknown action $ACTION"; exit 1 ;;
+            *)
+              echo "Unknown action $ACTION"; exit 1
+              ;;
           esac
+
+          echo "Current version after:"
+          migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose version || true
