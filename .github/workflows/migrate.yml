@@ -1,143 +1,143 @@
-name: DB Migrate
+# name: DB Migrate
 
-on:
-  workflow_dispatch:
-    inputs:
-      service:
-        description: Which service to migrate
-        required: true
-        type: choice
-        options: [auth, user, chat, payment, all]
-        default: all
-      action:
-        description: Migration action
-        required: true
-        type: choice
-        options: [up, down-one, down-to-version]
-        default: up
-      version:
-        description: Required if action=down-to-version (e.g., 20250718161605)
-        required: false
-        type: string
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       service:
+#         description: Which service to migrate
+#         required: true
+#         type: choice
+#         options: [auth, user, chat, payment, all]
+#         default: all
+#       action:
+#         description: Migration action
+#         required: true
+#         type: choice
+#         options: [up, down-one, down-to-version]
+#         default: up
+#       version:
+#         description: Required if action=down-to-version (e.g., 20250718161605)
+#         required: false
+#         type: string
 
-permissions:
-  contents: read
-  id-token: write
+# permissions:
+#   contents: read
+#   id-token: write
 
-concurrency:
-  group: migrate-${{ github.ref }}
-  cancel-in-progress: false
+# concurrency:
+#   group: migrate-${{ github.ref }}
+#   cancel-in-progress: false
 
-env:
-  MIGRATE_VERSION: v4.17.1
-  CLOUDSQL_PROXY_VERSION: v2.18.1
+# env:
+#   MIGRATE_VERSION: v4.17.1
+#   CLOUDSQL_PROXY_VERSION: v2.18.1
 
-jobs:
-  plan:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set.outputs.matrix }}
-    steps:
-      - id: set
-        run: |
-          case "${{ inputs.service }}" in
-            all)  echo 'matrix={"service":["auth","user","chat","payment"]}' >> "$GITHUB_OUTPUT" ;;
-            *)    echo 'matrix={"service":["'${{ inputs.service }}'"]}' >> "$GITHUB_OUTPUT" ;;
-          esac
+# jobs:
+#   plan:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       matrix: ${{ steps.set.outputs.matrix }}
+#     steps:
+#       - id: set
+#         run: |
+#           case "${{ inputs.service }}" in
+#             all)  echo 'matrix={"service":["auth","user","chat","payment"]}' >> "$GITHUB_OUTPUT" ;;
+#             *)    echo 'matrix={"service":["'${{ inputs.service }}'"]}' >> "$GITHUB_OUTPUT" ;;
+#           esac
 
-  migrate:
-    name: Run migrations (${{ matrix.service }})
-    runs-on: ubuntu-latest
-    needs: [plan]
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    environment: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+#   migrate:
+#     name: Run migrations (${{ matrix.service }})
+#     runs-on: ubuntu-latest
+#     needs: [plan]
+#     strategy:
+#       fail-fast: false
+#       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+#     environment: production
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud (OIDC)
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: projects/889059323165/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-          service_account: github-ci@qubool-kallyanam.iam.gserviceaccount.com
+#       - name: Authenticate to Google Cloud (OIDC)
+#         uses: google-github-actions/auth@v2
+#         with:
+#           workload_identity_provider: projects/889059323165/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+#           service_account: github-ci@qubool-kallyanam.iam.gserviceaccount.com
 
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
+#       - name: Setup gcloud
+#         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install migrate CLI and Cloud SQL Auth Proxy
-        run: |
-          set -euo pipefail
-          curl -fsSL -o /tmp/migrate.tgz \
-            https://github.com/golang-migrate/migrate/releases/download/${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz
-          tar -xzf /tmp/migrate.tgz -C /usr/local/bin migrate
-          /usr/local/bin/migrate -version || true
+#       - name: Install migrate CLI and Cloud SQL Auth Proxy
+#         run: |
+#           set -euo pipefail
+#           curl -fsSL -o /tmp/migrate.tgz \
+#             https://github.com/golang-migrate/migrate/releases/download/${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz
+#           tar -xzf /tmp/migrate.tgz -C /usr/local/bin migrate
+#           /usr/local/bin/migrate -version || true
 
-          curl -fsSL -o /usr/local/bin/cloud-sql-proxy \
-            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${CLOUDSQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64
-          chmod +x /usr/local/bin/cloud-sql-proxy
-          /usr/local/bin/cloud-sql-proxy --version || true
+#           curl -fsSL -o /usr/local/bin/cloud-sql-proxy \
+#             https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${CLOUDSQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64
+#           chmod +x /usr/local/bin/cloud-sql-proxy
+#           /usr/local/bin/cloud-sql-proxy --version || true
 
-      - name: Start Cloud SQL Auth Proxy (public endpoint via proxy)
-        env:
-          CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
-        run: |
-          /usr/local/bin/cloud-sql-proxy --quiet --port 5432 "$CLOUDSQL_INSTANCE" &
-          for i in {1..30}; do
-            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break || sleep 1
-          done
+#       - name: Start Cloud SQL Auth Proxy (public endpoint via proxy)
+#         env:
+#           CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
+#         run: |
+#           /usr/local/bin/cloud-sql-proxy --quiet --port 5432 "$CLOUDSQL_INSTANCE" &
+#           for i in {1..30}; do
+#             (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && break || sleep 1
+#           done
 
-      - name: Apply migrations
-        env:
-          SERVICE: ${{ matrix.service }}
-          ACTION: ${{ inputs.action }}
-          TARGET_VERSION: ${{ inputs.version }}
-          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          AUTH_DB: ${{ vars.AUTH_POSTGRES_DBNAME }}
-          USER_DB: ${{ vars.USER_POSTGRES_DBNAME }}
-          CHAT_DB: ${{ vars.CHAT_POSTGRES_DBNAME }}
-          PAYMENT_DB: ${{ vars.PAYMENT_POSTGRES_DBNAME }}
-        run: |
-          set -euo pipefail
+#       - name: Apply migrations
+#         env:
+#           SERVICE: ${{ matrix.service }}
+#           ACTION: ${{ inputs.action }}
+#           TARGET_VERSION: ${{ inputs.version }}
+#           POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+#           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+#           AUTH_DB: ${{ vars.AUTH_POSTGRES_DBNAME }}
+#           USER_DB: ${{ vars.USER_POSTGRES_DBNAME }}
+#           CHAT_DB: ${{ vars.CHAT_POSTGRES_DBNAME }}
+#           PAYMENT_DB: ${{ vars.PAYMENT_POSTGRES_DBNAME }}
+#         run: |
+#           set -euo pipefail
 
-          case "$SERVICE" in
-            auth)    DB="$AUTH_DB";    DIR="services/auth/migrations/postgres" ;;
-            user)    DB="$USER_DB";    DIR="services/user/migrations/postgres" ;;
-            chat)    DB="$CHAT_DB";    DIR="services/chat/migrations/postgres" ;;
-            payment) DB="$PAYMENT_DB"; DIR="services/payment/migrations/postgres" ;;
-            *) echo "Unknown service $SERVICE"; exit 1 ;;
-          esac
+#           case "$SERVICE" in
+#             auth)    DB="$AUTH_DB";    DIR="services/auth/migrations/postgres" ;;
+#             user)    DB="$USER_DB";    DIR="services/user/migrations/postgres" ;;
+#             chat)    DB="$CHAT_DB";    DIR="services/chat/migrations/postgres" ;;
+#             payment) DB="$PAYMENT_DB"; DIR="services/payment/migrations/postgres" ;;
+#             *) echo "Unknown service $SERVICE"; exit 1 ;;
+#           esac
 
-          if [[ ! -d "$DIR" ]]; then
-            echo "No migrations directory found at $DIR; skipping."
-            exit 0
-          fi
+#           if [[ ! -d "$DIR" ]]; then
+#             echo "No migrations directory found at $DIR; skipping."
+#             exit 0
+#           fi
 
-          DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${DB}?sslmode=disable"
+#           DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${DB}?sslmode=disable"
 
-          echo "Current version before:"
-          migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose version || true
+#           echo "Current version before:"
+#           migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose version || true
 
-          echo "Running '$ACTION' for $SERVICE ($DB)"
-          case "$ACTION" in
-            up)
-              migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose up
-              ;;
-            down-one)
-              migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose down 1
-              ;;
-            down-to-version)
-              if [[ -z "${TARGET_VERSION:-}" ]]; then
-                echo "version input is required for down-to-version"; exit 2
-              fi
-              migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose goto "$TARGET_VERSION"
-              ;;
-            *)
-              echo "Unknown action $ACTION"; exit 1
-              ;;
-          esac
+#           echo "Running '$ACTION' for $SERVICE ($DB)"
+#           case "$ACTION" in
+#             up)
+#               migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose up
+#               ;;
+#             down-one)
+#               migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose down 1
+#               ;;
+#             down-to-version)
+#               if [[ -z "${TARGET_VERSION:-}" ]]; then
+#                 echo "version input is required for down-to-version"; exit 2
+#               fi
+#               migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose goto "$TARGET_VERSION"
+#               ;;
+#             *)
+#               echo "Unknown action $ACTION"; exit 1
+#               ;;
+#           esac
 
-          echo "Current version after:"
-          migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose version || true
+#           echo "Current version after:"
+#           migrate -source "file://$DIR" -database "$DATABASE_URL" -verbose version || true
