@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ksa-workload
+  namespace: qubool-kallyanam
+  annotations:
+    iam.gke.io/gcp-service-account: workload-sa@qubool-kallyanam-2025.iam.gserviceaccount.com

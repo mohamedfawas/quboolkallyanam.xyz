@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qubool-kallyanam-ingress
+  namespace: qubool-kallyanam
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "qubool-kallyanam-ip"
+    networking.gke.io/managed-certificates: "qubool-kallyanam-cert"
+spec:
+  ingressClassName: gce
+  rules:
+    - host: quboolkallyanam.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: qubool-kallyanam-gateway
+                port:
+                  number: 80

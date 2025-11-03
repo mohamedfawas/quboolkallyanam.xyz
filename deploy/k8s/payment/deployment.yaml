@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: qubool-kallyanam-payment
     app.kubernetes.io/part-of: qubool-kallyanam
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels: { app.kubernetes.io/name: qubool-kallyanam-payment }
@@ -17,16 +17,19 @@ spec:
         app.kubernetes.io/name: qubool-kallyanam-payment
         app.kubernetes.io/part-of: qubool-kallyanam
     spec:
+      serviceAccountName: ksa-workload
       terminationGracePeriodSeconds: 15
       containers:
         - name: qubool-kallyanam-payment
-          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/payment:latest
+          image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/payment:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           ports: [{ name: grpc, containerPort: 50081 }]
           envFrom:
             - configMapRef: { name: payment-config }
             - secretRef: { name: payment-secret }
           env:
+            - name: SERVICE_NAME
+              value: payment
             - name: PAYMENT_GRPC_PORT
               valueFrom: { configMapKeyRef: { name: shared-config, key: PAYMENT_GRPC_PORT } }
             - name: PAYMENT_ENVIRONMENT

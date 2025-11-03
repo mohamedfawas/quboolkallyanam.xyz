@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: qubool-kallyanam-auth
     app.kubernetes.io/part-of: qubool-kallyanam
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels: { app.kubernetes.io/name: qubool-kallyanam-auth }
@@ -17,16 +17,19 @@ spec:
         app.kubernetes.io/name: qubool-kallyanam-auth
         app.kubernetes.io/part-of: qubool-kallyanam
     spec:
+      serviceAccountName: ksa-workload
       terminationGracePeriodSeconds: 15
       containers:
         - name: qubool-kallyanam-auth
-          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/auth:latest
+          image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/auth:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           ports: [{ name: grpc, containerPort: 50051 }]
           envFrom:
             - configMapRef: { name: auth-config }
             - secretRef: { name: auth-secret }
           env:
+            - name: SERVICE_NAME
+              value: auth
             # Port from shared source
             - name: AUTH_GRPC_PORT
               valueFrom: { configMapKeyRef: { name: shared-config, key: AUTH_GRPC_PORT } }

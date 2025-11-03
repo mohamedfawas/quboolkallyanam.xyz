@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	messageBroker "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/messagebroker"
@@ -51,7 +52,14 @@ func (c *Client) Publish(topicName string, data interface{}) error {
 	return err
 }
 
-func (c *Client) Subscribe(subName string, handler messageBroker.MessageHandler) error {
+func (c *Client) Subscribe(topicName string, handler messageBroker.MessageHandler) error {
+	// Auto-generate service-specific subscription name
+	serviceName := os.Getenv("SERVICE_NAME")
+	if serviceName == "" {
+		serviceName = "default"
+	}
+	subName := fmt.Sprintf("%s-%s", serviceName, topicName)
+
 	sub := c.psClient.Subscription(subName)
 
 	go func() {

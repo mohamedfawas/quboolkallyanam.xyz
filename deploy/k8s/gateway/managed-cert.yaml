@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: qubool-kallyanam-cert
+  namespace: qubool-kallyanam
+spec:
+  domains:
+    - quboolkallyanam.xyz

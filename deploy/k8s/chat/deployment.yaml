@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: qubool-kallyanam-chat
     app.kubernetes.io/part-of: qubool-kallyanam
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels: { app.kubernetes.io/name: qubool-kallyanam-chat }
@@ -17,15 +17,18 @@ spec:
         app.kubernetes.io/name: qubool-kallyanam-chat
         app.kubernetes.io/part-of: qubool-kallyanam
     spec:
+      serviceAccountName: ksa-workload
       terminationGracePeriodSeconds: 15
       containers:
         - name: qubool-kallyanam-chat
-          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/chat:latest
+          image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/chat:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           ports: [{ name: grpc, containerPort: 50071 }]
           envFrom:
             - configMapRef: { name: chat-config }
           env:
+            - name: SERVICE_NAME
+              value: chat
             - name: CHAT_GRPC_PORT
               valueFrom: { configMapKeyRef: { name: shared-config, key: CHAT_GRPC_PORT } }
             - name: CHAT_ENVIRONMENT

@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: qubool-kallyanam-user
     app.kubernetes.io/part-of: qubool-kallyanam
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels: { app.kubernetes.io/name: qubool-kallyanam-user }
@@ -17,15 +17,18 @@ spec:
         app.kubernetes.io/name: qubool-kallyanam-user
         app.kubernetes.io/part-of: qubool-kallyanam
     spec:
+      serviceAccountName: ksa-workload
       terminationGracePeriodSeconds: 15
       containers:
         - name: qubool-kallyanam-user
-          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/user:latest
+          image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/user:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           ports: [{ name: grpc, containerPort: 50061 }]
           envFrom:
             - configMapRef: { name: user-config }
           env:
+            - name: SERVICE_NAME
+              value: user
             - name: USER_GRPC_PORT
               valueFrom: { configMapKeyRef: { name: shared-config, key: USER_GRPC_PORT } }
             - name: USER_ENVIRONMENT

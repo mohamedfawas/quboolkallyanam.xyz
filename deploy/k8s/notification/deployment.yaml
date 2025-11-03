@@ -17,15 +17,18 @@ spec:
         app.kubernetes.io/name: qubool-kallyanam-notification
         app.kubernetes.io/part-of: qubool-kallyanam
     spec:
+      serviceAccountName: ksa-workload
       terminationGracePeriodSeconds: 15
       containers:
         - name: qubool-kallyanam-notification
-          image: asia-south1-docker.pkg.dev/qubool-kallyanam/qubool-kallyanam-docker/notification:latest
+          image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/notification:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef: { name: notification-config }
             - secretRef: { name: notification-secret }
           env:
+            - name: SERVICE_NAME
+              value: notification
             - name: NOTIFICATION_ENVIRONMENT
               valueFrom: { configMapKeyRef: { name: shared-config, key: ENVIRONMENT } }
             - name: NOTIFICATION_RABBITMQ_EXCHANGE_NAME

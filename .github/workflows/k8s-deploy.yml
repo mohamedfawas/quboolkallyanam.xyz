@@ -23,8 +23,8 @@
 #       - name: Authenticate to Google Cloud (OIDC)
 #         uses: google-github-actions/auth@v2
 #         with:
-#           workload_identity_provider: projects/889059323165/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-#           service_account: github-ci@qubool-kallyanam.iam.gserviceaccount.com
+#           workload_identity_provider: projects/${{ vars.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.W_POOL }}/providers/${{ vars.W_PROVIDER }}
+#           service_account: ${{ vars.CI_SA_EMAIL }}
 
 #       - name: Setup gcloud
 #         uses: google-github-actions/setup-gcloud@v2
@@ -37,6 +37,45 @@
 #         run: |
 #           kubectl create namespace qubool-kallyanam --dry-run=client -o yaml | kubectl apply -f -
 #           gcloud container clusters get-credentials "$GKE_CLUSTER" --region "$GKE_REGION" --project "$PROJECT_ID"
+
+#       - name: Prepare rendered manifests (render variables)
+#         env:
+#           PROJECT_ID: ${{ vars.PROJECT_ID }}
+#           REGION: ${{ vars.REGION }}
+#           REPOSITORY: ${{ vars.REPOSITORY }}
+#           IMAGE_TAG: ${{ github.event.inputs.image_tag || format('sha-{0}', github.sha) }}
+#         run: |
+#           set -euo pipefail
+#           echo "Rendering k8s manifests with: PROJECT_ID=$PROJECT_ID REGION=$REGION REPOSITORY=$REPOSITORY IMAGE_TAG=$IMAGE_TAG"
+#           mkdir -p rendered
+#           # export only variables we want envsubst to replace
+#           export PROJECT_ID REGION REPOSITORY IMAGE_TAG
+#           # render all yaml files under k8s/ (preserve subfolders)
+#           find k8s -type f -name '*.yaml' | while read -r f; do
+#             # keep folder structure in rendered/
+#             out="rendered/${f#k8s/}"
+#             mkdir -p "$(dirname "$out")"
+#             # only substitute these variables to avoid touching other $() usages
+#             envsubst '${PROJECT_ID} ${REGION} ${REPOSITORY} ${IMAGE_TAG}' < "$f" > "$out"
+#           done
+#           # show a quick preview of a rendered file
+#           echo "---- sample rendered deployment ----"
+#           sed -n '1,120p' rendered/auth/deployment.yaml || true
+      
+#       - name: Preview kube diff (server-side)
+#         run: |
+#           set -euo pipefail
+#           # show diff (optional): will fail on clusters not supporting `kubectl diff` -> ignore nonzero
+#           kubectl -n ${{ vars.NS }} diff -f rendered/ || true
+
+#       - name: Apply rendered manifests (configmaps, secrets and deployments)
+#         run: |
+#           set -euo pipefail
+#           kubectl -n ${{ vars.NS }} apply -f rendered/
+#           # wait for deployments to start rolling out
+#           for dep in qubool-kallyanam-auth qubool-kallyanam-user qubool-kallyanam-chat qubool-kallyanam-payment qubool-kallyanam-gateway qubool-kallyanam-notification; do
+#             kubectl -n ${{ vars.NS }} rollout status deployment/"$dep" --timeout=180s || true
+#           done
 
 #       - name: Sync ConfigMaps (from GitHub Variables; mirrors .env.example)
 #         env:
