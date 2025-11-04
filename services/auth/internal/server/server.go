@@ -76,6 +76,7 @@ func NewServer(ctx context.Context, config *config.Config, rootLogger *zap.Logge
 
 	///////////////////////// REDIS INITIALIZATION /////////////////////////
 	redisClient, err := redis.NewClient(redis.Config{
+		RedisURL: config.Redis.RedisURL,
 		Host:     config.Redis.Host,
 		Port:     config.Redis.Port,
 		Password: config.Redis.Password,
