@@ -255,48 +255,74 @@ jobs:
           IMAGE_TAG: ${{ github.event.inputs.image_tag || format('sha-{0}', github.sha) }}
         run: |
           set -euo pipefail
-          echo "Using IMAGE_TAG: $IMAGE_TAG"
-          echo "Services to render: ${{ steps.services.outputs.services }}"
+          
+          echo "🏷️  IMAGE_TAG: $IMAGE_TAG"
+          echo "📦 Services: ${{ steps.services.outputs.services }}"
+          echo ""
           
           mkdir -p rendered
           export PROJECT_ID REGION REPOSITORY IMAGE_TAG
           
-          RENDERED_COUNT=0
+          # Render each service's manifests
           for service in ${{ steps.services.outputs.services }}; do
-            echo "📝 Rendering $service..."
+            echo "📝 Rendering manifests for: $service"
             
-            if [[ -d "deploy/k8s/$service" ]]; then
-              find deploy/k8s/$service -type f -name '*.yaml' | while read -r f; do
-                out="rendered/${f#deploy/k8s/}"
-                mkdir -p "$(dirname "$out")"
-                envsubst '${PROJECT_ID} ${REGION} ${REPOSITORY} ${IMAGE_TAG}' < "$f" > "$out"
-                echo "  ✅ Rendered: $out"
-              done
-              RENDERED_COUNT=$((RENDERED_COUNT + 1))
-            else
-              echo "  ⚠️ Directory not found: deploy/k8s/$service"
+            if [[ ! -d "deploy/k8s/$service" ]]; then
+              echo "❌ Error: deploy/k8s/$service not found!"
+              exit 1
             fi
+            
+            # Create service subdirectory in rendered/
+            mkdir -p "rendered/$service"
+            
+            # Render all YAML files for this service
+            find "deploy/k8s/$service" -type f -name '*.yaml' -print0 | while IFS= read -r -d '' yaml_file; do
+              filename=$(basename "$yaml_file")
+              out_file="rendered/$service/$filename"
+              
+              echo "  ✅ $yaml_file → $out_file"
+              envsubst '${PROJECT_ID} ${REGION} ${REPOSITORY} ${IMAGE_TAG}' < "$yaml_file" > "$out_file"
+            done
           done
           
           echo ""
           echo "📂 Rendered files:"
-          ls -lR rendered/ || echo "⚠️ No files rendered!"
+          find rendered -type f -name '*.yaml' || true
           
-          if [[ $RENDERED_COUNT -eq 0 ]]; then
-            echo "❌ Error: No services were rendered!"
+          # Verify we have files
+          file_count=$(find rendered -type f -name '*.yaml' | wc -l)
+          echo ""
+          echo "✨ Total files rendered: $file_count"
+          
+          if [[ $file_count -eq 0 ]]; then
+            echo "❌ Error: No YAML files were rendered!"
             exit 1
           fi
 
       - name: Apply deployments
         run: |
           set -euo pipefail
-          kubectl -n ${{ vars.NS }} apply -f rendered/
+          
+          echo "🚀 Applying manifests to namespace: ${{ vars.NS }}"
+          echo ""
+          
+          # Apply all rendered manifests
+          find rendered -type f -name '*.yaml' -exec kubectl apply -n ${{ vars.NS }} -f {} \;
           
           echo ""
-          echo "⏳ Waiting for rollouts..."
+          echo "⏳ Waiting for deployments to roll out..."
+          echo ""
+          
+          # Wait for each service deployment
           for service in ${{ steps.services.outputs.services }}; do
-            kubectl -n ${{ vars.NS }} rollout status deployment/qubool-kallyanam-$service --timeout=180s || echo "⚠️ $service timeout"
+            echo "⏳ Checking rollout: qubool-kallyanam-$service"
+            kubectl -n ${{ vars.NS }} rollout status deployment/qubool-kallyanam-$service --timeout=300s || {
+              echo "⚠️  Warning: $service rollout timeout or not found"
+            }
           done
+          
+          echo ""
+          echo "✅ Deployment complete!"
 
       - name: Deployment Summary
         if: always()
