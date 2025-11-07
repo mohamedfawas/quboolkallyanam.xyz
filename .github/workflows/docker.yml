@@ -51,7 +51,7 @@ jobs:
             all:
               - 'pkg/**'
               - 'api/**'
-              - 'deploy/**'
+              - 'deploy/docker/**'
               - 'Makefile'
               - '.github/workflows/docker.yml' 
             auth:
