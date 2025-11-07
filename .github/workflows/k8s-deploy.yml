@@ -256,10 +256,12 @@ jobs:
         run: |
           set -euo pipefail
           echo "Using IMAGE_TAG: $IMAGE_TAG"
+          echo "Services to render: ${{ steps.services.outputs.services }}"
           
           mkdir -p rendered
           export PROJECT_ID REGION REPOSITORY IMAGE_TAG
           
+          RENDERED_COUNT=0
           for service in ${{ steps.services.outputs.services }}; do
             echo "📝 Rendering $service..."
             
@@ -268,9 +270,22 @@ jobs:
                 out="rendered/${f#deploy/k8s/}"
                 mkdir -p "$(dirname "$out")"
                 envsubst '${PROJECT_ID} ${REGION} ${REPOSITORY} ${IMAGE_TAG}' < "$f" > "$out"
+                echo "  ✅ Rendered: $out"
               done
+              RENDERED_COUNT=$((RENDERED_COUNT + 1))
+            else
+              echo "  ⚠️ Directory not found: deploy/k8s/$service"
             fi
           done
+          
+          echo ""
+          echo "📂 Rendered files:"
+          ls -lR rendered/ || echo "⚠️ No files rendered!"
+          
+          if [[ $RENDERED_COUNT -eq 0 ]]; then
+            echo "❌ Error: No services were rendered!"
+            exit 1
+          fi
 
       - name: Apply deployments
         run: |
