@@ -252,7 +252,7 @@ jobs:
           PROJECT_ID: ${{ vars.PROJECT_ID }}
           REGION: ${{ vars.REGION }}
           REPOSITORY: ${{ vars.REPOSITORY }}
-          IMAGE_TAG: ${{ github.event.inputs.image_tag || format('sha-{0}', github.sha) }}
+          IMAGE_TAG: ${{ github.event.inputs.image_tag || (github.ref == 'refs/heads/main' && 'latest' || format('sha-{0}', github.sha)) }}
         run: |
           set -euo pipefail
           
