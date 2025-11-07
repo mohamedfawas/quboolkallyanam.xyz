@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ksa-media-signer
+  namespace: qubool-kallyanam
+  annotations:
+    iam.gke.io/gcp-service-account: media-signer@qubool-kallyanam-2025.iam.gserviceaccount.com
