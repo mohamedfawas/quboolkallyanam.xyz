@@ -30,6 +30,14 @@ spec:
             - name: SERVICE_NAME
               value: gateway
             # Ports from shared source
+            - name: GATEWAY_SERVICES_AUTH_HOST
+              valueFrom: { configMapKeyRef: { name: shared-config, key: AUTH_GRPC_HOST } }
+            - name: GATEWAY_SERVICES_USER_HOST
+              valueFrom: { configMapKeyRef: { name: shared-config, key: USER_GRPC_HOST } }
+            - name: GATEWAY_SERVICES_CHAT_HOST
+              valueFrom: { configMapKeyRef: { name: shared-config, key: CHAT_GRPC_HOST } }
+            - name: GATEWAY_SERVICES_PAYMENT_HOST
+              valueFrom: { configMapKeyRef: { name: shared-config, key: PAYMENT_GRPC_HOST } }
             - name: GATEWAY_SERVICES_AUTH_PORT
               valueFrom: { configMapKeyRef: { name: shared-config, key: AUTH_GRPC_PORT } }
             - name: GATEWAY_SERVICES_USER_PORT

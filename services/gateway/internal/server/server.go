@@ -119,7 +119,7 @@ func (s *Server) initClients() error {
 	// Initialize Auth gRPC Client
 	authGRPCClient, err := authGRPC.NewAuthGRPCClient(
 		ctx,
-		fmt.Sprintf("localhost:%s", s.config.Services.AuthServicePort),
+		fmt.Sprintf("%s:%s", s.config.Services.AuthServiceHost, s.config.Services.AuthServicePort),
 		false, // useTLS - set to true in production
 		nil,   // tlsConfig
 	)
@@ -132,7 +132,7 @@ func (s *Server) initClients() error {
 	// Initialize Payment gRPC Client
 	paymentGRPCClient, err := paymentGRPC.NewPaymentGRPCClient(
 		ctx,
-		fmt.Sprintf("localhost:%s", s.config.Services.PaymentServicePort),
+		fmt.Sprintf("%s:%s", s.config.Services.PaymentServiceHost, s.config.Services.PaymentServicePort),
 		false, // useTLS - set to true in production
 		nil,   // tlsConfig
 	)
@@ -144,7 +144,7 @@ func (s *Server) initClients() error {
 	// Initialize Chat gRPC Client
 	chatGRPCClient, err := chatGRPC.NewChatGRPCClient(
 		ctx,
-		fmt.Sprintf("localhost:%s", s.config.Services.ChatServicePort),
+		fmt.Sprintf("%s:%s", s.config.Services.ChatServiceHost, s.config.Services.ChatServicePort),
 		false, // useTLS - set to true in production
 		nil,   // tlsConfig
 	)
@@ -156,7 +156,7 @@ func (s *Server) initClients() error {
 	// Initialize User gRPC Client
 	userGRPCClient, err := userGRPC.NewUserGRPCClient(
 		ctx,
-		fmt.Sprintf("localhost:%s", s.config.Services.UserServicePort),
+		fmt.Sprintf("%s:%s", s.config.Services.UserServiceHost, s.config.Services.UserServicePort),
 		false, // useTLS - set to true in production
 		nil,   // tlsConfig
 	)
@@ -189,7 +189,6 @@ func (s *Server) initHandlers() error {
 func (s *Server) Start() error {
 	return s.httpServer.ListenAndServe()
 }
-
 
 // used for health check, ensures all clients are initialized
 func (s *Server) isReady() bool {
