@@ -335,7 +335,7 @@ Edit `.env` with your configuration.
 
 > **Note**: All endpoints marked with "JWT + Role" require a valid JWT token in the Authorization header with the specified role. Premium User role is automatically granted upon successful subscription payment.
 
-> For detailed request/response schemas and examples, visit the Swagger documentation at `/swagger/index.html` when running the gateway.
+> For detailed request/response schemas and examples, visit the POSTMAN documentation at this [link](https://www.postman.com/manojsir/workspace/fawas-qk-project/collection/17830038-d9926cb2-542e-4677-a6f9-35cc0f60069d?action=share&creator=17830038)
 
 
 
