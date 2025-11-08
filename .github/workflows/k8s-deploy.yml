@@ -114,6 +114,10 @@ jobs:
           DEFAULT_TIMEZONE: ${{ vars.DEFAULT_TIMEZONE }}
           GATEWAY_HTTP_PORT: ${{ vars.GATEWAY_HTTP_PORT }}
           GATEWAY_BASE_URL: ${{ vars.GATEWAY_BASE_URL }}
+          AUTH_GRPC_HOST: ${{ vars.AUTH_GRPC_HOST }}
+          USER_GRPC_HOST: ${{ vars.USER_GRPC_HOST }}
+          CHAT_GRPC_HOST: ${{ vars.CHAT_GRPC_HOST }}
+          PAYMENT_GRPC_HOST: ${{ vars.PAYMENT_GRPC_HOST }}
           POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
           POSTGRES_USER: ${{ vars.POSTGRES_USER }}
@@ -162,6 +166,10 @@ jobs:
             --from-literal=REDIS_HOST="$REDIS_HOST" \
             --from-literal=REDIS_PORT="$REDIS_PORT" \
             --from-literal=MONGODB_TIMEOUT="$MONGODB_TIMEOUT" \
+            --from-literal=AUTH_GRPC_HOST="$AUTH_GRPC_HOST" \
+            --from-literal=USER_GRPC_HOST="$USER_GRPC_HOST" \
+            --from-literal=CHAT_GRPC_HOST="$CHAT_GRPC_HOST" \
+            --from-literal=PAYMENT_GRPC_HOST="$PAYMENT_GRPC_HOST" \
             --from-literal=AUTH_GRPC_PORT="$AUTH_GRPC_PORT" \
             --from-literal=USER_GRPC_PORT="$USER_GRPC_PORT" \
             --from-literal=CHAT_GRPC_PORT="$CHAT_GRPC_PORT" \
