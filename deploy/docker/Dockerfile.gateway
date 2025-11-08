@@ -1,11 +1,14 @@
 # syntax=docker/dockerfile:1.8
 FROM gcr.io/distroless/static:nonroot
 
-COPY --chmod=0755 deploy/docker/artifacts/gateway-service /gateway-service
-
 WORKDIR /app
+
+# Copy binary to /app
+COPY --chmod=0755 deploy/docker/artifacts/gateway-service /app/gateway-service
+
+# Copy templates
 COPY services/gateway/internal/web/templates /app/internal/web/templates
 
 EXPOSE 8080
 USER nonroot
-ENTRYPOINT ["/gateway-service"]
+ENTRYPOINT ["/app/gateway-service"]
