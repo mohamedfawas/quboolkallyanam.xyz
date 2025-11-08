@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
+	// "github.com/mohamedfawas/quboolkallyanam.xyz/pkg/apperrors"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/constants"
 	"github.com/mohamedfawas/quboolkallyanam.xyz/pkg/utils/contextutils"
 	"go.uber.org/zap"
@@ -21,7 +21,7 @@ import (
 // @Router /payment/checkout [get]
 func (h *PaymentHandler) ShowPaymentPage(c *gin.Context) {
 	// Log BEFORE context extraction to catch all requests
-	h.logger.Info("ShowPaymentPage called", 
+	h.logger.Info("ShowPaymentPage called",
 		zap.String("razorpay_order_id", c.Query("razorpay_order_id")),
 		zap.String("path", c.Request.URL.Path))
 	reqCtx, err := contextutils.ExtractRequestContext(c)
@@ -43,22 +43,22 @@ func (h *PaymentHandler) ShowPaymentPage(c *gin.Context) {
 	resp, err := h.paymentUsecase.ShowPaymentPage(reqCtx.Ctx, razorpayOrderID)
 	if err != nil {
 		// Log ALL errors
-		log.Error("Failed to get payment page data", 
-			zap.Error(err), 
+		log.Error("Failed to get payment page data",
+			zap.Error(err),
 			zap.String("razorpay_order_id", razorpayOrderID))
-		
+
 		c.Redirect(http.StatusFound, fmt.Sprintf("/payment/failed?order_id=%s&error=failed_to_load", razorpayOrderID))
 		return
-		
+
 		/*
-		if apperrors.ShouldLogError(err) {
-			log.Error("Failed to get payment page data", zap.Error(err), zap.String("razorpay_order_id", razorpayOrderID))
-		}
-		c.Redirect(http.StatusFound, fmt.Sprintf("/payment/failed?order_id=%s&error=failed_to_load", razorpayOrderID))
-		return
+			if apperrors.ShouldLogError(err) {
+				log.Error("Failed to get payment page data", zap.Error(err), zap.String("razorpay_order_id", razorpayOrderID))
+			}
+			c.Redirect(http.StatusFound, fmt.Sprintf("/payment/failed?order_id=%s&error=failed_to_load", razorpayOrderID))
+			return
 		*/
 	}
 
-	log.Info("Payment page data retrieved", zap.String("razorpay_order_id", razorpayOrderID))
+	log.Info("Payment page data is retrieved", zap.String("razorpay_order_id", razorpayOrderID))
 	c.HTML(http.StatusOK, "payment.html", resp)
 }
