@@ -253,12 +253,12 @@ Edit `.env` with your configuration.
 
 ### Docker Compose (Recommended for Local Dev)
 
-# Build and start all services
+#### Build and start all services
 `make docker-build`
 
 `docker compose -f deploy/compose/docker-compose.yml up`
 
-# Or use the gateway directly
+#### Or use the gateway directly
 `docker compose -f deploy/compose/docker-compose.yml up gateway`
 
 
