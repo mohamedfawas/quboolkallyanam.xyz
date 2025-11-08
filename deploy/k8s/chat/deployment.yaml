@@ -22,7 +22,7 @@ spec:
       containers:
         - name: qubool-kallyanam-chat
           image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/chat:${IMAGE_TAG}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports: [{ name: grpc, containerPort: 50071 }]
           envFrom:
             - configMapRef: { name: chat-config }

@@ -22,7 +22,7 @@ spec:
       containers:
         - name: qubool-kallyanam-auth
           image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/auth:${IMAGE_TAG}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports: [{ name: grpc, containerPort: 50051 }]
           envFrom:
             - configMapRef: { name: auth-config }

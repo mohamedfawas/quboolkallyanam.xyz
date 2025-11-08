@@ -22,7 +22,7 @@ spec:
       containers:
         - name: qubool-kallyanam-gateway
           image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/gateway:${IMAGE_TAG}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports: [{ name: http, containerPort: 8080 }]
           envFrom:
             - configMapRef: { name: gateway-config }

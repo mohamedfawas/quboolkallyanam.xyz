@@ -22,7 +22,7 @@ spec:
       containers:
         - name: qubool-kallyanam-notification
           image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/notification:${IMAGE_TAG}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef: { name: notification-config }
             - secretRef: { name: notification-secret }

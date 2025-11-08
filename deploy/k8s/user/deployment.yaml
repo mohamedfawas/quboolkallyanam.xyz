@@ -22,7 +22,7 @@ spec:
       containers:
         - name: qubool-kallyanam-user
           image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/user:${IMAGE_TAG}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports: [{ name: grpc, containerPort: 50061 }]
           envFrom:
             - configMapRef: { name: user-config }

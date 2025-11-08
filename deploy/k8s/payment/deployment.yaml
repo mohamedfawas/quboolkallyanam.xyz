@@ -22,7 +22,7 @@ spec:
       containers:
         - name: qubool-kallyanam-payment
           image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/payment:${IMAGE_TAG}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports: [{ name: grpc, containerPort: 50081 }]
           envFrom:
             - configMapRef: { name: payment-config }
