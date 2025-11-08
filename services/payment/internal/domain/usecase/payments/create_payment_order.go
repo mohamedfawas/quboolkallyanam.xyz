@@ -29,7 +29,7 @@ func (u *paymentUsecase) CreatePaymentOrder(ctx context.Context, userID string, 
 	}
 
 	now := time.Now().UTC()
-	expiresAt := now.Add(time.Minute * 15)
+	expiresAt := now.Add(time.Minute * 30)
 
 	payment := &entity.Payment{
 		UserID:            userID,
