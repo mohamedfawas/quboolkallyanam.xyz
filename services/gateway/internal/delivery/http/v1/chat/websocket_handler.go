@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -38,6 +39,21 @@ func NewConnectionManager(logger *zap.Logger) *ConnectionManager {
 		logger:      logger,
 	}
 }
+
+// Add constants at package level (after upgrader)
+const (
+	// Time allowed to write a message to the peer
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period (must be less than pongWait)
+	pingPeriod = 50 * time.Second
+
+	// Maximum message size allowed from peer
+	maxMessageSize = 512 * 1024 // 512KB
+)
 
 // AddConnection registers a new WebSocket for a user.
 // If they already had one, we close the old connection.
@@ -163,12 +179,27 @@ func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 
 	log.Info("WebSocket handler started")
 
+	// Configure connection timeouts
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
+	// Start ping ticker in goroutine
+	done := make(chan struct{})
+	go h.sendPings(conn, done, log)
+	defer close(done)
+
 	// Handle incoming messages
 	h.handleWebSocketMessages(ctx, userID, conn, log)
 }
 
 // handleWebSocketMessages listens for incoming JSON messages and processes them
 func (h *ChatHandler) handleWebSocketMessages(ctx context.Context, userID string, conn *websocket.Conn, logger *zap.Logger) {
+	// Set max message size
+	conn.SetReadLimit(maxMessageSize)
+
 	for {
 		var wsMessage dto.WebSocketMessage
 		// ReadJSON blocks until a message arrives or an error happens
@@ -181,6 +212,9 @@ func (h *ChatHandler) handleWebSocketMessages(ctx context.Context, userID string
 			}
 			break
 		}
+
+		// Reset read deadline on each successful message
+		conn.SetReadDeadline(time.Now().Add(pongWait))
 
 		// Delegate to handler based on message Type
 		if err := h.handleIncomingMessage(ctx, userID, wsMessage, logger); err != nil {
@@ -283,4 +317,22 @@ func (h *ChatHandler) findOtherParticipant(participantIDs []string, currentUserI
 		}
 	}
 	return ""
+}
+
+// Add new function at the end of the file
+func (h *ChatHandler) sendPings(conn *websocket.Conn, done chan struct{}, logger *zap.Logger) {
+	ticker := time.NewTicker(pingPeriod)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+				logger.Warn("Failed to send ping", zap.Error(err))
+				return
+			}
+		case <-done:
+			return
+		}
+	}
 }

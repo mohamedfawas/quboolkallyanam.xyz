@@ -6,6 +6,8 @@ metadata:
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "qubool-kallyanam-ip"
     networking.gke.io/managed-certificates: "qubool-kallyanam-cert"
+    # WebSocket support - CRITICAL for long-lived connections
+    cloud.google.com/backend-config: "gateway-backend-config"
 spec:
   rules:
     - host: quboolkallyanam.xyz

@@ -1,0 +1,10 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: gateway-backend-config
+  namespace: qubool-kallyanam
+spec:
+  # Extend timeout to 1 hour for WebSocket connections
+  timeoutSec: 3600
+  connectionDraining:
+    drainingTimeoutSec: 60

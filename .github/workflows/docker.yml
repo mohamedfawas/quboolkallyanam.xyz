@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  id-token: write
+  contents: read # Allow read-only access to repo contents
+  id-token: write  # Required for OIDC auth to Google Cloud (no JSON key needed)
 
 concurrency:
-  group: docker-${{ github.ref }}
-  cancel-in-progress: true
+  group: docker-${{ github.ref }} # Only one run per branch/tag (ref) at a time
+  cancel-in-progress: true # If a new run starts for same ref, cancel the older one
 
 jobs:
   set-env:
@@ -32,9 +32,9 @@ jobs:
   changes:
     name: Detect changed services
     runs-on: ubuntu-latest
-    needs: [set-env]
+    needs: [set-env] #  Wait for environment selection
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}  # JSON list of services to build
     steps:
       - name: Checkout (full history for diff)
         uses: actions/checkout@v4
@@ -76,13 +76,14 @@ jobs:
       - id: set-matrix
         name: Build service matrix
         run: |
-          # Build everything on tag builds
+          # Build everything on tag builds , If building a release tag (vX.Y.Z), build EVERYTHING
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             services='["auth","user","chat","payment","notification","gateway"]'
             echo "matrix={\"service\":${services}}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
+          # If "all" paths changed, build all services; else build only the ones flagged
           if [[ "${{ steps.filter.outputs.all }}" == "true" ]]; then
             services='["auth","user","chat","payment","notification","gateway"]'
           else
@@ -93,7 +94,8 @@ jobs:
             [[ "${{ steps.filter.outputs.payment }}" == "true" ]] && items+=('"payment"')
             [[ "${{ steps.filter.outputs.notification }}" == "true" ]] && items+=('"notification"')
             [[ "${{ steps.filter.outputs.gateway }}" == "true" ]] && items+=('"gateway"')
-            if [[ ${#items[@]} -eq 0 ]]; then
+            # If nothing changed, set an empty list so we can skip the build job
+            if [[ ${#items[@]} -eq 0 ]]; then  
               services='[]'
             else
               services="[${items[*]}]"
@@ -104,22 +106,22 @@ jobs:
   build-and-push:
     name: Build, Scan, Push (${{ matrix.service }})
     runs-on: ubuntu-latest
-    needs: [set-env, changes]
-    if: ${{ needs.changes.outputs.matrix != '{"service":[]}' }}
+    needs: [set-env, changes] # Wait for env + changed-services
+    if: ${{ needs.changes.outputs.matrix != '{"service":[]}' }} # Skip if nothing to build
     environment: ${{ needs.set-env.outputs.environment }}
     strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
+      fail-fast: false # Don't cancel other matrix jobs if one fails
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }} #  Expands into many jobs (one per service)
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Get the repo code
 
       - name: Setup Go with module caching
         uses: actions/setup-go@v5
         with:
           go-version: '1.23.4'
-          cache: true
+          cache: true # Enable caching to speed up builds
           cache-dependency-path: |
             go.sum
             pkg/go.sum
@@ -130,11 +132,13 @@ jobs:
       - name: Authenticate to Google Cloud (OIDC)
         uses: google-github-actions/auth@v2
         with:
+          # These come from repo/environment Variables (no secrets JSON file!)
+          #    OIDC exchanges GitHub's short-lived token for a Google access token.
           workload_identity_provider: projects/${{ vars.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.W_POOL }}/providers/${{ vars.W_PROVIDER }}
           service_account: ${{ vars.CI_SA_EMAIL }}
 
       - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v2 # Installs gcloud CLI
 
       - name: Resolve environment variables (with defaults)
         run: |

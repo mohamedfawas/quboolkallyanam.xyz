@@ -37,35 +37,39 @@ on:
         type: string
 
 permissions:
-  contents: read
-  id-token: write
+  contents: read # Allows the workflow to read repository files
+  id-token: write # Needed for OIDC (short-lived cloud credentials)
 
 concurrency:
+  # Only one deploy per branch/tag at a time; new runs cancel older in-progress ones
   group: k8s-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   deploy:
     name: Deploy to GKE
-    runs-on: ubuntu-latest
-    environment: production
+    runs-on: ubuntu-latest # GitHub gives us a fresh Linux VM to run these steps
+    environment: production # Hooks into GitHub "Environments" (for vars/protection rules)
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Pulls the repo code into the runner
 
       - name: Authenticate to Google Cloud (OIDC)
+        # No JSON key file. OIDC swaps GitHub's token for a Google token just-in-time
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: projects/${{ vars.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ vars.W_POOL }}/providers/${{ vars.W_PROVIDER }}
-          service_account: ${{ vars.CI_SA_EMAIL }}
+          service_account: ${{ vars.CI_SA_EMAIL }} # GCP service account the workflow impersonates
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
+          # We also need the GKE auth plugin so kubectl can talk to GKE
           install_components: 'gke-gcloud-auth-plugin'
 
       - name: Get GKE credentials
         run: |
+          # Writes kubeconfig so kubectl knows which cluster/namespace to talk to
           gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER }} \
             --region ${{ vars.GKE_REGION }} \
             --project ${{ vars.PROJECT_ID }}
@@ -86,8 +90,10 @@ jobs:
             [[ "${{ github.event.inputs.deploy_payment }}" == "true" ]] && SERVICES+="payment "
             [[ "${{ github.event.inputs.deploy_notification }}" == "true" ]] && SERVICES+="notification "
             
+            # Trim trailing space
             SERVICES="${SERVICES% }"
             
+            # Safety check: don't continue if nothing was selected
             if [[ -z "$SERVICES" ]]; then
               echo "❌ No services selected! Please check at least one service."
               exit 1
@@ -96,13 +102,16 @@ jobs:
             echo "📦 Deploying selected services: $SERVICES"
           fi
           
+          # Expose to later steps as steps.services.outputs.services
           echo "services=$SERVICES" >> $GITHUB_OUTPUT
 
       - name: Ensure namespace exists
         run: |
+          # Creates the namespace if missing; updates nothing if it already exists
           kubectl create namespace ${{ vars.NS }} --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply ServiceAccounts
+        # Applies Kubernetes ServiceAccount YAMLs for workload identity / permissions
         run: |
           kubectl apply -f deploy/k8s/ksa-workload.yaml
           kubectl apply -f deploy/k8s/ksa-media-signer.yaml || true
@@ -215,6 +224,7 @@ jobs:
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Sync Secrets
+        # Secrets are sensitive values (passwords, tokens). Keep them in GitHub Secrets
         env:
           NS: ${{ vars.NS }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -260,6 +270,10 @@ jobs:
           PROJECT_ID: ${{ vars.PROJECT_ID }}
           REGION: ${{ vars.REGION }}
           REPOSITORY: ${{ vars.REPOSITORY }}
+          # IMAGE_TAG precedence:
+          #  1) If user provided an input tag, use it.
+          #  2) Else if on main, use "latest".
+          #  3) Else use the current commit SHA like "sha-<sha>".
           IMAGE_TAG: ${{ github.event.inputs.image_tag || (github.ref == 'refs/heads/main' && 'latest' || format('sha-{0}', github.sha)) }}
         run: |
           set -euo pipefail
@@ -271,7 +285,7 @@ jobs:
           mkdir -p rendered
           export PROJECT_ID REGION REPOSITORY IMAGE_TAG
           
-          # Render each service's manifests
+          # For each selected service, render its YAMLs into the ./rendered folder
           for service in ${{ steps.services.outputs.services }}; do
             echo "📝 Rendering manifests for: $service"
             
@@ -308,6 +322,7 @@ jobs:
           fi
 
       - name: Apply deployments
+         # Apply the rendered manifests to the chosen namespace and wait for rollouts
         run: |
           set -euo pipefail
           
