@@ -6,6 +6,9 @@ metadata:
   labels:
     app.kubernetes.io/name: qubool-kallyanam-gateway
     app.kubernetes.io/part-of: qubool-kallyanam
+  annotations:
+    # Link this service to the BackendConfig for timeout settings
+    cloud.google.com/backend-config: '{"default": "gateway-backend-config"}'
 spec:
   type: ClusterIP   
   selector:

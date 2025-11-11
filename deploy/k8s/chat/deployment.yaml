@@ -70,5 +70,5 @@ spec:
             grpc: { port: 50071 }
             initialDelaySeconds: 10
           resources:
-            requests: { cpu: 100m, memory: 128Mi }
-            limits: { cpu: 500m, memory: 256Mi }
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { cpu: 150m, memory: 64Mi }

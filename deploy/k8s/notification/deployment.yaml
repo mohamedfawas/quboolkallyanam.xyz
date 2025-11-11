@@ -38,5 +38,5 @@ spec:
             - name: NOTIFICATION_PUBSUB_PROJECT_ID
               valueFrom: { configMapKeyRef: { name: shared-config, key: PUBSUB_PROJECT_ID } }
           resources:
-            requests: { cpu: 50m, memory: 64Mi }
-            limits: { cpu: 250m, memory: 128Mi }
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { cpu: 150m, memory: 64Mi }
