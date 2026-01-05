@@ -153,10 +153,24 @@ func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 	}
 	ctx := context.WithValue(c.Request.Context(), constants.ContextKeyRequestID, requestID)
 
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		h.logger.Error("Failed to upgrade WebSocket", zap.Error(err))
+		return
+	}
+
+	// From here on, HTTP is gone — WebSocket only
+	defer conn.Close()
+
 	// Authenticate WebSocket connection
 	userID, err := h.authenticateWebSocket(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid token"})
+		// Policy violation = 1008 (industry standard)
+		_ = conn.WriteControl(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "unauthorized"),
+			time.Now().Add(writeWait),
+		)
 		return
 	}
 
@@ -165,14 +179,6 @@ func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 		zap.String(constants.ContextKeyUserID, userID),
 	)
 
-	// Upgrade HTTP connection to WebSocket
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		log.Error("Failed to upgrade WebSocket connection", zap.Error(err))
-		return
-	}
-	defer conn.Close()
-
 	// Add connection to manager
 	h.connManager.AddConnection(userID, conn)
 	defer h.connManager.RemoveConnection(userID)
@@ -180,6 +186,7 @@ func (h *ChatHandler) HandleWebSocket(c *gin.Context) {
 	log.Info("WebSocket handler started")
 
 	// Configure connection timeouts
+	conn.SetReadLimit(maxMessageSize)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(pongWait))
